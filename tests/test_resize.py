@@ -8,9 +8,6 @@ now-passing test and you remove the marker. Treat those as the to-do list.
 """
 
 import copy
-import math
-
-import pytest
 
 from engine.main import self_check
 from engine.resize import resize
@@ -86,21 +83,7 @@ def test_elements_inside_source_canvas_stay_inside_target(source, target_canvas)
             )
 
 
-def test_non_cover_images_keep_aspect_ratio(request, source, target_canvas):
-    src_canvas = source["canvas"]
-    ratio_changes = not math.isclose(
-        src_canvas["width"] / src_canvas["height"],
-        target_canvas["width"] / target_canvas["height"],
-    )
-    if ratio_changes:
-        request.applymarker(
-            pytest.mark.xfail(
-                strict=True,
-                reason="Baseline is a uniform stretch, so it distorts images whenever the "
-                "canvas ratio changes. Remove this marker once resize() preserves "
-                "image aspect ratios.",
-            )
-        )
+def test_non_cover_images_keep_aspect_ratio(source, target_canvas):
     out = resize(source, target_canvas)
     out_by_id = {el["id"]: el for el in out["elements"]}
     for src_el in source["elements"]:

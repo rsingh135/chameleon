@@ -1,75 +1,75 @@
-"""
-THIS IS THE FILE YOU IMPLEMENT.
+"""Offline, deterministic design reflow with source-aware candidate selection."""
 
-Everything else in this repo (input loading, output writing, rendering,
-the Dockerfile) is plumbing so you can focus on exactly one function:
-`resize()`. See RULES.md and the design schema for the full contract.
-"""
-
+import json
+import math
+from copy import deepcopy
+from functools import lru_cache
 from typing import Any
+
+from engine.layout import build_context, generate_candidates, get_measurer
+from engine.layout.geometry import bounds, intersection
+
+
+def _quality(source: dict, candidate: dict, context) -> float:
+    """Local ranking until the evaluation track is integrated."""
+    original = {e["id"]: e for e in source["elements"]}
+    source_scale = math.sqrt(
+        candidate["canvas"]["width"]
+        * candidate["canvas"]["height"]
+        / (source["canvas"]["width"] * source["canvas"]["height"])
+    )
+    background_ids = {e["id"] for e in context.backgrounds + context.decorations}
+    unit_ids = {e["id"]: i for i, u in enumerate(context.units) for e in u.elements}
+    roles = {e["id"]: u.role for u in context.units for e in u.elements}
+    elements = [e for e in candidate["elements"] if e["id"] not in background_ids]
+    score = 0.0
+    for i, element in enumerate(elements):
+        box = bounds(element)
+        if element["type"] == "text":
+            measured = get_measurer().measure(element, element["font_size"], element["width"])
+            overflow = max(0.0, measured.width - element["width"])
+            overflow += max(0.0, measured.height - element["height"])
+            score -= overflow * 100
+            relative = element["font_size"] / max(
+                1.0, original[element["id"]]["font_size"] * source_scale
+            )
+            weight = {"headline": 3.0, "body": 2.0, "legal": 0.5}.get(roles[element["id"]], 1.0)
+            score += weight * math.log(max(0.01, relative))
+        for other in elements[i + 1 :]:
+            if unit_ids[element["id"]] == unit_ids[other["id"]]:
+                continue
+            overlap = intersection(box, bounds(other))
+            if overlap <= 0:
+                continue
+            source_overlap = intersection(
+                bounds(original[element["id"]]), bounds(original[other["id"]])
+            )
+            intentional = source_overlap > 0 and not (element["type"] == other["type"] == "text")
+            if not intentional:
+                fraction = overlap / max(
+                    1.0, min(box.width * box.height, other["width"] * other["height"])
+                )
+                score -= fraction * 20
+    return score
+
+
+@lru_cache(maxsize=64)
+def _resize_cached(source_json: str, width: int, height: int) -> dict:
+    source = json.loads(source_json)
+    target_canvas = {"width": width, "height": height}
+    context = build_context(source)
+    candidates = generate_candidates(source, target_canvas)
+    return max(candidates, key=lambda candidate: _quality(source, candidate, context))
 
 
 def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:
+    """Adapt composition without changing the supplied assets, fonts or copy.
+
+    Deterministic, offline, and does not mutate either argument. A bounded task
+    cache speeds up repeated viewer requests; each caller receives its own copy.
     """
-    Args:
-        source: {"canvas": {"width": int, "height": int}, "elements": [...]}
-                 — the design at its original size. See
-                 chameleon_design_schema_v0.9.json for the full element spec
-                 (text / image / shape, position, size, rotation, opacity,
-                 z_index, group_id, and type-specific fields).
-        target_canvas: {"width": int, "height": int} — the shape you're
-                 resizing into.
-
-    Returns:
-        A design dict with the SAME shape as `source`:
-        {"canvas": target_canvas, "elements": [...]}
-
-        Hard requirements (see RULES.md for the full list):
-        - Every element `id` in `source` must appear exactly once in your
-          output. Do not add, remove, or invent elements.
-        - Do not regenerate or redraw any asset's pixel content — you are
-          repositioning and resizing the elements you were given, nothing
-          more. This is a disqualifying rule, not a style preference.
-        - Non-background image elements should be kept in proportion
-          (matching the source aspect ratio within ~5%) unless they are a
-          full-bleed / `fit: "cover"` element, which is expected to crop.
-        - `font_size` may change to help text fit. `font_family` and
-          `content` should not, for this stage of scoring (see RULES.md,
-          "Adaptive typography and copy").
-        - Nothing should end up outside `target_canvas`'s bounds.
-
-    This is where your actual approach goes: constraint solving, a learned
-    layout model, heuristics, whatever you choose. Latency is not a scoring
-    concern (see RULES.md) — spend your effort on quality, not speed.
-    """
-
-    # ------------------------------------------------------------------
-    # Naive baseline so this file runs out of the box. This is a uniform
-    # stretch — literally the thing the brief tells you NOT to do ("a
-    # naive program stretches the picture; a good one moves the
-    # furniture"). It's here so `python -m engine.main` produces valid,
-    # schema-correct output on day one. Replace the body of this function;
-    # do not just tune these three lines.
-    # ------------------------------------------------------------------
-    scale_x = target_canvas["width"] / source["canvas"]["width"]
-    scale_y = target_canvas["height"] / source["canvas"]["height"]
-
-    out_elements = []
-    for el in source["elements"]:
-        el = dict(el)  # shallow copy — don't mutate the input
-        el["x"] = el["x"] * scale_x
-        el["y"] = el["y"] * scale_y
-        el["width"] = el["width"] * scale_x
-        el["height"] = el["height"] * scale_y
-        if el["type"] == "text":
-            # font_size scaling isn't required to be uniform — this is
-            # just a starting point. Floored at 1px: the schema requires
-            # font_size >= 1, and an extreme downscale (e.g. a tall poster
-            # squeezed into a short banner) can otherwise compute < 1.
-            el["font_size"] = max(1.0, el["font_size"] * min(scale_x, scale_y))
-        out_elements.append(el)
-
-    return {
-        "canvas": {"width": target_canvas["width"], "height": target_canvas["height"]},
-        "elements": out_elements,
-    }
+    return deepcopy(
+        _resize_cached(
+            json.dumps(source, sort_keys=True), target_canvas["width"], target_canvas["height"]
+        )
+    )

@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install pytest
+      - run: pip install -r requirements-dev.txt
       - run: pytest
 
   docker:

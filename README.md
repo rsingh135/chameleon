@@ -92,6 +92,17 @@ engine needs must be installed at **build** time (add it to
 `requirements.txt`), not fetched at run time. If you're using a locally
 hosted model, bake its weights into the image during the build step.
 
+## Working on this repo
+
+```bash
+make setup    # .venv + deps
+make check    # lint + tests (what CI runs)
+make run      # resize input/*.json -> output/
+```
+
+Branch off `main`, open a PR, let CI go green, squash-merge. Full workflow,
+commit conventions, and test policy are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## See also
 
 - `chameleon_design_schema_v0.9.json` — full input/output field spec

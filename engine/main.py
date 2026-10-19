@@ -59,7 +59,9 @@ def self_check(source: dict, output: dict) -> list[str]:
                 continue
         for field in REQUIRED_BY_TYPE.get(el.get("type"), []):
             if field not in el:
-                problems.append(f"element '{el.get('id')}' (type={el.get('type')}): missing '{field}'")
+                problems.append(
+                    f"element '{el.get('id')}' (type={el.get('type')}): missing '{field}'"
+                )
         if cw and ch and all(k in el for k in ("x", "y", "width", "height")):
             x1, y1 = el["x"] + el["width"], el["y"] + el["height"]
             if el["x"] < -0.5 or el["y"] < -0.5 or x1 > cw + 0.5 or y1 > ch + 0.5:
@@ -77,6 +79,7 @@ def render_to_png(design: dict, assets_dir: Path, png_path: Path) -> None:
     real preview."""
     try:
         from renderer.converter.convert import render_design_to_png  # type: ignore
+
         render_design_to_png(design, assets_dir, str(png_path))
         return
     except ImportError:
@@ -127,8 +130,10 @@ def main() -> int:
         render_to_png(output, ASSETS_DIR, OUTPUT_DIR / f"{stem}_output.png")
 
         status = "OK" if not problems else f"{len(problems)} self-check warning(s)"
-        print(f"[{task_path.name}] {status} in {elapsed:.2f}s "
-              f"-> {stem}_output.json, {stem}_output.png")
+        print(
+            f"[{task_path.name}] {status} in {elapsed:.2f}s "
+            f"-> {stem}_output.json, {stem}_output.png"
+        )
         for p in problems:
             print(f"    - {p}")
 

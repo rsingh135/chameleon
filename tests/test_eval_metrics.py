@@ -109,3 +109,13 @@ def test_catalogue_ranking():
     nearest = by_aspect_distance({"width": 1080, "height": 1080}, n=1)[0]
     assert CATALOGUE[nearest]["width"] == CATALOGUE[nearest]["height"]
     assert by_aspect_distance({"width": 728, "height": 90})[-1] in ("wide_skyscraper", "half_page")
+
+
+def test_moving_a_corner_element_across_the_canvas_is_penalised(ctx3):
+    cand = copy.deepcopy(LEVEL3)
+    for el_id in ("ribbon_bg", "ribbon_label"):
+        el = _el(cand, el_id)
+        el["x"], el["y"] = 60, 1100  # top-right ribbon -> bottom-left
+    base = score(LEVEL3, LEVEL3, ctx3)["metrics"]["position_affinity"]
+    moved = score(LEVEL3, cand, ctx3)["metrics"]["position_affinity"]
+    assert base == 1.0 and moved < base

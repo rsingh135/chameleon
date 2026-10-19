@@ -1,0 +1,22 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# renderer/ is a vendored copy of transformer-convertor (see README). We don't
+# own that code, so it's not held to this repo's lint/format rules.
+extend-exclude = ["renderer"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (unused imports/variables, undefined names)
+    "I",   # isort (import ordering)
+    "B",   # bugbear (likely bugs)
+    "UP",  # pyupgrade (modern syntax for the target version)
+    "SIM", # simplify
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"

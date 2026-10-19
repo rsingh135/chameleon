@@ -171,6 +171,21 @@ def compute_metrics(
     else:
         m["hero"] = 1.0
 
+    # --- position affinity: elements stay in the region they came from -----
+    # A corner ribbon should still be in a corner, a footer watermark still in
+    # the footer. Compare each element's normalised centre (0..1 in each axis)
+    # between source and candidate; distances beyond 0.35 count as moved.
+    if fg:
+        drift = []
+        for i in fg:
+            s, c = sboxes[i], cboxes[i]
+            dx = s.cx / scanvas.width - c.cx / ccanvas.width
+            dy = s.cy / scanvas.height - c.cy / ccanvas.height
+            drift.append(_clamp(1.0 - math.hypot(dx, dy) / 0.35))
+        m["position_affinity"] = sum(drift) / len(drift)
+    else:
+        m["position_affinity"] = 1.0
+
     # --- relative scale consistency ---------------------------------------
     if len(fg) >= 2:
         logs = []

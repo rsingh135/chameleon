@@ -23,8 +23,9 @@ REQUIRED_BY_TYPE = {
     "image": ("asset_id",),
     "shape": ("shape_type", "fill_color"),
 }
-# Fields the engine may not change. Position, size and (for text) font_size
-# are the only knobs; everything else is the design's identity.
+# Fields the engine may not change: everything that is the design's identity
+# rather than its geometry. Position, size, font_size, and the px-valued shape
+# geometry (`corner_radius`, `stroke_width`) may scale with the element.
 FROZEN_FIELDS = (
     "type",
     "content",
@@ -41,7 +42,6 @@ FROZEN_FIELDS = (
     "shape_type",
     "fill_color",
     "stroke_color",
-    "corner_radius",
     "group_id",
     "z_index",
     "opacity",

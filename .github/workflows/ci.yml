@@ -31,7 +31,9 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - run: pip install pytest
+      # skia-python needs the same GL runtime libs the Dockerfile installs.
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq libgl1 libegl1 libglib2.0-0
+      - run: pip install -r requirements-dev.txt
       - run: pytest
 
   docker:
@@ -47,5 +49,21 @@ jobs:
           context: .
           platforms: linux/amd64
           push: false
+          load: true
+          tags: chameleon-engine:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      # Run it exactly the way stage-one scoring will: no network, input/
+      # and output/ mounted, and check every task produced both artifacts.
+      - name: Run engine offline on the sample tasks
+        run: |
+          mkdir -p ci_output
+          docker run --rm --network none \
+            -v "$PWD/input:/app/input" -v "$PWD/ci_output:/app/output" \
+            chameleon-engine:ci
+          for task in input/*.json; do
+            stem=$(basename "$task" .json)
+            test -s "ci_output/${stem}_output.json" || { echo "missing ${stem}_output.json"; exit 1; }
+            test -s "ci_output/${stem}_output.png"  || { echo "missing ${stem}_output.png"; exit 1; }
+          done
+          ls -la ci_output

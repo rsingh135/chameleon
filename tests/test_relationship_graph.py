@@ -166,11 +166,19 @@ def test_flow_changes_require_an_explicit_cluster_state():
     graph = build_relationship_graph(original)
     message = graph.clusters[0]
     candidate = deepcopy(original)
-    candidate["elements"][1].update(x=200, y=20)
+    first, second = (graph.units[index].box for index in message.unit_indices)
+    source_gap = next(edge.source_gap for edge in graph.edges if edge.code == "message_attachment")
+    # This test changes flow, not proximity. Preserve the dimensionless gap;
+    # an absolute x=200 fell on different sides of the attachment threshold
+    # with Windows and Linux font advances.
+    candidate["elements"][1].update(
+        x=first.x + first.width + source_gap * max(first.width, second.width), y=first.y
+    )
     unchanged = analyze_relationships(graph, candidate)
     changed = analyze_relationships(graph, candidate, {message.id: "horizontal"})
     assert "shared_axis" in {warning["code"] for warning in unchanged["warnings"]}
     assert changed["warnings"] == []
+    assert changed["metrics"]["message_attachment"] == pytest.approx(1)
     with pytest.raises(ValueError, match="known cluster"):
         analyze_relationships(graph, candidate, {"unknown": "horizontal"})
 

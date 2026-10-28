@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE, by_aspect_distance
@@ -38,6 +39,7 @@ def test_identity_scores_high_json_only(ctx2):
     r = score(LEVEL2, LEVEL2, ctx2)
     assert r["violations"] == []
     assert r["total"] >= 0.9
+    assert r["metrics"]["raw_collisions"] == 0
 
 
 def test_identity_scores_high_with_pixels(ctx3):
@@ -45,6 +47,7 @@ def test_identity_scores_high_with_pixels(ctx3):
     r = score(LEVEL3, LEVEL3, ctx3, plate)
     assert r["violations"] == []
     assert r["total"] >= 0.9
+    assert r["metrics"]["raw_collisions"] == 0
     assert r["metrics"]["raw_min_contrast"] > 3.0  # white text on dark gradient / orange
 
 
@@ -70,6 +73,238 @@ def test_intentional_overlap_is_not_a_collision(ctx2):
     # deco_circle_1 overlaps the product in the source on purpose.
     assert frozenset(("deco_circle_1", "product")) in ctx2.intentional_overlaps
     assert score(LEVEL2, LEVEL2, ctx2)["metrics"]["raw_collisions"] == 0
+
+
+@pytest.fixture
+def padded_product(tmp_path):
+    image = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
+    image.paste((255, 0, 0, 255), (45, 20, 55, 80))
+    image.save(tmp_path / "product.png")
+    Image.new("RGBA", (20, 20), (0, 0, 255, 255)).save(tmp_path / "small.png")
+    source = {
+        "canvas": {"width": 800, "height": 800},
+        "elements": [
+            {
+                "id": "product",
+                "type": "image",
+                "x": 100,
+                "y": 100,
+                "width": 400,
+                "height": 400,
+                "asset_id": "product.png",
+                "fit": "contain",
+            },
+            {
+                "id": "copy",
+                "type": "text",
+                "x": 150,
+                "y": 200,
+                "width": 200,
+                "height": 120,
+                "font_size": 24,
+                "content": "Copy",
+                "font_family": "Solstice Sans",
+                "color": "#000000",
+            },
+        ],
+    }
+    return source, tmp_path
+
+
+def test_transparent_image_padding_and_text_frame_overlap_are_not_collisions(padded_product):
+    source, assets = padded_product
+    context = build_context(source, assets)
+    assert frozenset(("product", "copy")) in context.intentional_overlaps
+    result = score(source, source, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 0
+    assert result["metrics"]["collision_free"] == 1
+
+
+@pytest.mark.parametrize("move", ["text", "image"])
+def test_source_padding_overlap_cannot_authorize_new_visible_collision(padded_product, move):
+    source, assets = padded_product
+    context = build_context(source, assets)
+    candidate = copy.deepcopy(source)
+    if move == "text":
+        _el(candidate, "copy")["x"] = 280
+    else:
+        _el(candidate, "product")["x"] = 0
+    result = score(source, candidate, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 1
+    assert result["metrics"]["collision_free"] < 1
+
+
+def test_visible_image_to_image_collision_uses_alpha_not_padded_frames(padded_product):
+    source, assets = padded_product
+    source["elements"][1] = {
+        "id": "small",
+        "type": "image",
+        "asset_id": "small.png",
+        "fit": "contain",
+        "x": 150,
+        "y": 200,
+        "width": 50,
+        "height": 50,
+    }
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "small")["x"] = 290
+    assert score(source, candidate, context)["metrics"]["raw_collisions"] == 1
+
+
+def test_actual_visible_layering_is_retained_without_allowing_more_overlap(padded_product):
+    source, assets = padded_product
+    source["elements"][1] = {
+        "id": "plate",
+        "type": "shape",
+        "shape_type": "rectangle",
+        "fill_color": "#ffffff",
+        "x": 230,
+        "y": 200,
+        "width": 60,
+        "height": 40,
+    }
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "plate")["x"] = 270
+    assert score(source, candidate, context)["metrics"]["raw_collisions"] == 1
+
+
+def test_visible_image_text_overlay_can_scale_with_its_source_layering(padded_product):
+    source, assets = padded_product
+    _el(source, "copy")["x"] = 280
+    context = build_context(source, assets)
+    candidate = copy.deepcopy(source)
+    candidate["canvas"] = {"width": 1600, "height": 1600}
+    for element in candidate["elements"]:
+        for key in ("x", "y", "width", "height", "font_size"):
+            if key in element:
+                element[key] *= 2
+    result = score(source, candidate, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 0
+
+
+def test_image_inside_unused_multiline_text_area_is_not_a_collision(padded_product):
+    source, assets = padded_product
+    _el(source, "copy").update(content="Copy\n\nCopy", x=280, y=100, height=120)
+    _el(source, "product").update(x=220, y=131, width=20, height=20, asset_id="small.png")
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "product").update(x=285, y=135)
+    assert score(source, candidate, context)["metrics"]["raw_collisions"] == 0
+
+
+@pytest.mark.parametrize("content", ["image", "text"])
+def test_source_decoration_below_foreground_is_an_underlay_not_a_collision(padded_product, content):
+    source, assets = padded_product
+    _el(source, "product")["z_index"] = 3
+    _el(source, "copy")["z_index"] = 4
+    source["elements"].append(
+        {
+            "id": "ornament",
+            "type": "shape",
+            "shape_type": "ellipse",
+            "fill_color": "#ffffff",
+            "opacity": 0.15,
+            "z_index": 1,
+            "x": 550,
+            "y": 500,
+            "width": 120,
+            "height": 120,
+        }
+    )
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "ornament").update(x=270 if content == "image" else 140, y=190)
+    result = score(source, candidate, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 0
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"opacity": 1},
+        {"opacity": 0.5},
+        {"z_index": 5},
+        {"z_index": 3},
+        {"group_id": "diagram"},
+        {"type": "image", "asset_id": "small.png", "fit": "contain"},
+    ],
+)
+def test_opaque_raised_grouped_or_image_elements_are_not_underlays(padded_product, overrides):
+    source, assets = padded_product
+    _el(source, "product")["z_index"] = 3
+    _el(source, "copy")["z_index"] = 4
+    _el(source, "copy")["y"] = 20
+    ornament = {
+        "id": "ornament",
+        "type": "shape",
+        "shape_type": "ellipse",
+        "fill_color": "#ffffff",
+        "opacity": 0.15,
+        "z_index": 1,
+        "x": 550,
+        "y": 500,
+        "width": 120,
+        "height": 120,
+        **overrides,
+    }
+    source["elements"].append(ornament)
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "ornament").update(x=270, y=190)
+    result = score(source, candidate, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 1
+
+
+def test_ungrouped_translucent_label_plate_does_not_gain_underlay_exemption(padded_product):
+    source, assets = padded_product
+    _el(source, "product")["z_index"] = 3
+    _el(source, "copy")["y"] = 20
+    source["elements"].extend(
+        [
+            {
+                "id": "plate",
+                "type": "shape",
+                "shape_type": "rectangle",
+                "fill_color": "#ffffff",
+                "opacity": 0.15,
+                "z_index": 1,
+                "x": 550,
+                "y": 500,
+                "width": 120,
+                "height": 100,
+            },
+            {
+                "id": "label",
+                "type": "text",
+                "font_family": "Solstice Sans",
+                "font_size": 18,
+                "content": "Label",
+                "color": "#000000",
+                "z_index": 2,
+                "x": 560,
+                "y": 520,
+                "width": 100,
+                "height": 30,
+            },
+        ]
+    )
+    context = build_context(source, assets)
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    _el(candidate, "plate").update(x=270, y=190)
+    assert score(source, candidate, context)["metrics"]["raw_collisions"] == 1
 
 
 @pytest.mark.parametrize("grouped", [False, True])

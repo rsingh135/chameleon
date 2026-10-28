@@ -28,6 +28,8 @@ from engine.eval.geometry import (
 )
 from engine.eval.render import region_stats
 from engine.eval.text import get_measurer
+from engine.layout.appearance import visible_box
+from engine.layout.model import build_context as build_layout_context
 
 # Minimum comfortably readable text: a fraction of the shorter canvas side,
 # floored in px. 1080-wide -> 13px; 728x90 -> the 10px floor applies.
@@ -96,6 +98,33 @@ def _line_overlap(first: list[Box], second: list[Box]) -> float:
     return maximum
 
 
+def _occupied_boxes(element: dict, text_lines: dict[str, list[Box]], assets_dir: str) -> list[Box]:
+    """Approximate visible rectangles, not a pixel-level collision mask.
+
+    Use individual occupied lines for unrotated text. Rotated text, images and
+    shapes use their visible axis-aligned bounds, including image alpha/fitting.
+    """
+    if element.get("opacity", 1) <= 0:
+        return []
+    if element["type"] == "text" and not element.get("rotation", 0):
+        return text_lines[element["id"]]
+    box = visible_box(element, assets_dir)
+    if box.width <= 0 or box.height <= 0:
+        return []
+    return [Box(box.x, box.y, box.x + box.width, box.y + box.height)]
+
+
+def _decorative_underlays(source: dict, context: Context) -> set[str]:
+    """Reuse source ornament classification without treating label plates as art."""
+    decorations = {element["id"] for element in build_layout_context(source).decorations}
+    label_plates = {
+        outer
+        for inner, outer in context.containment
+        if context.by_id[inner]["type"] == "text" and not context.by_id[inner].get("group_id")
+    }
+    return decorations - label_plates
+
+
 def compute_metrics(
     source: dict,
     candidate: dict,
@@ -115,17 +144,42 @@ def compute_metrics(
     candidate_layouts = {i: measurer.layout(cand_by_id[i]) for i in texts}
     candidate_lines = {i: _text_line_boxes(cand_by_id[i], candidate_layouts[i]) for i in texts}
     source_lines = {i: _text_line_boxes(context.by_id[i], context.text_layouts[i]) for i in texts}
+    candidate_occupied = {
+        i: _occupied_boxes(cand_by_id[i], candidate_lines, context.assets_dir) for i in fg
+    }
+    source_occupied = {
+        i: _occupied_boxes(context.by_id[i], source_lines, context.assets_dir) for i in fg
+    }
+    underlays = _decorative_underlays(source, context)
 
     # --- collisions: overlaps that did not exist in the source ---------------
     worst = 0.0
     total = 0.0
     count = 0
     for a, b in combinations(fg, 2):
+        if any(
+            decoration in underlays
+            and other not in underlays
+            and context.by_id[decoration].get("z_index", 0) < context.by_id[other].get("z_index", 0)
+            and cand_by_id[decoration].get("z_index", 0) < cand_by_id[other].get("z_index", 0)
+            for decoration, other in ((a, b), (b, a))
+        ):
+            # Source low-opacity ungrouped ornaments may sit behind foreground
+            # content. Their rectangular bounds do not model the painted shape;
+            # rendered contrast/busyness must still assess text legibility.
+            continue
         unrotated_text = cand_by_id[a]["type"] == cand_by_id[b]["type"] == "text" and not any(
             element.get("rotation", 0)
             for element in (cand_by_id[a], cand_by_id[b], context.by_id[a], context.by_id[b])
         )
-        if unrotated_text:
+        if "image" in (cand_by_id[a]["type"], cand_by_id[b]["type"]):
+            # An overlapping padded source frame does not establish visible
+            # layering. Allow only the overlap measured in the source itself.
+            baseline = _line_overlap(source_occupied[a], source_occupied[b])
+            frac = _line_overlap(candidate_occupied[a], candidate_occupied[b]) - baseline
+            if frac <= 0.02:
+                continue
+        elif unrotated_text:
             # Overlapping source frames do not authorize a new collision of
             # their drawn lines, including labels within the same group.
             baseline = _line_overlap(source_lines[a], source_lines[b])

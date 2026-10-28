@@ -92,6 +92,12 @@ The final challenge PDF requests the engine for stage one and a full Adobe
 Express add-on, pitch and demo video for the finale. An Express add-on is not
 implemented in this repository.
 
+An isolated orientation-continuation trial is documented in
+[`docs/REFLOW_EXPERIMENT.md`](docs/REFLOW_EXPERIMENT.md). It compares intermediate
+layouts while holding the endpoint fixed. It remains outside the default engine:
+the first trial reduced the worst position jump, but substantial jumps and
+unverified motion between anchors remain.
+
 ## Docker submission
 
 Docker Desktop must be running with Linux containers enabled. Build once with

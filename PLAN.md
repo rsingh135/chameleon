@@ -115,3 +115,18 @@ required by the current approach.
   builds the image and runs the samples without networking.
 - Remaining product work: improve tiny-banner readability and pixel-aware
   selection, then build the Express add-on for the finale.
+
+## Gradual quality checkpoint
+
+- Added and tested a loopback studio around the existing engine. The supplied
+  Core style-run range is now accepted without changing its content; JSON and
+  full-resolution PNG exports were verified in the actual browser.
+- Corrected CTA/badge inference and packed related headline/body copy. The Core
+  headline/body box gap decreased from 103 px to 10 px. This is a narrow coherence
+  fix, not a claim of solved visual quality.
+- Added a separate orientation-continuation experiment. Its guided seven-anchor
+  trial reduces the worst measured center jump from 0.6282 to 0.4647, with the
+  same final design. The default engine does not use the experiment.
+- Current validation: 348 tests passed, one expected skip, Ruff clean; 17 live
+  HTTP checks passed. See `docs/REFLOW_EXPERIMENT.md` for results, provenance,
+  rejected trials, limitations and the next geometry/ink-aware work.

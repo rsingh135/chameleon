@@ -26,7 +26,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE
-from engine.eval.render import render_image, render_plate
 from engine.resize import resize
 
 ASSETS_DIR = Path("brand_kit/assets")
@@ -34,10 +33,34 @@ THUMB = (320, 320)
 CELL_W, CELL_H, LABEL_H = 340, 400, 60
 
 
+def render_image(*args, **kwargs):
+    """Load the renderer only when previews are requested."""
+    from engine.eval.render import render_image as render
+
+    return render(*args, **kwargs)
+
+
+def render_plate(*args, **kwargs):
+    from engine.eval.render import render_plate as render
+
+    return render(*args, **kwargs)
+
+
+def _succeeded(row: dict) -> bool:
+    return not (row["violations"] or row.get("crashed") or row.get("render_error"))
+
+
+def _record_failure(row: dict, code: str, error: str) -> None:
+    row[code] = error
+    row["violations"].append(f"{code}: {error.strip().splitlines()[-1]}")
+    row["violation_codes"] = sorted(set(row["violation_codes"]) | {code})
+    row["total"] = 0.0
+
+
 def load_tasks(input_dir: Path) -> list[dict]:
     tasks = []
     for path in sorted(input_dir.glob("*.json")):
-        task = json.loads(path.read_text())
+        task = json.loads(path.read_text(encoding="utf-8"))
         task.setdefault("task_id", path.stem)
         task.setdefault("family", task.get("difficulty", "sample"))
         task.setdefault("holdout", False)
@@ -63,7 +86,6 @@ def run_one(
     task: dict, target_name: str, target: dict, render: bool
 ) -> tuple[dict, Image.Image | None]:
     source = task["source"]
-    ctx = build_context(source, ASSETS_DIR)
     row = {
         "task_id": task["task_id"],
         "family": task["family"],
@@ -75,33 +97,38 @@ def run_one(
     }
     t0 = time.perf_counter()
     try:
+        ctx = build_context(source, ASSETS_DIR)
         candidate = resize(source, target)
+        row["elapsed"] = time.perf_counter() - t0
+        row["crashed"] = False
+
+        plate = image = None
+        if render:
+            try:
+                plate = render_plate(candidate, ASSETS_DIR, max_size=1024)
+                image = render_image(candidate, ASSETS_DIR, max_size=1024)
+            except Exception:  # noqa: BLE001 - failed rendering is not a valid scored run
+                row["render_error"] = traceback.format_exc(limit=3)
+                plate = image = None
+        result = score(source, candidate, ctx, plate, target)
     except Exception:  # noqa: BLE001 - a crash is a reliability failure we must record
         row.update(
             elapsed=time.perf_counter() - t0,
             crashed=True,
             error=traceback.format_exc(limit=3),
             violations=["crash"],
+            violation_codes=["crash"],
             total=0.0,
             metrics={},
         )
         return row, None
-    row["elapsed"] = time.perf_counter() - t0
-    row["crashed"] = False
-
-    plate = image = None
-    if render:
-        try:
-            plate = render_plate(candidate, ASSETS_DIR, max_size=1024)
-            image = render_image(candidate, ASSETS_DIR, max_size=1024)
-        except Exception:  # noqa: BLE001
-            row["render_error"] = traceback.format_exc(limit=3)
-    result = score(source, candidate, ctx, plate, target)
     row["violations"] = [str(v) for v in result["violations"]]
     row["violation_codes"] = sorted({v.code for v in result["violations"]})
     row["total"] = result["total"]
     row["metrics"] = {k: round(v, 4) for k, v in result["metrics"].items()}
     row["candidate"] = candidate
+    if row.get("render_error"):
+        _record_failure(row, "render_error", row["render_error"])
     return row, image
 
 
@@ -142,12 +169,12 @@ def contact_sheet(
             src_img,
             f"SOURCE {src['canvas']['width']}x{src['canvas']['height']}",
             [task["task_id"], task["family"]],
-            True,
+            src_img is not None,
         )
     )
     for row, img in zip(rows, images, strict=True):
         tc = row["target_canvas"]
-        ok = not row["violations"]
+        ok = _succeeded(row)
         detail = ", ".join(row.get("violation_codes") or []) or f"total {row['total']:.2f}"
         m = row["metrics"]
         second = (
@@ -178,17 +205,17 @@ def summarize(rows: list[dict]) -> str:
             "|---|---|---|---|---|",
         ]
         for name, g in sorted(groups.items()):
-            valid = [r for r in g if not r["violations"]]
+            valid = [r for r in g if _succeeded(r)]
             mean = sum(r["total"] for r in valid) / len(valid) if valid else 0.0
             crashes = sum(r["crashed"] for r in g)
             out.append(f"| {name} | {len(g)} | {len(valid)} | {mean:.3f} | {crashes} |")
         return "\n".join(out)
 
-    valid = [r for r in rows if not r["violations"]]
+    valid = [r for r in rows if _succeeded(r)]
     codes = Counter(c for r in rows for c in r.get("violation_codes") or ["crash"] * r["crashed"])
     mean_total = sum(r["total"] for r in valid) / len(valid) if valid else 0.0
-    mean_elapsed = sum(r["elapsed"] for r in rows) / len(rows)
-    max_elapsed = max(r["elapsed"] for r in rows)
+    mean_elapsed = sum(r["elapsed"] for r in rows) / len(rows) if rows else 0.0
+    max_elapsed = max((r["elapsed"] for r in rows), default=0.0)
     lines = [
         "# Harness report\n",
         f"- rows: {len(rows)}  valid: {len(valid)}  crashes: {sum(r['crashed'] for r in rows)}",
@@ -238,6 +265,11 @@ def main() -> int:
         tasks += generate(args.synth, args.seed)
     if args.limit:
         tasks = tasks[: args.limit]
+    if not tasks:
+        print(
+            f"No tasks found in {args.input}; add task JSON files or use --synth.", file=sys.stderr
+        )
+        return 1
     args.out.mkdir(parents=True, exist_ok=True)
     render = not args.no_render
 
@@ -248,19 +280,34 @@ def main() -> int:
             row, img = run_one(task, name, target, render)
             rows.append(row)
             images.append(img)
-            flag = "OK " if not row["violations"] else "BAD"
-            codes = ",".join(row.get("violation_codes") or [])
-            print(f"{flag} {task['task_id']:<28} {name:<20} total={row['total']:.3f} {codes}")
         if render and not args.no_sheets:
-            contact_sheet(task, rows, images, render).save(
-                args.out / f"sheet_{task['task_id']}.png"
+            sheet_path = args.out / f"sheet_{task['task_id']}.png"
+            try:
+                contact_sheet(task, rows, images, render).save(sheet_path)
+            except Exception:  # noqa: BLE001 - retain the report even if source rendering fails
+                error = traceback.format_exc(limit=3)
+                for row in rows:
+                    _record_failure(row, "sheet_error", error)
+                print(f"[{task['task_id']}] contact sheet failed: {error}", file=sys.stderr)
+                # Preserve target previews and show a failed source cell without retrying rendering.
+                try:
+                    contact_sheet(task, rows, images, render=False).save(sheet_path)
+                except Exception as exc:  # noqa: BLE001
+                    print(f"[{task['task_id']}] fallback sheet failed: {exc}", file=sys.stderr)
+        for row in rows:
+            flag = "OK " if _succeeded(row) else "BAD"
+            codes = ",".join(row.get("violation_codes") or [])
+            print(
+                f"{flag} {task['task_id']:<28} {row['target']:<20} total={row['total']:.3f} {codes}"
             )
         all_rows += rows
 
-    (args.out / "report.json").write_text(json.dumps(all_rows, indent=1, default=str))
-    (args.out / "report.md").write_text(summarize(all_rows))
+    (args.out / "report.json").write_text(
+        json.dumps(all_rows, indent=1, default=str, allow_nan=False), encoding="utf-8"
+    )
+    (args.out / "report.md").write_text(summarize(all_rows), encoding="utf-8")
     print(f"\n{len(all_rows)} rows -> {args.out}/report.md")
-    return 0
+    return int(any(not _succeeded(row) for row in all_rows))
 
 
 if __name__ == "__main__":

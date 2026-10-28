@@ -2,7 +2,7 @@
 Orchestrator — you shouldn't need to edit this file. It:
   1. Reads every *.json task file from /app/input (source + target_canvas)
   2. Calls your resize() from resize.py
-  3. Runs a quick self-check (structural only — NOT the official scoring;
+  3. Checks the output contract (local checks — NOT the official scoring;
      see RULES.md for what the judge actually checks)
   4. Writes <task>_output.json and <task>_output.png to /app/output
 
@@ -16,6 +16,7 @@ import sys
 import time
 from pathlib import Path
 
+from engine.eval import check_contract
 from engine.resize import resize
 
 # Relative to the current working directory, which is /app both inside the
@@ -71,41 +72,14 @@ def self_check(source: dict, output: dict) -> list[str]:
 
 
 def render_to_png(design: dict, assets_dir: Path, png_path: Path) -> None:
-    """Renders `design` to a PNG. Prefers the real renderer
-    (transformer-convertor, wrapping cr-renderer) if it's vendored into
-    ./renderer; falls back to a plain box-and-label preview otherwise so
-    this repo is runnable before that's wired in. Swap the fallback out
-    once ./renderer is populated — don't ship the fallback's output as a
-    real preview."""
+    """Render a real preview or fail explicitly if the renderer is unavailable."""
     try:
         from renderer.converter.convert import render_design_to_png  # type: ignore
-
-        render_design_to_png(design, assets_dir, str(png_path))
-        return
-    except ImportError:
-        pass
-
-    _fallback_render(design, png_path)
-
-
-def _fallback_render(design: dict, png_path: Path) -> None:
-    """Placeholder only — labeled boxes, not real text/asset rendering.
-    Confirms the pipeline runs end-to-end; do not use this to judge your
-    actual layout quality. Use transformer-convertor (RULES.md / FAQ Q3)
-    for a real preview."""
-    from PIL import Image, ImageDraw
-
-    w, h = design["canvas"]["width"], design["canvas"]["height"]
-    img = Image.new("RGB", (w, h), "#EDE7DD")
-    draw = ImageDraw.Draw(img)
-    palette = {"text": "#2B6CB0", "image": "#B7791F", "shape": "#2F855A"}
-    for el in sorted(design["elements"], key=lambda e: e.get("z_index", 0)):
-        x0, y0 = el["x"], el["y"]
-        x1, y1 = x0 + el["width"], y0 + el["height"]
-        color = palette.get(el["type"], "#555555")
-        draw.rectangle([x0, y0, x1, y1], outline=color, width=3)
-        draw.text((x0 + 4, y0 + 4), el["id"], fill=color)
-    img.save(png_path)
+    except ImportError as exc:
+        raise RuntimeError(
+            "Real renderer is unavailable. Install requirements.txt before running the engine."
+        ) from exc
+    render_design_to_png(design, assets_dir, str(png_path))
 
 
 def main() -> int:
@@ -117,25 +91,33 @@ def main() -> int:
 
     exit_code = 0
     for task_path in task_files:
-        task = json.loads(task_path.read_text())
-        source, target_canvas = task["source"], task["target_canvas"]
-
-        t0 = time.time()
-        output = resize(source, target_canvas)
-        elapsed = time.time() - t0
-
-        problems = self_check(source, output)
         stem = task_path.stem
-        (OUTPUT_DIR / f"{stem}_output.json").write_text(json.dumps(output, indent=2))
-        render_to_png(output, ASSETS_DIR, OUTPUT_DIR / f"{stem}_output.png")
+        json_path = OUTPUT_DIR / f"{stem}_output.json"
+        png_path = OUTPUT_DIR / f"{stem}_output.png"
+        try:
+            # A failed rerun must not leave an old preview masquerading as its result.
+            json_path.unlink(missing_ok=True)
+            png_path.unlink(missing_ok=True)
+            task = json.loads(task_path.read_text(encoding="utf-8"))
+            source, target_canvas = task["source"], task["target_canvas"]
 
-        status = "OK" if not problems else f"{len(problems)} self-check warning(s)"
-        print(
-            f"[{task_path.name}] {status} in {elapsed:.2f}s "
-            f"-> {stem}_output.json, {stem}_output.png"
-        )
-        for p in problems:
-            print(f"    - {p}")
+            t0 = time.perf_counter()
+            output = resize(source, target_canvas)
+            elapsed = time.perf_counter() - t0
+            violations = check_contract(source, output, target_canvas)
+            if violations:
+                raise ValueError("Output contract failed: " + "; ".join(map(str, violations)))
+
+            json_path.write_text(json.dumps(output, indent=2, allow_nan=False), encoding="utf-8")
+            render_to_png(output, ASSETS_DIR, png_path)
+        except Exception as exc:
+            exit_code = 1
+            # A renderer can fail after writing part of a PNG.
+            png_path.unlink(missing_ok=True)
+            print(f"[{task_path.name}] ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+            continue
+
+        print(f"[{task_path.name}] OK in {elapsed:.2f}s -> {stem}_output.json, {stem}_output.png")
 
     return exit_code
 

@@ -3,137 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chameleon Viewer</title>
-<style>
-  :root { --bg: #f4f0ea; --ink: #1c1018; --muted: #6b5f66; --line: #d8d0c6; --text: #2b6cb0; --image: #b7791f; --shape: #2f855a; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; color: var(--ink); background: var(--bg); }
-  header { display: flex; gap: 16px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-  header h1 { font-size: 16px; margin: 0 8px 0 0; }
-  label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
-  label input[type=file] { max-width: 220px; }
-  main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
-  section { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-height: 200px; }
-  section h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
-  canvas { width: 100%; height: auto; background: #fff; border: 1px solid var(--line); }
-  #inspector { grid-column: 1 / -1; font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; color: var(--muted); }
-  .legend { display: flex; gap: 12px; margin-left: auto; color: var(--muted); }
-  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border: 2px solid; vertical-align: -1px; }
-</style>
+<meta name="description" content="Resize and inspect Chameleon designs locally with real brand assets and fonts.">
+<title>Chameleon · Local studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232b1b2e'/%3E%3Cpath d='M23 9a10 10 0 1 0 0 14' fill='none' stroke='%23f0b242' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/styles.css">
+<script src="/app.js" defer></script>
 </head>
 <body>
-<header>
-  <h1>Chameleon Viewer</h1>
-  <label>task JSON <input id="task" type="file" accept=".json"></label>
-  <label>output JSON <input id="output" type="file" accept=".json"></label>
-  <label>output PNG <input id="png" type="file" accept=".png"></label>
-  <label><input id="showText" type="checkbox" checked> draw text</label>
-  <span class="legend">
-    <span><i style="border-color: var(--text)"></i>text</span>
-    <span><i style="border-color: var(--image)"></i>image</span>
-    <span><i style="border-color: var(--shape)"></i>shape</span>
-  </span>
+<a class="skip-link" href="#workspace">Skip to workspace</a>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Chameleon home"><span class="brand-mark" aria-hidden="true">C</span><span>Chameleon</span></a>
+  <span class="app-label">Local studio</span>
+  <div class="header-right"><span id="connection" class="connection">Connecting to engine</span><a href="/inspector.html" target="_blank" rel="noopener">File inspector ↗</a></div>
 </header>
-<main>
-  <section><h2 id="srcTitle">Source</h2><canvas id="src"></canvas></section>
-  <section><h2 id="outTitle">Output</h2><canvas id="out"></canvas></section>
-  <section id="inspector">Load a task JSON from input/ and the matching *_output.json from output/. Hover an element for its properties. Drop a rendered PNG to see it under the output boxes.</section>
+<main id="workspace" class="workspace">
+  <aside class="controls" aria-label="Resize controls">
+    <div class="intro"><h1>Resize a design</h1><p>Choose a source and target canvas. Preview the new composition before exporting.</p></div>
+    <form id="resizeForm">
+      <fieldset id="settings">
+        <legend>Design and canvas</legend>
+        <label for="sample">Source design</label>
+        <select id="sample" disabled><option>Loading samples…</option></select>
+        <div id="sourceSummary" class="field-help">Loading bundled designs</div>
+        <label for="preset">Target format</label>
+        <select id="preset" disabled><option>Loading formats…</option></select>
+        <div class="dimensions"><div><label for="width">Width <span>px</span></label><input id="width" type="number" min="1" max="8192" step="1" required inputmode="numeric"></div><span class="multiply" aria-hidden="true">×</span><div><label for="height">Height <span>px</span></label><input id="height" type="number" min="1" max="8192" step="1" required inputmode="numeric"></div></div>
+        <button id="run" class="primary" type="submit" disabled>Resize design <span aria-hidden="true">↗</span></button>
+        <p class="field-help">Runs on this computer with the supplied images and fonts.</p>
+        <details id="importPanel" class="import-panel"><summary>Use your own task JSON</summary><label class="file-label" for="taskFile">Choose a JSON file<input id="taskFile" type="file" accept=".json,application/json"></label><label for="taskJson">Or paste a task or source design</label><textarea id="taskJson" rows="7" spellcheck="false" placeholder='{"source": {"canvas": …, "elements": […]}, "target_canvas": …}'></textarea><button id="applyJson" type="button" class="secondary">Load JSON</button><p class="field-help">Image references use the bundled brand assets. Unknown assets appear as labeled placeholders.</p></details>
+      </fieldset>
+    </form>
+    <div class="downloads"><p class="section-label">Export result</p><a id="downloadJson" class="download" aria-disabled="true">Download JSON <span aria-hidden="true">↓</span></a><a id="downloadPng" class="download" aria-disabled="true">Download PNG <span aria-hidden="true">↓</span></a></div>
+    <p class="local-note">Your design stays local.<br>No account or external service needed.</p>
+  </aside>
+  <section class="studio" aria-label="Design comparison">
+    <div class="workspace-heading"><div><h2>Design workspace</h2><p id="taskName">Preparing your first design</p></div><label class="toggle"><input id="showBoxes" type="checkbox"> Element boxes</label></div>
+    <div id="status" class="status" role="status" aria-live="polite">Connecting to the local engine…</div>
+    <div id="error" class="error" role="alert" hidden></div>
+    <div id="previews" class="previews">
+      <section class="preview-panel"><div class="panel-heading"><h3>Original</h3><span id="sourceSize">—</span></div><div class="preview-stage"><canvas id="sourceCanvas" aria-label="Original design preview" hidden></canvas><div id="sourceEmpty" class="empty-preview"><span class="empty-shape"></span><p>Your original design will appear here.</p></div></div></section>
+      <section class="preview-panel"><div class="panel-heading"><h3>Resized</h3><span id="outputSize">—</span></div><div class="preview-stage"><canvas id="outputCanvas" aria-label="Resized design preview" hidden></canvas><div id="outputEmpty" class="empty-preview"><span class="empty-shape wide"></span><p>The adapted composition will appear here.</p></div></div></section>
+    </div>
+    <div id="resultSummary" class="result-summary" hidden><span id="checkSummary"></span><span id="timing"></span><span id="fontSummary"></span></div>
+    <ul id="warnings" class="warnings" aria-label="Design warnings" hidden></ul>
+    <section id="inspection" class="inspection" hidden aria-label="Element inspector">
+      <div class="element-list"><div class="inspection-heading"><h3>Elements</h3><span id="elementCount"></span></div><div id="elements" role="group" aria-label="Select an element"></div></div>
+      <div class="properties"><div class="inspection-heading"><h3 id="propertyTitle">Element properties</h3><span id="propertyType"></span></div><p class="field-help">Select an element below or click it in a preview.</p><pre id="properties"></pre></div>
+    </section>
+    <footer><span>Offline engine · Real rendered previews</span><span>Local checks support visual review; they are not Adobe's official score.</span></footer>
+  </section>
 </main>
-<script>
-(() => {
-  const COLORS = { text: "#2b6cb0", image: "#b7791f", shape: "#2f855a" };
-  const state = { source: null, output: null, png: null };
-  const $ = (id) => document.getElementById(id);
-
-  const readJSON = (file) => file.text().then(JSON.parse);
-  const readImage = (file) => new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.src = URL.createObjectURL(file);
-  });
-
-  $("task").addEventListener("change", async (e) => {
-    const doc = await readJSON(e.target.files[0]);
-    state.source = doc.source || doc;
-    state.target = doc.target_canvas || null;
-    draw();
-  });
-  $("output").addEventListener("change", async (e) => { state.output = await readJSON(e.target.files[0]); draw(); });
-  $("png").addEventListener("change", async (e) => { state.png = await readImage(e.target.files[0]); draw(); });
-  $("showText").addEventListener("change", draw);
-
-  function drawDesign(canvasEl, design, title, bitmap) {
-    if (!design) return;
-    const { width, height } = design.canvas;
-    const scale = Math.min(1, 900 / Math.max(width, height));
-    canvasEl.width = Math.round(width * scale);
-    canvasEl.height = Math.round(height * scale);
-    const ctx = canvasEl.getContext("2d");
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, width, height);
-    if (bitmap) ctx.drawImage(bitmap, 0, 0, width, height);
-    const els = [...design.elements].sort((a, b) => (a.z_index ?? 0) - (b.z_index ?? 0));
-    const drawText = $("showText").checked;
-    for (const el of els) {
-      ctx.save();
-      ctx.globalAlpha = el.opacity ?? 1;
-      ctx.translate(el.x + el.width / 2, el.y + el.height / 2);
-      ctx.rotate(((el.rotation ?? 0) * Math.PI) / 180);
-      ctx.translate(-el.width / 2, -el.height / 2);
-      if (el.type === "shape" && !bitmap) {
-        ctx.fillStyle = el.fill_color || "rgba(0,0,0,0.1)";
-        if (el.shape_type === "ellipse") {
-          ctx.beginPath(); ctx.ellipse(el.width / 2, el.height / 2, el.width / 2, el.height / 2, 0, 0, Math.PI * 2); ctx.fill();
-        } else { ctx.fillRect(0, 0, el.width, el.height); }
-      }
-      if (el.type === "text" && drawText && !bitmap) {
-        ctx.fillStyle = el.color || "#000";
-        ctx.font = `${el.font_weight === "bold" ? "bold " : ""}${el.font_style === "italic" ? "italic " : ""}${el.font_size}px ${/serif/i.test(el.font_family) ? "Georgia, serif" : "Helvetica, Arial, sans-serif"}`;
-        ctx.textAlign = el.text_align || "left";
-        const x = el.text_align === "center" ? el.width / 2 : el.text_align === "right" ? el.width : 0;
-        wrap(ctx, el.content, el.width).forEach((line, i) => ctx.fillText(line, x, el.font_size * (0.85 + i * (el.line_height ?? 1.2))));
-      }
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = COLORS[el.type] || "#555";
-      ctx.lineWidth = 2 / scale;
-      ctx.strokeRect(0, 0, el.width, el.height);
-      ctx.fillStyle = COLORS[el.type] || "#555";
-      ctx.font = `${12 / scale}px ui-monospace, monospace`;
-      ctx.textAlign = "left";
-      ctx.fillText(el.id, 2 / scale, 12 / scale);
-      ctx.restore();
-    }
-    canvasEl.onmousemove = (ev) => {
-      const r = canvasEl.getBoundingClientRect();
-      const px = ((ev.clientX - r.left) / r.width) * width;
-      const py = ((ev.clientY - r.top) / r.height) * height;
-      const hit = [...els].reverse().find((el) => px >= el.x && px <= el.x + el.width && py >= el.y && py <= el.y + el.height);
-      $("inspector").textContent = hit ? `${title}: ${JSON.stringify(hit, null, 1)}` : "";
-    };
-    return `${title} ${width}×${height}`;
-  }
-
-  function wrap(ctx, text, maxWidth) {
-    const lines = [];
-    for (const para of String(text).split("\n")) {
-      let line = "";
-      for (const word of para.split(" ")) {
-        const probe = line ? `${line} ${word}` : word;
-        if (ctx.measureText(probe).width > maxWidth && line) { lines.push(line); line = word; } else { line = probe; }
-      }
-      lines.push(line);
-    }
-    return lines;
-  }
-
-  function draw() {
-    const t = state.target ? ` → target ${state.target.width}×${state.target.height}` : "";
-    $("srcTitle").textContent = (drawDesign($("src"), state.source, "Source") || "Source") + t;
-    $("outTitle").textContent = drawDesign($("out"), state.output, "Output", state.png) || "Output";
-  }
-})();
-</script>
 </body>
 </html>
+

@@ -54,6 +54,22 @@ Output is deterministic. A bounded cache speeds up repeated requests, and each
 caller receives an independent copy. Valid designs requested at the same size
 retain their composition.
 
+## Open the local studio
+
+```powershell
+.\.venv\Scripts\python.exe -m viewer.server --port 8765
+```
+
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765). Choose a bundled sample or
+import a task JSON, select a target preset or enter custom dimensions, then
+resize. Real previews, element inspection, validation and asset warnings, and
+JSON/full-resolution PNG downloads are available. The server binds to loopback
+and uses the existing offline engine with no additional packages.
+
+Verify a running instance with `python -m tools.verify_local`. Results are saved
+to `output/local-verification.json`. The standalone file inspector remains at
+`viewer/inspector.html`.
+
 ## Verify and compare
 
 ```powershell
@@ -70,8 +86,8 @@ catalogue in `engine/eval/catalogue.py` contains 26 representative platform,
 advertising, print and presentation formats; it is our test catalogue, not a
 confirmed organizer list. Metrics are local quality proxies, not Adobe's scorer.
 
-Open `viewer/index.html` and load a task, its output JSON, and its rendered PNG
-to inspect element boxes and properties. This is a local development viewer.
+Use the local studio for resizing, or open `viewer/inspector.html` and load a
+task, its output JSON, and its rendered PNG for manual inspection.
 The final challenge PDF requests the engine for stage one and a full Adobe
 Express add-on, pitch and demo video for the finale. An Express add-on is not
 implemented in this repository.
@@ -100,7 +116,7 @@ runs all three samples with `--network none`, checking that both artifacts exist
 | `renderer/` | Vendored schema converter and rendering integration |
 | `tools/` | Deterministic synthetic fixtures and evaluation harness |
 | `brand_kit/` | Supplied image assets and fonts |
-| `viewer/` | Local JSON/PNG inspector |
+| `viewer/` | Local studio, HTTP API and standalone file inspector |
 | `PLAN.md` | Build plan, acceptance criteria and outstanding work |
 
 ## Current limits

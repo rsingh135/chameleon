@@ -238,6 +238,25 @@ def verify(url: str, timeout: float) -> dict:
         require(isinstance(evaluation.get("metrics"), dict), "Missing quality metrics")
         total = evaluation.get("total")
         require(isinstance(total, (int, float)) and 0 <= total <= 1, "Invalid quality score")
+        style = evaluation.get("style")
+        require(isinstance(style, dict), "Missing source-style report")
+        require(
+            isinstance(style.get("score"), (int, float)) and 0 <= style["score"] <= 1,
+            "Invalid source-style score",
+        )
+        require(isinstance(style.get("metrics"), dict), "Missing source-style metrics")
+        require(isinstance(style.get("warnings"), list), "Missing source-style warnings")
+        source_ids = {element["id"] for element in before["elements"]}
+        for warning in style["warnings"]:
+            require(
+                isinstance(warning, dict)
+                and bool(warning.get("code"))
+                and bool(warning.get("message"))
+                and isinstance(warning.get("element_ids"), list)
+                and bool(warning["element_ids"])
+                and set(warning["element_ids"]) <= source_ids,
+                "Malformed source-style warning",
+            )
         warnings = result.get("warnings")
         require(isinstance(warnings, list), "Missing warnings list")
         missing = {
@@ -259,6 +278,7 @@ def verify(url: str, timeout: float) -> dict:
             "source_png": png_dimensions(result.get("source_png"), before["canvas"]),
             "output_png": png_dimensions(result.get("output_png"), target),
             "total": total,
+            "style": style,
             "elapsed_ms": elapsed,
             "warnings": warnings,
         }

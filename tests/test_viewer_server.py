@@ -10,6 +10,7 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
+from engine.eval.style import analyze_style
 from viewer import server
 
 
@@ -205,6 +206,10 @@ def test_real_samples_render_and_preserve_style_runs_and_warnings(http_server, s
     assert result["report"]["violations"] == []
     assert result["report"]["metrics"]
     assert 0 <= result["report"]["total"] <= 1
+    assert result["report"]["style"] == analyze_style(
+        task["source"], result["design"], server.ASSETS_DIR
+    )
+    assert 0 <= result["report"]["style"]["score"] <= 1
     assert result["elapsed_ms"] >= 0
     if sample == "level3_advanced":
         assert any("solstice_holiday_badge_2025.png" in warning for warning in result["warnings"])
@@ -229,3 +234,4 @@ def test_download_png_uses_full_target_resolution(http_server, payload):
     source_png = base64.b64decode(result["source_png"].split(",", 1)[1])
     assert Image.open(BytesIO(output_png)).size == (2560, 1440)
     assert Image.open(BytesIO(source_png)).size == (100, 100)
+    assert result["report"]["style"]["warnings"] == []

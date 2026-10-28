@@ -92,6 +92,11 @@ silently substitute a smaller, less readable final composition.
 | First continuation beam, rejected | 0.7989 | Same default |
 | Endpoint-guided minimax beam | 0.4647 | Same default |
 
+These measurements describe the `7055ebd` checkpoint. Later source-style
+candidate and selection changes alter the independent default layouts, so a new
+run must establish its own baseline; the numbers above are not a measurement of
+the current selector.
+
 The first trial postponed almost all movement until the last anchor. The guided
 trial adds endpoint-based intermediate seeds, a lower bound on remaining motion,
 and a search priority that minimizes the worst jump before aggregate cost. Each

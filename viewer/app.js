@@ -198,13 +198,16 @@
       $('sourceEmpty').hidden = $('outputEmpty').hidden = true;
       $('outputSize').textContent = `${width} × ${height}`;
       $('status').textContent = `Resize complete. All ${result.design.elements.length} source elements preserved.`;
-      $('checkSummary').textContent = result.report.violations.length ? 'Layout needs attention' : 'Layout checks passed';
+      const style = result.report.style;
+      const structure = result.report.violations.length ? 'Structure needs attention' : 'Structure checks passed';
+      $('checkSummary').textContent = style ? `${structure} · ${style.warnings.length ? 'Style needs review' : 'Source style checks passed'}` : structure;
+      $('checkSummary').classList.toggle('needs-review', Boolean(style?.warnings.length));
       $('timing').textContent = `${(result.elapsed_ms / 1000).toFixed(2)} s`;
       const texts = result.design.elements.filter(el => el.type === 'text');
       const minFont = texts.length ? Math.min(...texts.map(el => el.font_size)) : null;
       $('fontSummary').textContent = minFont === null ? 'No text elements' : `Smallest text ${minFont.toFixed(1)} px`;
       $('resultSummary').hidden = false;
-      const warnings = [...(result.warnings || []), ...result.report.violations];
+      const warnings = [...(result.warnings || []), ...result.report.violations, ...(style?.warnings || []).map(warning => `Style: ${warning.message}`)];
       if (minFont !== null && minFont < 10) warnings.push('Some text is smaller than 10 px at this canvas size. Review readability or choose a larger format.');
       $('warnings').replaceChildren();
       for (const warning of [...new Set(warnings)]) { const li = document.createElement('li'); li.textContent = warning; $('warnings').append(li); }

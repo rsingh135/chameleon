@@ -130,3 +130,23 @@ required by the current approach.
 - Current validation: 348 tests passed, one expected skip, Ruff clean; 17 live
   HTTP checks passed. See `docs/REFLOW_EXPERIMENT.md` for results, provenance,
   rejected trials, limitations and the next geometry/ink-aware work.
+
+## Source-style checkpoint
+
+- Added the project-local Chameleon design taste skill, with separate source
+  design and local GUI guidance routed through `AGENTS.md`.
+- Added source-derived style diagnostics and bounded corner/control-preserving
+  candidates. Selection considers collision and readability checks before style;
+  the viewer reports style losses separately from structural validity.
+- Measured occupied text lines for copy cohesion and new unrotated text/text
+  collisions. Oversized source frames no longer authorize new line collisions.
+  Image prominence uses alpha bounds and includes foreground cover images.
+- Visually inspected the Core source, previous template selection and new
+  result. Its four source-style warnings drop to zero, with a 13.3 px minimum
+  font. Real browser JSON/PNG downloads preserve 11 elements at 1600x400.
+- Validation: 382 tests passed, one expected skip; Ruff and JavaScript syntax
+  checks pass. A 17-case audit has valid contracts, deterministic results,
+  unchanged sources and no detected collisions. Eight cases still raise style
+  warnings, and six have text below 10 px. Reports and comparison renders are in
+  ignored `output/style-audit/`; this does not establish style fidelity for every
+  design or ink-level collision safety.

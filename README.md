@@ -98,6 +98,25 @@ layouts while holding the endpoint fixed. It remains outside the default engine:
 the first trial reduced the worst position jump, but substantial jumps and
 unverified motion between anchors remain.
 
+## Preserve source style
+
+The project-local [Chameleon design taste skill](.agents/skills/chameleon-design-taste/SKILL.md)
+guides future engine and studio changes through `AGENTS.md`. It separates the
+supplied design's visual language from the surrounding viewer interface.
+
+Runtime checks compare each result with its original source: font hierarchy,
+relative badge/action proportions, adjacent headline/body spacing, corner
+anchors, and visible image prominence. Transparent image padding is excluded
+using cached alpha bounds where assets are available. Copy, font families,
+colors, assets and grouping remain protected by the existing hard contract.
+
+Selection favors source relationships among candidates with equally separated
+content and readable text. Additional candidates preserve source control
+proportions and corner anchors. The studio exposes the measured differences as
+style warnings, separately from structural checks; `report.style` contains the
+metrics, score and affected element IDs. These are bounded heuristics, so inspect
+the real render, especially when a new aspect ratio forces a tradeoff.
+
 ## Docker submission
 
 Docker Desktop must be running with Linux containers enabled. Build once with

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Chameleon Design Taste"
+  short_description: "Preserve source style and usable studio controls"
+  default_prompt: "Use $chameleon-design-taste to preserve the source design's style or improve the local viewer within the current task."
+policy:
+  allow_implicit_invocation: true

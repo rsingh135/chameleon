@@ -90,6 +90,7 @@ def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dic
     try:
         from engine.eval import build_context as build_eval_context
         from engine.eval import score
+        from engine.eval.style import analyze_style
     except ImportError:
         if _safe_identity(source, target):
             return source
@@ -111,11 +112,26 @@ def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dic
         if result["violations"]:
             violations.update(v.code for v in result["violations"])
             continue
-        valid.append((candidate, result["total"]))
+        style = analyze_style(source, candidate, root / "brand_kit/assets")
+        valid.append((candidate, result, style))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
-    return max(valid, key=lambda item: (item[1], _quality(source, item[0], layout_context)))[0]
+
+    def rank(item):
+        candidate, result, style = item
+        metrics = result["metrics"]
+        # Style is compared among layouts that keep content separated and
+        # readable. These metrics saturate once the readability target is met.
+        return (
+            -metrics.get("raw_collisions", 0.0),
+            metrics.get("text_size", 1.0),
+            style["score"],
+            result["total"],
+            _quality(source, candidate, layout_context),
+        )
+
+    return max(valid, key=rank)[0]
 
 
 @lru_cache(maxsize=64)

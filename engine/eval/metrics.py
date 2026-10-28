@@ -64,6 +64,38 @@ def _contrast_ratio(l1: float, l2: float) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
+def _text_line_boxes(element: dict, layout) -> list[Box]:
+    """Occupied line bounds, rather than the possibly oversized text frame.
+
+    These bounds use glyph advances and line height, not rasterized glyph ink.
+    The caller uses them only for unrotated text.
+    """
+    align = {"left": 0, "center": 0.5, "right": 1}.get(element.get("text_align"), 0)
+    height = layout.font_size * layout.line_height
+    boxes = []
+    for index, (line, width) in enumerate(zip(layout.lines, layout.line_widths, strict=True)):
+        if not line.strip() or width <= 0:
+            continue
+        x = element["x"] + (element["width"] - width) * align
+        y = element["y"] + index * height
+        boxes.append(Box(x, y, x + width, y + height))
+    return boxes
+
+
+def _line_overlap(first: list[Box], second: list[Box]) -> float:
+    """Largest occupied-line intersection; both lists are ordered vertically."""
+    i = j = 0
+    maximum = 0.0
+    while i < len(first) and j < len(second):
+        a, b = first[i], second[j]
+        maximum = max(maximum, overlap_fraction(a, b))
+        if a.y1 <= b.y1:
+            i += 1
+        else:
+            j += 1
+    return maximum
+
+
 def compute_metrics(
     source: dict,
     candidate: dict,
@@ -78,15 +110,32 @@ def compute_metrics(
     cboxes = {i: rotated_aabb(cand_by_id[i]) for i in cand_by_id}
     sboxes = {i: rotated_aabb(context.by_id[i]) for i in context.by_id}
     short_side = min(ccanvas.width, ccanvas.height)
+    measurer = get_measurer(context.fonts_dir)
+    texts = [i for i in fg if cand_by_id[i]["type"] == "text"]
+    candidate_layouts = {i: measurer.layout(cand_by_id[i]) for i in texts}
+    candidate_lines = {i: _text_line_boxes(cand_by_id[i], candidate_layouts[i]) for i in texts}
+    source_lines = {i: _text_line_boxes(context.by_id[i], context.text_layouts[i]) for i in texts}
 
     # --- collisions: overlaps that did not exist in the source ---------------
     worst = 0.0
     total = 0.0
     count = 0
     for a, b in combinations(fg, 2):
-        if context.same_group(a, b) or frozenset((a, b)) in context.intentional_overlaps:
-            continue
-        frac = overlap_fraction(cboxes[a], cboxes[b])
+        unrotated_text = cand_by_id[a]["type"] == cand_by_id[b]["type"] == "text" and not any(
+            element.get("rotation", 0)
+            for element in (cand_by_id[a], cand_by_id[b], context.by_id[a], context.by_id[b])
+        )
+        if unrotated_text:
+            # Overlapping source frames do not authorize a new collision of
+            # their drawn lines, including labels within the same group.
+            baseline = _line_overlap(source_lines[a], source_lines[b])
+            frac = _line_overlap(candidate_lines[a], candidate_lines[b]) - baseline
+            if frac <= 0.02:
+                continue
+        else:
+            if context.same_group(a, b) or frozenset((a, b)) in context.intentional_overlaps:
+                continue
+            frac = overlap_fraction(cboxes[a], cboxes[b])
         if frac <= 0.0:
             continue
         weight = 2.0 if "text" in (cand_by_id[a]["type"], cand_by_id[b]["type"]) else 1.0
@@ -97,8 +146,6 @@ def compute_metrics(
     m["collision_free"] = _clamp(1.0 - total / max(1, len(fg)) * 2 - (0.5 if worst >= 1.0 else 0))
 
     # --- text readability --------------------------------------------------
-    measurer = get_measurer(context.fonts_dir)
-    texts = [i for i in fg if cand_by_id[i]["type"] == "text"]
     if texts:
         threshold = max(MIN_FONT_PX, MIN_FONT_FRACTION * short_side)
         min_font = min(cand_by_id[i]["font_size"] for i in texts)
@@ -108,7 +155,7 @@ def compute_metrics(
         growth = []
         for i in texts:
             src_lines = max(1, context.text_layouts[i].line_count)
-            lay = measurer.layout(cand_by_id[i])
+            lay = candidate_layouts[i]
             growth.append(lay.line_count / src_lines)
         m["raw_line_growth"] = float(sum(growth) / len(growth))
         m["text_lines_stable"] = _clamp(1.0 - max(0.0, (m["raw_line_growth"] - 1.0)) / 2.0)

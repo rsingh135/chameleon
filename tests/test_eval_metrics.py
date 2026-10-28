@@ -72,6 +72,69 @@ def test_intentional_overlap_is_not_a_collision(ctx2):
     assert score(LEVEL2, LEVEL2, ctx2)["metrics"]["raw_collisions"] == 0
 
 
+@pytest.mark.parametrize("grouped", [False, True])
+def test_overlapping_source_text_frames_do_not_allow_new_line_collisions(grouped):
+    source = {
+        "canvas": {"width": 800, "height": 800},
+        "elements": [
+            {
+                "id": name,
+                "type": "text",
+                "x": 100,
+                "y": y,
+                "width": 600,
+                "height": height,
+                "font_size": size,
+                "content": content,
+                "font_family": "Solstice Sans",
+                "color": "#000000",
+                **({"group_id": "copy"} if grouped else {}),
+            }
+            for name, y, height, size, content in (
+                ("h", 100, 200, 48, "Headline"),
+                ("b", 200, 60, 24, "Body text"),
+            )
+        ],
+    }
+    context = build_context(source, ASSETS)
+    assert frozenset(("h", "b")) in context.intentional_overlaps
+    assert score(source, source, context)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    candidate["elements"][1]["y"] = 100
+    result = score(source, candidate, context)
+    assert result["violations"] == []
+    assert result["metrics"]["raw_collisions"] == 1
+    assert result["metrics"]["collision_free"] < 1
+
+
+def test_text_collision_line_bounds_respect_alignment_and_source_layering():
+    source = {
+        "canvas": {"width": 600, "height": 300},
+        "elements": [
+            {
+                "id": name,
+                "type": "text",
+                "x": 20,
+                "y": 20,
+                "width": 550,
+                "height": 100,
+                "font_size": 24,
+                "content": "Short",
+                "font_family": "Solstice Sans",
+                "color": "#000000",
+                "text_align": alignment,
+            }
+            for name, alignment in (("left", "left"), ("right", "right"))
+        ],
+    }
+    assert score(source, source)["metrics"]["raw_collisions"] == 0
+    source["elements"][1]["text_align"] = "left"
+    assert score(source, source)["metrics"]["raw_collisions"] == 0
+    candidate = copy.deepcopy(source)
+    candidate["elements"][1]["y"] += 100
+    assert score(source, candidate)["metrics"]["raw_collisions"] == 0
+
+
 def test_group_split_is_penalised(ctx2):
     cand = copy.deepcopy(LEVEL2)
     _el(cand, "cta_label")["y"] -= 300  # label leaves its button

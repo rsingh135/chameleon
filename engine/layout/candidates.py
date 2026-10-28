@@ -3,7 +3,7 @@
 import math
 from copy import deepcopy
 
-from .geometry import Box, contain
+from .geometry import Box, contain, intersection
 from .model import DesignContext, Unit, build_context
 from .text import get_measurer
 
@@ -273,6 +273,211 @@ def _split(
     return _finish(source, target, elements)
 
 
+def _corner_units(context: DesignContext) -> list[tuple[Unit, bool, bool]]:
+    """Small source accents keep their corner; content determines no roles here."""
+    corners = []
+    for unit in context.units:
+        if unit.role not in {"badge", "logo", "support"}:
+            continue
+        if unit.box.width * unit.box.height > context.width * context.height * 0.12:
+            continue
+        cx = (unit.box.x + unit.box.width / 2) / context.width
+        cy = (unit.box.y + unit.box.height / 2) / context.height
+        if (cx <= 0.25 or cx >= 0.75) and (cy <= 0.25 or cy >= 0.75):
+            corners.append((unit, cx < 0.5, cy < 0.5))
+    return corners
+
+
+def _style_place(unit: Unit, x: float, y: float, scale: float) -> list[dict]:
+    """Uniform control geometry and source label proportions travel together."""
+    box = Box(x, y, unit.box.width * scale, unit.box.height * scale)
+    elements = _place(unit, box, scale)
+    for original, element in zip(unit.elements, elements, strict=True):
+        if element["type"] == "text":
+            element["font_size"] = get_measurer().fit(
+                element, element["width"], element["height"], original["font_size"] * scale
+            )
+    return elements
+
+
+def _style_content(
+    copy: list[Unit], rows: list[list[Unit]], box: Box, scale: float, gap: float
+) -> list[dict] | None:
+    """Pack related copy and proportionate controls inside an allocated clear slot."""
+    rows = [row for row in rows if row]
+    row_heights = [max(unit.box.height for unit in row) * scale for row in rows]
+    copy_height = sum(_preferred_height(unit, box.width, box.height, scale) for unit in copy)
+    copy_height += gap * max(0, len(copy) - 1)
+    separators = gap * max(0, len(rows) + bool(copy) - 1)
+    remaining = box.height - sum(row_heights) - separators
+    if remaining <= 0 or box.width <= 0:
+        return None
+    copy_height = min(copy_height, remaining)
+    total = copy_height + sum(row_heights) + separators
+    y = box.y + max(0, box.height - total) / 2
+    elements = _flow(copy, Box(box.x, y, box.width, max(0.1, copy_height)), scale, gap)
+    if copy:
+        y += copy_height + (gap if rows else 0)
+    for row, height in zip(rows, row_heights, strict=True):
+        widths = [unit.box.width * scale for unit in row]
+        used = sum(widths) + gap * (len(row) - 1)
+        if used > box.width + 1e-6:
+            return None
+        x = box.x + (box.width - used) / 2
+        for unit, width in zip(row, widths, strict=True):
+            unit_height = unit.box.height * scale
+            elements.extend(_style_place(unit, x, y + (height - unit_height) / 2, scale))
+            x += width + gap
+        y += height + gap
+    return elements
+
+
+def _source_style(
+    source: dict, context: DesignContext, target: dict, media_share: float, typography: float
+) -> dict | None:
+    """Allocate clear header/corner slots before laying out the main composition."""
+    width, height = target["width"], target["height"]
+    pad, gap = min(width, height) * 0.04, min(width, height) * 0.025
+    wide = width / height >= 1.35
+    corners = _corner_units(context)
+    pinned = {element["id"] for unit, _, _ in corners for element in unit.elements}
+    free = [unit for unit in context.units if not any(e["id"] in pinned for e in unit.elements)]
+    logos = [unit for unit in free if unit.role == "logo"]
+    heroes = [unit for unit in free if unit.role == "hero"]
+    copy = sorted(
+        [unit for unit in free if unit.role in {"headline", "body"}],
+        key=lambda u: (_ORDER[u.role], u.box.y),
+    )
+    legal = [unit for unit in free if unit.role == "legal"]
+    badges = sorted([unit for unit in free if unit.role == "badge"], key=lambda u: u.box.x)
+    actions = sorted(
+        [unit for unit in free if unit.role in {"action", "support"}], key=lambda u: u.box.x
+    )
+    rows = [row for row in (badges, actions) if row]
+    inner_width = width - 2 * pad
+    media_width = inner_width * media_share if wide and heroes else 0.0
+    content_x = pad + media_width + (gap if media_width else 0)
+    content_width = width - pad - content_x
+    scale = math.sqrt(width * height / (context.width * context.height)) * typography
+    for unit, _, _ in corners:
+        scale = min(scale, width * 0.28 / unit.box.width, height * 0.3 / unit.box.height)
+    for row in rows:
+        available = content_width - gap * (len(row) - 1)
+        scale = min(scale, available / sum(unit.box.width for unit in row))
+    if scale <= 0:
+        return None
+    elements, occupied = _base(context, target), []
+    bottom_boxes = []
+    for unit, left, top in corners:
+        sx = unit.box.x if left else context.width - unit.box.x - unit.box.width
+        sy = unit.box.y if top else context.height - unit.box.y - unit.box.height
+        inset_x = min(width * 0.1, max(pad, max(0, sx) * scale))
+        inset_y = min(height * 0.1, max(pad, max(0, sy) * scale))
+        w, h = unit.box.width * scale, unit.box.height * scale
+        x, y = inset_x if left else width - inset_x - w, inset_y if top else height - inset_y - h
+        box = Box(x, y, w, h)
+        if any(intersection(box, other) > 1e-6 for other in occupied):
+            return None
+        elements.extend(_style_place(unit, x, y, scale))
+        occupied.append(box)
+        if not top:
+            bottom_boxes.append(box)
+    for unit in logos:
+        logo_scale = min(
+            scale, inner_width * 0.45 / unit.box.width, height * 0.24 / unit.box.height
+        )
+        w, h = unit.box.width * logo_scale, unit.box.height * logo_scale
+        x = min(
+            width - pad - w,
+            max(pad, (unit.box.x + unit.box.width / 2) / context.width * width - w / 2),
+        )
+        y = min(height - pad - h, max(pad, unit.box.y / context.height * height))
+        top_occupied = [box for box in occupied if box.y + box.height / 2 < height / 2]
+        below = max((box.y + box.height for box in top_occupied), default=pad) + gap
+        slots = [
+            Box(x, y, w, h),
+            Box(x, below, w, h),
+            Box(pad, below, w, h),
+            Box(width - pad - w, below, w, h),
+        ]
+        slot = next(
+            (
+                box
+                for box in slots
+                if box.y + box.height <= height - pad
+                and not any(intersection(box, other) > 1e-6 for other in occupied)
+            ),
+            None,
+        )
+        if slot is None:
+            return None
+        elements.extend(_style_place(unit, slot.x, slot.y, logo_scale))
+        occupied.append(slot)
+
+    bottom_reserve = max((height - pad - box.y for box in bottom_boxes), default=0.0)
+    footer_height = sum(_preferred_height(unit, inner_width, height, scale) for unit in legal)
+    footer_height += gap * max(0, len(legal) - 1)
+    footer_height = min(height * 0.12, footer_height)
+    footer_y = height - pad - bottom_reserve - (gap if bottom_boxes else 0) - footer_height
+    bottom = footer_y - (gap if legal else 0)
+    elements.extend(
+        _flow(legal, Box(pad, footer_y, inner_width, max(0.1, footer_height)), scale, gap)
+    )
+
+    def clear_top(x, w):
+        return max(
+            [pad]
+            + [
+                box.y + box.height + gap
+                for box in occupied
+                if box not in bottom_boxes and min(x + w, box.x + box.width) > max(x, box.x)
+            ]
+        )
+
+    if wide:
+        if heroes:
+            top = clear_top(pad, media_width)
+            if bottom <= top:
+                return None
+            elements.extend(_row(heroes, Box(pad, top, media_width, bottom - top), scale, gap))
+        content_top = clear_top(content_x, content_width)
+    else:
+        top = clear_top(pad, inner_width)
+        available = bottom - top
+        if available <= 0:
+            return None
+        hero_height = available * media_share if heroes else 0
+        elements.extend(_row(heroes, Box(pad, top, inner_width, hero_height), scale, gap))
+        content_top = top + hero_height + (gap if heroes else 0)
+        content_x, content_width = pad, inner_width
+    content = _style_content(
+        copy, rows, Box(content_x, content_top, content_width, bottom - content_top), scale, gap
+    )
+    if content is None:
+        return None
+    elements.extend(content)
+    return _finish(source, target, elements)
+
+
+def generate_style_candidates(
+    source: dict, target_canvas: dict, context: DesignContext | None = None
+) -> list[dict]:
+    """Append at most four bounded variants without replacing existing layouts."""
+    context = context or build_context(source)
+    if not _corner_units(context):
+        return []
+    shares = (
+        (0.24, 0.32) if target_canvas["width"] / target_canvas["height"] >= 1.35 else (0.42, 0.52)
+    )
+    candidates = []
+    for share in shares:
+        for typography in (0.85, 1.0):
+            candidate = _source_style(source, context, target_canvas, share, typography)
+            if candidate is not None:
+                candidates.append(candidate)
+    return candidates
+
+
 def generate_candidates(source: dict, target_canvas: dict) -> list[dict]:
     """Generate deterministic complete designs, preserving input order and values."""
     context = build_context(source)
@@ -285,4 +490,5 @@ def generate_candidates(source: dict, target_canvas: dict) -> list[dict]:
         for media_share in (0.18, 0.28):
             for sidebar in (False, True):
                 candidates.append(_split(source, context, target_canvas, media_share, sidebar, 1.1))
+    candidates.extend(generate_style_candidates(source, target_canvas, context))
     return candidates

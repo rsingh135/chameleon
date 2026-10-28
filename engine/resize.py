@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from engine.layout import build_context, generate_candidates, get_measurer
+from engine.layout.composition import generate_composition_states
 from engine.layout.geometry import bounds, intersection
+from engine.layout.relationships import analyze_relationships, build_relationship_graph
 
 
 def _quality(source: dict, candidate: dict, context) -> float:
@@ -107,31 +109,65 @@ def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dic
 
     valid = []
     violations = set()
+    graph = build_relationship_graph(source, root / "brand_kit/assets")
     for candidate in candidates:
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
             violations.update(v.code for v in result["violations"])
             continue
         style = analyze_style(source, candidate, root / "brand_kit/assets")
-        valid.append((candidate, result, style))
+        relationships = analyze_relationships(graph, candidate)
+        valid.append((candidate, result, style, relationships))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
 
-    def rank(item):
-        candidate, result, style = item
+    def safety(item):
+        candidate, result, style, relationships = item
         metrics = result["metrics"]
-        # Style is compared among layouts that keep content separated and
-        # readable. These metrics saturate once the readability target is met.
+        # Reading order and explicit ownership are not compensated by a larger
+        # minimum font. Softer association hypotheses remain below readability.
+        essential = sum(
+            w["code"] in {"reading_order", "explicit_group"} for w in relationships["warnings"]
+        )
+        detached = sum(w["confidence"] >= 0.8 for w in relationships["warnings"])
         return (
             -metrics.get("raw_collisions", 0.0),
+            -essential,
             metrics.get("text_size", 1.0),
-            style["score"],
-            result["total"],
-            _quality(source, candidate, layout_context),
+            -detached,
         )
 
-    return max(valid, key=rank)[0]
+    safest = max(map(safety, valid))
+    feasible = [item for item in valid if safety(item) == safest]
+
+    def fidelity(item):
+        return (item[2]["score"] + item[3]["score"]) / 2
+
+    # Small changes to inferred gaps must not dominate typography or visual
+    # hierarchy. Keep a near-best fidelity set before comparing source scale.
+    best_fidelity = max(map(fidelity, feasible))
+    finalists = [item for item in feasible if fidelity(item) >= best_fidelity - 0.01]
+    originals = {element["id"]: element for element in source["elements"]}
+    source_scale = math.sqrt(
+        target["width"]
+        * target["height"]
+        / (source["canvas"]["width"] * source["canvas"]["height"])
+    )
+
+    def typography_preference(item):
+        texts = [element for element in item[0]["elements"] if element["type"] == "text"]
+        drift = sum(
+            abs(
+                math.log(
+                    element["font_size"] / (originals[element["id"]]["font_size"] * source_scale)
+                )
+            )
+            for element in texts
+        )
+        return -drift / max(1, len(texts)), item[1]["total"], fidelity(item)
+
+    return max(finalists, key=typography_preference)[0]
 
 
 @lru_cache(maxsize=64)
@@ -139,6 +175,7 @@ def _resize_cached(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     candidates = generate_candidates(source, target_canvas)
+    candidates.extend(state.design for state in generate_composition_states(source, target_canvas))
     return _select_candidate(source, target_canvas, candidates)
 
 

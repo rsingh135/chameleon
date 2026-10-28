@@ -150,3 +150,23 @@ required by the current approach.
   warnings, and six have text below 10 px. Reports and comparison renders are in
   ignored `output/style-audit/`; this does not establish style fidelity for every
   design or ink-level collision safety.
+
+## Relationship and state checkpoint
+
+- Research real adaptive design systems and ten primary research approaches;
+  record the evidence and decision in `docs/COMPOSITION_REFLOW_RESEARCH.md`.
+- Snapshot source meaning hypotheses as frozen clusters and typed relationships
+  with confidence/provenance. Detect reversed reading order, detached actions and
+  broken brand/product alignment that the earlier style score missed.
+- Realize bounded column/stacked compound states, using alpha-aware geometry and
+  occupied text lines. Keep all frames in bounds without independently repairing
+  cluster members. Unsupported complex compositions decline this state family.
+- Save graph/state provenance and actual renders through `tools.composition_demo`;
+  include candidates in default selection and expose relationship losses in the
+  studio. Confidence is heuristic evidence, not a calibrated probability.
+- Validation: 461 tests pass, one expected skip; Ruff and JavaScript checks pass.
+  The 17-case audit has valid deterministic outputs, unchanged sources and zero
+  detected foreground collisions. Five cases still have relationship warnings;
+  six have text below 10 px. Core's inspected banner restores the brand/product
+  axis and message cluster; multi-product ownership and Advanced badge-row
+  adaptation remain open. No universal style guarantee is claimed.

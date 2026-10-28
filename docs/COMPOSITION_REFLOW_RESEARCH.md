@@ -258,13 +258,19 @@ Tests also reproduce reversed supporting copy and a detached action that the
 previous style score missed, plus opaque IDs, rotated groups, full accent bounds
 and two-product structures that must decline this limited realizer.
 
-Validation: 460 tests pass with one expected skip; lint/format and JavaScript
+Validation: 461 tests pass with one expected skip; lint/format and JavaScript
 syntax checks pass. A 17-case sample/shape audit has valid contracts, deterministic
 results, unchanged sources and zero detected foreground collisions. Five cases
 still raise relationship warnings and six contain text below 10 px. Approximate
 visible rectangles and recognized low-opacity underlays do not establish full
 ink-level safety. Advanced badge rows, multiple product/message ownership and
 natural-language/visual semantics remain open work.
+
+Rendered review also rejected a ranking that put the aggregate relationship
+score ahead of typography: exact source gaps could select a visibly worse
+portrait. Selection now retains a near-best joint style/relationship set (0.01
+local-proxy tolerance) before comparing source typography scale. The tolerance
+is a heuristic, not a perceptual just-noticeable-difference claim.
 
 Reproduce the state artifacts with:
 

@@ -117,6 +117,17 @@ style warnings, separately from structural checks; `report.style` contains the
 metrics, score and affected element IDs. These are bounded heuristics, so inspect
 the real render, especially when a new aspect ratio forces a tradeoff.
 
+An immutable source relationship graph also records directed reading order,
+message/action ownership, shared axes and inferred brand/product associations.
+Bounded compound states arrange related units together; ambiguous or unsupported
+structures retain other candidates. `report.relationships` exposes the modeled
+losses and evidence. This remains geometric inference, not general semantic
+understanding. See the [research and implementation decision](docs/COMPOSITION_REFLOW_RESEARCH.md)
+for real-application evidence, alternative approaches, results and limits.
+
+Run `python -m tools.composition_demo --out output/composition-core` to save the
+source graph, candidate states, full-resolution renders and comparison sheet.
+
 ## Docker submission
 
 Docker Desktop must be running with Linux containers enabled. Build once with

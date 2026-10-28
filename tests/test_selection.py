@@ -192,3 +192,65 @@ def test_style_cannot_outweigh_collisions_or_unreadable_text(monkeypatch, design
     )
     monkeypatch.setattr(module, "generate_candidates", lambda *_: [unsafe, safe])
     assert module.resize(design, target) == safe
+
+
+@pytest.mark.parametrize("failure", ["reversed_copy", "detached_action"])
+def test_relationship_loss_cannot_win_with_a_higher_aggregate_proxy(monkeypatch, failure):
+    import json
+    from pathlib import Path
+
+    import engine.eval as evaluation
+    from engine.layout.composition import generate_composition_states
+
+    task = json.loads(
+        (
+            Path(__file__).resolve().parents[1] / "input/chameleon_sample_level2_core.json"
+        ).read_text()
+    )
+    source, target = task["source"], task["target_canvas"]
+    connected = generate_composition_states(source, target)[-1].design
+    broken = deepcopy(connected)
+    if failure == "reversed_copy":
+        head = next(e for e in broken["elements"] if e["id"] == "headline")
+        next(e for e in broken["elements"] if e["id"] == "subhead")["y"] = head["y"] - 40
+    else:
+        for element in broken["elements"]:
+            if element.get("group_id") == "cta":
+                element["x"] += 450
+
+    def proxy(_source, candidate, *_args, **_kwargs):
+        return {
+            "violations": [],
+            "metrics": {"raw_collisions": 0, "text_size": 1},
+            "total": 1 if candidate == broken else 0.5,
+        }
+
+    monkeypatch.setattr(evaluation, "score", proxy)
+    assert module._select_candidate(source, target, [broken, connected]) == connected
+
+
+def test_exact_gap_fidelity_cannot_hide_large_typography_and_style_loss():
+    import json
+    from pathlib import Path
+
+    from engine.eval.style import analyze_style
+    from engine.layout.composition import generate_composition_states
+    from engine.layout.relationships import analyze_relationships, build_relationship_graph
+
+    source = json.loads(
+        (
+            Path(__file__).resolve().parents[1] / "input/chameleon_sample_level2_core.json"
+        ).read_text()
+    )["source"]
+    target = {"width": 1080, "height": 1920}
+    exact_gaps = module.generate_candidates(source, target)[0]
+    coherent = generate_composition_states(source, target)[-1].design
+    graph = build_relationship_graph(source)
+    assert (
+        analyze_relationships(graph, exact_gaps)["score"]
+        > analyze_relationships(graph, coherent)["score"]
+    )
+    assert (
+        analyze_style(source, coherent)["score"] > analyze_style(source, exact_gaps)["score"] + 0.1
+    )
+    assert module._select_candidate(source, target, [exact_gaps, coherent]) == coherent

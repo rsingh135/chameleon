@@ -65,9 +65,10 @@ need to change a rule, change it in the repo settings, don't route around it.
   that's your cue to delete the marker. Treat the xfail list as the to-do list.
 - New behaviour gets a test in the same PR. If a bug slips through, the fix
   PR adds the test that would have caught it.
-- Tests must not need the renderer, fonts, or network — they run on plain
-  `pytest` in CI with no `cr-renderer` installed. Visual checks are done by
-  running `make run` and looking at `output/*_output.png`.
+- Install `requirements-dev.txt` before running tests. Typography and evaluation
+  tests use the real renderer and bundled fonts; CI installs those dependencies.
+  Tests must not fetch anything from the network at runtime. Visual checks are
+  done by running `make run` and looking at `output/*_output.png`.
 
 ## Lint & format
 

@@ -1,110 +1,118 @@
-# CHAMELEON — starter repo
+# CHAMELEON - Any Design. Every Canvas.
 
-This is the scaffolding for your engine. It handles input loading, output
-writing, rendering, and Docker packaging — so the only file you need to
-edit is **`engine/resize.py`**.
+An offline design reflow engine for Adobe University Hackathon 2026. It adapts
+an existing design to a new canvas by rearranging its elements, fitting text
+with the supplied fonts, and keeping images in proportion.
 
-```
-input:  a task JSON (source design + target canvas)
-              |
-              v
-        engine/resize.py   <-- YOU IMPLEMENT THIS
-              |
-              v
-output: <task>_output.json  (schema-valid resized design)
-        <task>_output.png   (rendered preview)
-```
+The public entry point is `engine.resize.resize(source, target_canvas)`. It
+returns a new design in the supplied v0.9 schema without mutating either input.
+Text, font families, assets, colors, style runs, opacity, IDs and grouping are
+preserved. No image content is generated and no network is used at runtime.
 
-Both the JSON and the PNG are what get evaluated — see `RULES.md`.
+## Run locally
 
-## Repo layout
+Use Python 3.11 or newer. From the repository root on Windows PowerShell:
 
-```
-engine/
-  resize.py        <- implement your approach here
-  main.py           <- orchestrator (input -> resize() -> output). Don't need to edit this.
-renderer/           <- the real renderer (transformer-convertor + cr-renderer), already vendored
-brand_kit/
-  assets/           <- image files referenced by asset_id in the sample designs
-  fonts/            <- font files matching the schema's font_family values
-input/               <- drop task JSON files here for local testing (3 samples included)
-output/              <- results land here
-chameleon_design_schema_v0.9.json   <- full field-by-field spec for the design format
-Dockerfile
-RULES.md
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m engine.main
 ```
 
-## Quick start (no Docker needed for iterating on `resize()`)
+On macOS/Linux:
 
 ```bash
-pip install -r requirements.txt
-python -m engine.main
+make setup
+make run
 ```
 
-This processes every `*.json` file in `input/` (the 3 sample designs are
-already there — one per difficulty level) and writes an `_output.json` and
-`_output.png` for each into `output/`.
+Each task in `input/*.json` contains `source` and `target_canvas`. A successful
+run writes `output/<task>_output.json` and `output/<task>_output.png`. The PNG
+uses the vendored converter and `cr-renderer`, with real assets and brand fonts.
+A missing asset is rendered as a labeled placeholder; the advanced sample
+deliberately references one missing asset.
 
-The included baseline is a **uniform stretch** — deliberately the wrong
-approach (see the main brief: "a naive program stretches the picture; a
-good one moves the furniture"). It's there so the pipeline runs on day
-one. Run it once, look at `output/*_output.png`, and you'll see exactly
-why it's not good enough — that's the point. Replace the body of
-`resize()` in `engine/resize.py`, not just its constants.
+The CLI checks the local output contract before rendering, continues processing
+other tasks after an individual failure, and exits nonzero if any task fails.
+Missing rendering dependencies are an error. An unsuccessful rerun removes old
+artifacts for that task so stale previews cannot appear to be new results.
 
-## What the self-check does (and doesn't do)
+## How the engine works
 
-`main.py` runs a quick structural check after every task — same element
-`id`s as the source, required fields present, nothing off-canvas. **This
-is not the official scorer.** It exists to catch obvious mistakes before
-you waste a submission on them. See `RULES.md` for what's actually
-checked and graded.
+1. Infer backgrounds, image roles, typography hierarchy, explicit groups and
+   ungrouped text/shape containment from source geometry.
+2. Generate bounded composition candidates: preserve the source arrangement,
+   stack content, or split media and copy into columns on wide canvases.
+3. Fit text using the renderer's brand-font measurements and wrapping. Move
+   rotated groups with a shared uniform transform, and preserve non-cover image
+   proportions.
+4. Reject candidates that violate the local contract, then rank valid candidates
+   using source-aware collision, readability, hierarchy, grouping, prominence,
+   alignment and spacing metrics.
 
-A self-check warning does not fail the run — your JSON and PNG are still
-written either way. Read the warning; decide whether it's a real problem
-or, like the Level 2 sample's intentionally corner-bleeding decorative
-circle, an expected one.
+Output is deterministic. A bounded cache speeds up repeated requests, and each
+caller receives an independent copy. Valid designs requested at the same size
+retain their composition.
 
-## The renderer
+## Verify and compare
 
-`main.py` calls `renderer/converter/convert.py`'s `render_design_to_png()`
-(a vendored copy of `transformer-convertor`, wrapping `cr-renderer`) to
-produce each task's PNG — already wired in, no setup needed. It reads
-fonts/assets from `brand_kit/` and writes a real rendered preview, not a
-placeholder. If you ever see plain labeled boxes instead of real text and
-images in `output/*.png`, that means the import in `main.py` failed (e.g.
-`cr-renderer` didn't install — check `requirements.txt` installed cleanly)
-and it silently fell back to the box-and-label placeholder; don't judge
-your layout quality by that fallback.
-
-## Docker (how you'll actually be run)
-
-```bash
-docker build --platform linux/amd64 -t my-chameleon-engine .
-docker run --rm --network none \
-  -v $(pwd)/input:/app/input \
-  -v $(pwd)/output:/app/output \
-  my-chameleon-engine
+```powershell
+.\.venv\Scripts\ruff.exe check .
+.\.venv\Scripts\ruff.exe format --check .
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m tools.harness --targets all --out output/evaluation
+.\.venv\Scripts\python.exe -m tools.harness --synth 24 --seed 218 --no-render --out output/holdout
 ```
 
-`--network none` matches how stage-one scoring runs: everything your
-engine needs must be installed at **build** time (add it to
-`requirements.txt`), not fetched at run time. If you're using a locally
-hosted model, bake its weights into the image during the build step.
+The harness writes `report.json`, `report.md`, and rendered contact sheets. Use
+`--no-render` for geometry and typography checks without PNG generation. The
+catalogue in `engine/eval/catalogue.py` contains 26 representative platform,
+advertising, print and presentation formats; it is our test catalogue, not a
+confirmed organizer list. Metrics are local quality proxies, not Adobe's scorer.
 
-## Working on this repo
+Open `viewer/index.html` and load a task, its output JSON, and its rendered PNG
+to inspect element boxes and properties. This is a local development viewer.
+The final challenge PDF requests the engine for stage one and a full Adobe
+Express add-on, pitch and demo video for the finale. An Express add-on is not
+implemented in this repository.
 
-```bash
-make setup    # .venv + deps
-make check    # lint + tests (what CI runs)
-make run      # resize input/*.json -> output/
+## Docker submission
+
+Docker Desktop must be running with Linux containers enabled. Build once with
+network access, then run with networking disabled:
+
+```powershell
+docker build --platform linux/amd64 -t chameleon-engine .
+docker run --rm --network none -v "${PWD}/input:/app/input" -v "${PWD}/output:/app/output" chameleon-engine
 ```
 
-Branch off `main`, open a PR, let CI go green, squash-merge. Full workflow,
-commit conventions, and test policy are in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+All dependencies install at build time. CI builds the Linux AMD64 image and
+runs all three samples with `--network none`, checking that both artifacts exist.
 
-## See also
+## Project map
 
-- `chameleon_design_schema_v0.9.json` — full input/output field spec
-- `RULES.md` — what's checked, what's graded, and what disqualifies a submission
-- FAQ — for anything not covered above
+| Path | Purpose |
+| --- | --- |
+| `engine/resize.py` | Public API, validation and candidate selection |
+| `engine/layout/` | Source analysis, composition generation and text fitting |
+| `engine/eval/` | Contract checks and source-aware quality metrics |
+| `engine/main.py` | Batch JSON/PNG runner |
+| `renderer/` | Vendored schema converter and rendering integration |
+| `tools/` | Deterministic synthetic fixtures and evaluation harness |
+| `brand_kit/` | Supplied image assets and fonts |
+| `viewer/` | Local JSON/PNG inspector |
+| `PLAN.md` | Build plan, acceptance criteria and outstanding work |
+
+## Current limits
+
+Extreme formats can require very small text when all original copy and elements
+must remain. A structurally valid 320x50 banner containing a long headline,
+body, several badges and legal copy is not necessarily readable. The engine
+does not drop elements or shorten copy to improve its score. Candidate search
+uses geometric metrics; pixel contrast and busyness are available in rendered
+evaluation reports but do not currently drive selection. Missing assets remain
+visible placeholders. Model limits, the final canvas catalogue, hardware budget
+and code-freeze/submission details require organizer confirmation.
+
+See `RULES.md`, `chameleon_design_schema_v0.9.json`, and `CONTRIBUTING.md` for
+the supplied contract and contribution workflow.

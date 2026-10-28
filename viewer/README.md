@@ -1,8 +1,8 @@
 # Viewer
 
-A dependency-free stand-in for the "viewer add-on" the FAQ lists as a
-required-but-unscored stage-one deliverable, until the Express add-on is
-built for the finale.
+A dependency-free local inspector for development. The final challenge PDF
+requires the engine for stage one and a full Adobe Express add-on for the
+finale. This inspector is not an installed Express add-on.
 
 Open `viewer/index.html` in a browser (no server needed), then load:
 

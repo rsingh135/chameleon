@@ -44,17 +44,12 @@ cr-renderer is still doing the real rendering work under the hood — we convert
 
 **Q3. How do I render my output to see what it actually looks like?**
 
-Use the **`/transformer-convertor`** tool in the starter repo. It's a small local app that takes your engine's output JSON (plus your assets folder) and renders it the same way scoring will — via cr-renderer under the hood, doing the schema conversion from Q2 for you automatically.
+Run `python -m engine.main` from the repository root after installing the
+runtime dependencies. The converter is already vendored under `renderer/` and
+uses `cr-renderer` to produce real previews in `output/*_output.png`.
 
-To run it:
-
-```
-cd transformer-convertor
-source .venv/bin/activate
-python app.py
-```
-
-Then open **http://127.0.0.1:5050**, point it at your JSON file and the `brand_kit/assets/` folder (see Q4), and see the rendered image inline along with any warnings.
+For comparisons across target formats, run `python -m tools.harness --targets
+all --out output/evaluation`. It writes quality reports and contact sheets.
 
 It's already been verified end-to-end against all three sample designs from Q1, including the level-3 file's intentionally-missing asset — that case renders as a labeled placeholder instead of crashing, so you can see exactly what happens if your own output ever references an asset that isn't there.
 
@@ -66,7 +61,10 @@ What it handles for you automatically:
 
 Requires Python 3.10+. If your system Python is older (e.g. 3.9), use the repo's own virtual environment as shown above rather than your system interpreter — cr-renderer won't install otherwise.
 
-This is a **local preview tool for your own development loop**, separate from the Express add-on you'll build and submit as your viewer, and separate from the official scoring pipeline. Use it constantly while iterating; it's not something you turn in.
+The optional `viewer/index.html` is a local JSON/PNG inspector for development.
+The final challenge PDF places the full Express add-on in the finale; stage one
+requires the engine. Neither the viewer nor local quality metrics replace the
+official scoring pipeline.
 
 **Q4. Where do I find the actual brand assets and fonts?**
 
@@ -88,9 +86,13 @@ One deliberate exception: the Level 3 sample's `holiday_watermark` element refer
 **Using it:**
 
 1. Unzip the starter repo. Install dependencies: `pip install -r requirements.txt`.
-2. Edit **`engine/resize.py`** — this is the only file you should need to change. Input loading, output writing, a self-check, and rendering are already wired up in `engine/main.py`.
+2. The public entry point is **`engine/resize.py`**. Layout generation and source
+   analysis live under `engine/layout/`; local validation and quality metrics
+   live under `engine/eval/`. Input/output and rendering are wired into
+   `engine/main.py`.
 3. Run it locally: `python -m engine.main`. This processes every task file already sitting in `input/` (the same 3 sample designs from Q1) and writes `<task>_output.json` + `<task>_output.png` into `output/` for each. Check the PNGs first — that's your fastest feedback loop on whether your approach is actually working.
-4. Vendor the real renderer: drop `transformer-convertor` into the repo's `renderer/` folder (see Q3) so those PNGs are real previews, not the placeholder box-and-label fallback `main.py` uses when it isn't there yet.
+4. The real renderer is already vendored. A missing runtime dependency is now
+   reported as an error rather than a box-and-label preview.
 5. Before you consider yourself done, confirm it works **in Docker**, exactly the way scoring will run it:
    ```
    docker build --platform linux/amd64 -t my-chameleon-engine .
@@ -102,6 +104,10 @@ One deliberate exception: the Level 3 sample's `holiday_watermark` element refer
 
 **Submitting:**
 
-Your stage-one submission is your engine: code, `Dockerfile`, and a short read-me explaining your approach and how to run it, plus the required (but not scored) viewer add-on. Submit before code freeze.
+The final challenge PDF requests the engine, `Dockerfile`, and a short read-me
+explaining the approach and run instructions for stage one. The full Express
+add-on, short pitch and demo video belong to the finale. This updates the older
+FAQ wording that described a viewer add-on as a stage-one requirement. Submit
+before code freeze and confirm the final checklist with organizers.
 
 Where to send it, and any submission form, will be announced separately ahead of the deadline — keep an eye out for that announcement. In the meantime, make sure your repo builds and runs cleanly in Docker (see step 5 above) so you're not doing that work last-minute once submission opens.

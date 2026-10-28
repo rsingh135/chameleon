@@ -246,6 +246,10 @@ def verify(url: str, timeout: float) -> dict:
         )
         require(isinstance(style.get("metrics"), dict), "Missing source-style metrics")
         require(isinstance(style.get("warnings"), list), "Missing source-style warnings")
+        relationships = evaluation.get("relationships")
+        require(isinstance(relationships, dict), "Missing source-relationship report")
+        require(isinstance(relationships.get("warnings"), list), "Missing relationship warnings")
+        require(isinstance(relationships.get("relations"), list), "Missing relationship evidence")
         source_ids = {element["id"] for element in before["elements"]}
         for warning in style["warnings"]:
             require(

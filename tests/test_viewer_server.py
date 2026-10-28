@@ -11,6 +11,7 @@ import pytest
 from PIL import Image
 
 from engine.eval.style import analyze_style
+from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from viewer import server
 
 
@@ -210,6 +211,9 @@ def test_real_samples_render_and_preserve_style_runs_and_warnings(http_server, s
         task["source"], result["design"], server.ASSETS_DIR
     )
     assert 0 <= result["report"]["style"]["score"] <= 1
+    assert result["report"]["relationships"] == analyze_relationships(
+        build_relationship_graph(task["source"], server.ASSETS_DIR), result["design"]
+    )
     assert result["elapsed_ms"] >= 0
     if sample == "level3_advanced":
         assert any("solstice_holiday_badge_2025.png" in warning for warning in result["warnings"])

@@ -22,6 +22,7 @@ from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE
 from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
+from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.resize import resize
 from renderer.converter.convert import _get_renderer, convert_chameleon_to_crello
 
@@ -195,6 +196,7 @@ def perform_resize(payload: dict) -> dict:
         plate = render_plate(design, ASSETS_DIR, FONTS_DIR, max_size=1024)
         result = score(source, design, context, plate, target)
         style = analyze_style(source, design, ASSETS_DIR)
+        relationships = analyze_relationships(build_relationship_graph(source, ASSETS_DIR), design)
         source_png, source_warnings = _render_png(source)
         output_png, output_warnings = _render_png(design)
     return {
@@ -206,6 +208,7 @@ def perform_resize(payload: dict) -> dict:
             "metrics": result["metrics"],
             "total": result["total"],
             "style": style,
+            "relationships": relationships,
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),
         "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),

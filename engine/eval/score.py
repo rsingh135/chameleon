@@ -23,13 +23,15 @@ WEIGHTS: dict[str, float] = {
     "hierarchy": 1.0,
     "containment": 1.5,
     "group_integrity": 1.5,
-    "hero": 2.0,
+    # Product prominence and use of the new canvas must outweigh the appeal
+    # of shrinking the entire old composition into a small central island.
+    "hero": 3.0,
     "scale_consistency": 1.5,
     "position_affinity": 1.0,
     "alignment": 0.75,
     "balance": 0.5,
     "margin": 0.75,
-    "coverage": 0.5,
+    "coverage": 1.0,
 }
 
 

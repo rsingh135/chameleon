@@ -4,6 +4,7 @@ import json
 import math
 from copy import deepcopy
 from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 from engine.layout import build_context, generate_candidates, get_measurer
@@ -11,7 +12,7 @@ from engine.layout.geometry import bounds, intersection
 
 
 def _quality(source: dict, candidate: dict, context) -> float:
-    """Local ranking until the evaluation track is integrated."""
+    """Typography tie-breaker and a dependency-free development fallback."""
     original = {e["id"]: e for e in source["elements"]}
     source_scale = math.sqrt(
         candidate["canvas"]["width"]
@@ -53,13 +54,76 @@ def _quality(source: dict, candidate: dict, context) -> float:
     return score
 
 
+def _safe_identity(source: dict, target: dict) -> bool:
+    """Keep an unchanged canvas only when its original content already fits."""
+    if source["canvas"] != target:
+        return False
+    for element in source["elements"]:
+        box = bounds(element)
+        if (
+            box.x < 0
+            or box.y < 0
+            or box.x + box.width > target["width"]
+            or box.y + box.height > target["height"]
+        ):
+            return False
+        if element["type"] == "text":
+            measured = get_measurer().measure(element, element["font_size"], element["width"])
+            if (
+                element["font_size"] < 1
+                or measured.width > element["width"] + 1e-6
+                or measured.height > element["height"] + 1e-6
+                or (element.get("max_lines") is not None and measured.lines > element["max_lines"])
+            ):
+                return False
+    return True
+
+
+def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dict:
+    """Exclude disqualified layouts, then rank source-aware quality metrics.
+
+    The evaluation package uses the real renderer's font manager. Minimal
+    installations can still exercise the layout engine without that optional
+    dependency, using the existing conservative typography ranking.
+    """
+    layout_context = build_context(source)
+    try:
+        from engine.eval import build_context as build_eval_context
+        from engine.eval import score
+    except ImportError:
+        if _safe_identity(source, target):
+            return source
+        if not candidates:
+            raise ValueError("No layout candidates were generated") from None
+        return max(candidates, key=lambda c: _quality(source, c, layout_context))
+
+    root = Path(__file__).resolve().parents[1]
+    context = build_eval_context(source, root / "brand_kit/assets", root / "brand_kit/fonts")
+    if _safe_identity(source, target):
+        identity = score(source, source, context, target_canvas=target)
+        if not identity["violations"]:
+            return source
+
+    valid = []
+    violations = set()
+    for candidate in candidates:
+        result = score(source, candidate, context, target_canvas=target)
+        if result["violations"]:
+            violations.update(v.code for v in result["violations"])
+            continue
+        valid.append((candidate, result["total"]))
+    if not valid:
+        detail = ", ".join(sorted(violations)) or "no candidates generated"
+        raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
+    return max(valid, key=lambda item: (item[1], _quality(source, item[0], layout_context)))[0]
+
+
 @lru_cache(maxsize=64)
 def _resize_cached(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
-    context = build_context(source)
     candidates = generate_candidates(source, target_canvas)
-    return max(candidates, key=lambda candidate: _quality(source, candidate, context))
+    return _select_candidate(source, target_canvas, candidates)
 
 
 def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:

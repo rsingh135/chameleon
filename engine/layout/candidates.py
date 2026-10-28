@@ -21,6 +21,13 @@ _ORDER = {
 
 def _place(unit: Unit, box: Box, font_scale: float) -> list[dict]:
     sx, sy = box.width / unit.box.width, box.height / unit.box.height
+    # Rotating after different horizontal/vertical scales changes a group's
+    # geometry. Move rotated labels and their plates with one shared scale.
+    if any(element.get("rotation", 0) for element in unit.elements):
+        scale = min(sx, sy)
+        width, height = unit.box.width * scale, unit.box.height * scale
+        box = Box(box.x + (box.width - width) / 2, box.y + (box.height - height) / 2, width, height)
+        sx = sy = scale
     result = []
     for source in unit.elements:
         element = deepcopy(source)
@@ -137,6 +144,24 @@ def _row(units: list[Unit], box: Box, font_scale: float, gap: float) -> list[dic
     return elements
 
 
+def _media(units: list[Unit], box: Box, font_scale: float, gap: float) -> list[dict]:
+    """Give the main image the space left after the brand lockup is placed."""
+    if not units:
+        return []
+    logos = [unit for unit in units if unit.role == "logo"]
+    heroes = [unit for unit in units if unit.role != "logo"]
+    if not heroes:
+        return _flow(logos, box, font_scale, gap)
+    elements = []
+    logo_height = min(box.height * 0.18, box.width * 0.25) if logos else 0.0
+    if logos:
+        elements.extend(_row(logos, Box(box.x, box.y, box.width, logo_height), font_scale, gap))
+    top = box.y + logo_height + (gap if logos else 0)
+    available = max(0.1, box.height - logo_height - (gap if logos else 0))
+    elements.extend(_row(heroes, Box(box.x, top, box.width, available), font_scale, gap))
+    return elements
+
+
 def _preserved(source: dict, context: DesignContext, target: dict, stretch: bool) -> dict:
     width, height = target["width"], target["height"]
     sx, sy = width / context.width, height / context.height
@@ -205,7 +230,7 @@ def _split(
     elements = _base(context, target)
     media_width = inner_width * media_share if media else 0
     media.sort(key=lambda u: (_ORDER[u.role], u.box.y))
-    elements.extend(_flow(media, Box(pad, pad, media_width, content_height), scale, gap))
+    elements.extend(_media(media, Box(pad, pad, media_width, content_height), scale, gap))
     content_x = pad + media_width + (gap if media else 0)
     content_width = width - pad - content_x
     if sidebar and actions + badges:

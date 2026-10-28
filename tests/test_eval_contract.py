@@ -119,3 +119,17 @@ def test_degenerate_size(sample):
     cand = copy.deepcopy(source)
     _text(cand)["height"] = 0
     assert "degenerate_size" in _codes(source, cand, ctx)
+
+
+def test_shape_geometry_may_scale(sample):
+    """corner_radius / stroke_width are px geometry, not identity: a pill
+    button that shrinks keeps its pill shape by scaling its radius."""
+    source, ctx = sample
+    cand = copy.deepcopy(source)
+    shapes = [el for el in cand["elements"] if el["type"] == "shape"]
+    if not shapes:
+        pytest.skip("no shapes in this sample")
+    for el in shapes:
+        el["corner_radius"] = el.get("corner_radius", 0) * 0.5 + 1
+        el["stroke_width"] = 3
+    assert "frozen_field_changed" not in _codes(source, cand, ctx)

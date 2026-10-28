@@ -2,7 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const colors = {text: '#2963a4', image: '#97600a', shape: '#287049'};
-  const state = {samples: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, busy: false, dirty: true, version: 0};
+  const state = {samples: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
 
   function errorMessage(error) {
     $('error').textContent = error.message || String(error);
@@ -15,7 +15,9 @@
       $(id).setAttribute('tabindex', '-1');
     }
     if (state.jsonUrl) URL.revokeObjectURL(state.jsonUrl);
+    if (state.pngUrl) URL.revokeObjectURL(state.pngUrl);
     state.jsonUrl = null;
+    state.pngUrl = null;
   }
   function markDirty() {
     state.dirty = true;
@@ -165,9 +167,11 @@
   }
   function enableDownloads() {
     state.jsonUrl = URL.createObjectURL(new Blob([JSON.stringify(state.result.design, null, 2)], {type: 'application/json'}));
+    const pngBytes = Uint8Array.from(atob(state.result.output_png.split(',')[1]), char => char.charCodeAt(0));
+    state.pngUrl = URL.createObjectURL(new Blob([pngBytes], {type: 'image/png'}));
     const name = String(state.task.task_id || 'chameleon').replace(/[^a-zA-Z0-9_-]/g, '_');
     const {width, height} = state.result.design.canvas;
-    for (const [id, href, ext] of [['downloadJson', state.jsonUrl, 'json'], ['downloadPng', state.result.output_png, 'png']]) {
+    for (const [id, href, ext] of [['downloadJson', state.jsonUrl, 'json'], ['downloadPng', state.pngUrl, 'png']]) {
       $(id).href = href; $(id).download = `${name}_${width}x${height}.${ext}`; $(id).setAttribute('aria-disabled', 'false'); $(id).removeAttribute('tabindex');
     }
   }
@@ -235,7 +239,7 @@
     finally { event.target.value = ''; }
   });
   for (const id of ['downloadJson', 'downloadPng']) $(id).addEventListener('click', event => { if ($(id).getAttribute('aria-disabled') === 'true') event.preventDefault(); });
-  window.addEventListener('beforeunload', () => { if (state.jsonUrl) URL.revokeObjectURL(state.jsonUrl); });
+  window.addEventListener('beforeunload', () => { if (state.jsonUrl) URL.revokeObjectURL(state.jsonUrl); if (state.pngUrl) URL.revokeObjectURL(state.pngUrl); });
 
   async function init() {
     try {

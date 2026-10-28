@@ -106,7 +106,7 @@ def _preferred_height(unit: Unit, width: float, height: float, font_scale: float
 
 
 def _flow(units: list[Unit], box: Box, font_scale: float, gap: float) -> list[dict]:
-    """Allocate vertical space by measured content, retaining all units."""
+    """Allocate measured space, keeping adjacent headline/body copy together."""
     if not units:
         return []
     heights = [_preferred_height(u, box.width, box.height, font_scale) for u in units]
@@ -114,9 +114,15 @@ def _flow(units: list[Unit], box: Box, font_scale: float, gap: float) -> list[di
     factor = min(1.0, available / max(0.1, sum(heights)))
     heights = [height * factor for height in heights]
     extra = max(0.0, available - sum(heights))
-    spacing = gap + extra / max(1, len(units) + 1)
-    y, elements = box.y + extra / max(1, len(units) + 1), []
-    for unit, height in zip(units, heights, strict=True):
+    copy_roles = {"headline", "body"}
+    joined = [
+        first.role in copy_roles and second.role in copy_roles
+        for first, second in zip(units, units[1:], strict=False)
+    ]
+    clusters = len(units) - sum(joined)
+    outer_spacing = extra / (clusters + 1)
+    y, elements = box.y + outer_spacing, []
+    for index, (unit, height) in enumerate(zip(units, heights, strict=True)):
         unit_width = box.width
         if unit.role == "logo":
             unit_width = min(box.width * 0.65, height * unit.box.width / unit.box.height)
@@ -127,7 +133,9 @@ def _flow(units: list[Unit], box: Box, font_scale: float, gap: float) -> list[di
                 unit, Box(box.x + (box.width - unit_width) / 2, y, unit_width, height), font_scale
             )
         )
-        y += height + spacing
+        y += height + gap
+        if index < len(joined) and not joined[index]:
+            y += outer_spacing
     return elements
 
 

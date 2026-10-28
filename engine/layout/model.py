@@ -81,14 +81,29 @@ def build_context(source: dict) -> DesignContext:
     max_font = max((e.get("font_size", 0) for e in foreground), default=1)
     images = [u for u in units if not u.text and any(e["type"] == "image" for e in u.elements)]
     hero = max(images, key=lambda u: u.box.width * u.box.height, default=None)
+    # Compare labels with other controls, rather than with an unrelated headline.
+    # The lowest row of prominent controls is the action area; smaller badges
+    # above it keep their supporting role even when they share the lower canvas.
+    footer_controls = [
+        u
+        for u in units
+        if u.text
+        and any(e["type"] == "shape" for e in u.elements)
+        and u.box.y + u.box.height / 2 >= height * 0.7
+    ]
+    footer_edge = max((u.box.y + u.box.height for u in footer_controls), default=height)
+    footer_font = max((e["font_size"] for u in footer_controls for e in u.text), default=1)
     for unit in units:
         if unit.text:
             font = max(e["font_size"] for e in unit.text)
             content = " ".join(e["content"] for e in unit.text)
             if any(e["type"] == "shape" for e in unit.elements):
-                unit.role = (
-                    "action" if unit.box.y > height * 0.7 and font >= max_font * 0.4 else "badge"
+                is_action = (
+                    unit.box.y + unit.box.height / 2 >= height * 0.7
+                    and unit.box.y + unit.box.height >= footer_edge - unit.box.height / 2
+                    and font >= footer_font * 0.85
                 )
+                unit.role = "action" if is_action else "badge"
             elif font >= max_font * 0.8:
                 unit.role = "headline"
             elif font <= max_font * 0.35 and len(content) > 50:

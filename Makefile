@@ -1,4 +1,4 @@
-.PHONY: setup lint fmt test check run docker-build docker-run clean
+.PHONY: setup lint fmt test check run eval docker-build docker-run clean
 
 PY ?= .venv/bin/python
 
@@ -21,6 +21,9 @@ check: lint test  ## everything CI runs, locally
 
 run:              ## resize every input/*.json -> output/
 	$(PY) -m engine.main
+
+eval:             ## score samples + 20 synthetic tasks, write eval_out/report.md + sheets
+	$(PY) -m tools.harness --synth 20 --seed 0
 
 docker-build:
 	docker build --platform linux/amd64 -t chameleon-engine .

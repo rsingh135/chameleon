@@ -861,10 +861,18 @@ def analyze_relationships(
             after_gap, _ = _pair(row_box, action, axis, "center")
             source_row = _box_union([graph.units[index].box for index in row.unit_indices])
             source_after, _ = _pair(source_row, graph.units[action_index].box, edge.axis, "center")
-            _, alignment = _pair(row_box, b, axis, "center")
+            # A heading may occupy a separate region while its supporting
+            # body, badge row and action still form one local column. Compare
+            # that local spine in BOTH source and candidate, rather than the
+            # bounding rectangle of the entire message (which includes the
+            # heading's unrelated horizontal extent).
+            local_spine = _box_union([body, action])
+            source_spine = _box_union([graph.units[body_index].box, graph.units[action_index].box])
+            _, alignment = _pair(row_box, local_spine, axis, "center")
+            _, source_alignment = _pair(source_row, source_spine, edge.axis, "center")
             before_growth = max(0.0, gap - edge.source_gap)
             after_growth = max(0.0, after_gap - source_after)
-            drift = abs(alignment - edge.source_alignment)
+            drift = abs(alignment - source_alignment)
             own_cost = _ownership_cost(
                 row_box, b, candidate["canvas"]["width"], candidate["canvas"]["height"]
             )[0]

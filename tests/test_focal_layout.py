@@ -10,6 +10,7 @@ from engine.eval import build_context, check_contract, score
 from engine.layout.appearance import visible_box
 from engine.layout.focal import analyze_focal
 from engine.layout.focal_states import generate_focal_states
+from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.resize import resize_with_state
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,3 +78,22 @@ def test_body_scale_exceptions_leave_controls_and_primary_hierarchy_rigid():
                 "z_index",
             ):
                 assert element.get(key) == original[element["id"]].get(key)
+
+
+def test_badges_follow_their_body_action_column_when_headline_moves_to_another_region():
+    task = json.loads((ROOT / "input/chameleon_sample_level3_advanced.json").read_text())
+    source = task["source"]
+    graph = build_relationship_graph(source)
+    state = next(
+        state
+        for state in generate_focal_states(source, {"width": 913, "height": 517}, graph)
+        if state.name == "focal-balanced-1"
+    )
+    report = analyze_relationships(graph, state.design, dict(state.cluster_axes))
+    assert not any(w["code"] == "row_attachment" for w in report["warnings"])
+    detached = state.design
+    for element in detached["elements"]:
+        if element.get("group_id") in {"badge1", "badge2", "badge3"}:
+            element["x"] -= 300
+    report = analyze_relationships(graph, detached, dict(state.cluster_axes))
+    assert any(w["code"] == "row_attachment" for w in report["warnings"])

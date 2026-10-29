@@ -266,6 +266,12 @@ visible rectangles and recognized low-opacity underlays do not establish full
 ink-level safety. Advanced badge rows, multiple product/message ownership and
 natural-language/visual semantics remain open work.
 
+That first checkpoint has since been extended with ordered badge rows, local
+campaign ownership and source-evidenced sibling alignment. The later
+[Advanced layout checkpoint](ADVANCED_LAYOUTS.md) records 523 tests, 12 actual
+selected renders and the remaining tiny-format/semantic-inference limits;
+the earlier measurements above are retained as the research baseline.
+
 Rendered review also rejected a ranking that put the aggregate relationship
 score ahead of typography: exact source gaps could select a visibly worse
 portrait. Selection now retains a near-best joint style/relationship set (0.01

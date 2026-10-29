@@ -200,9 +200,10 @@
       $('status').textContent = 'Resize complete. Review the composition and any warnings below.';
       const style = result.report.style;
       const relationships = result.report.relationships;
-      const review = Boolean(style?.warnings.length || relationships?.warnings.length);
+      const uncertain = Boolean(relationships?.ambiguities?.length);
+      const review = Boolean(style?.warnings.length || relationships?.warnings.length || uncertain);
       const structure = result.report.violations.length ? 'Structure needs attention' : 'Structure checks passed';
-      const composition = review ? 'Composition needs review' : relationships?.relations.length ? 'No modeled relationship losses' : 'Composition inference limited';
+      const composition = uncertain ? 'Composition inference uncertain' : review ? 'Composition needs review' : relationships?.relations.length ? 'No modeled relationship losses' : 'Composition inference limited';
       $('checkSummary').textContent = `${structure} · ${composition}`;
       $('checkSummary').classList.toggle('needs-review', review);
       $('timing').textContent = `${(result.elapsed_ms / 1000).toFixed(2)} s`;
@@ -211,6 +212,7 @@
       $('fontSummary').textContent = minFont === null ? 'No text elements' : `Smallest text ${minFont.toFixed(1)} px`;
       $('resultSummary').hidden = false;
       const warnings = [...(result.warnings || []), ...result.report.violations, ...(style?.warnings || []).map(warning => `Style: ${warning.message}`), ...(relationships?.warnings || []).map(warning => `Relationship: ${warning.message}`)];
+      if (uncertain) warnings.push('Some product/message associations are ambiguous in the source. Review the resized connections.');
       if (minFont !== null && minFont < 10) warnings.push('Some text is smaller than 10 px at this canvas size. Review readability or choose a larger format.');
       $('warnings').replaceChildren();
       for (const warning of [...new Set(warnings)]) { const li = document.createElement('li'); li.textContent = warning; $('warnings').append(li); }

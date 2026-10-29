@@ -128,6 +128,13 @@ for real-application evidence, alternative approaches, results and limits.
 Run `python -m tools.composition_demo --out output/composition-core` to save the
 source graph, candidate states, full-resolution renders and comparison sheet.
 
+Advanced badge rows and multiple product/message groups now have bounded layout
+families. `resize_with_state()` retains the selected flow declarations alongside
+the unchanged `resize()` design API. Run
+`python -m tools.composition_cases --out output/advanced-audit` for actual
+sample/authored-case renders and independent ownership/order checks. See
+[Advanced layout evidence and remaining limits](docs/ADVANCED_LAYOUTS.md).
+
 ## Docker submission
 
 Docker Desktop must be running with Linux containers enabled. Build once with

@@ -170,3 +170,21 @@ required by the current approach.
   six have text below 10 px. Core's inspected banner restores the brand/product
   axis and message cluster; multi-product ownership and Advanced badge-row
   adaptation remain open. No universal style guarantee is claimed.
+
+## Advanced and multi-campaign checkpoint
+
+- Implement source peer rows with wrap/order/prominence and whole-row ownership
+  checks. Retain each row between its own copy and action.
+- Infer disjoint local campaigns beyond the globally largest image, retaining
+  ambiguous assignments rather than forcing cross-product connections.
+- Realize complete Advanced and multi-offer states, including source-evidenced
+  sibling alignment, original corner promotions, legal footer and missing-asset
+  placeholder. Keep the selected topology/flow metadata through cache and API.
+- Inspect actual selected wide/custom/portrait renders against saved baselines.
+  Across 12 cases, authored reading-order violations decrease from four to zero
+  and detached relationship instances from 12 to zero. All outputs render and
+  preserve the contract; source/graph remain unchanged.
+- Validation: 523 tests pass, one expected skip. Wide/custom Advanced text reaches
+  10 px and the two-offer wide comparison reaches 13.2 px. Tiny 728x90 formats
+  remain unreadable; custom small-wordmark and portrait-whitespace limits remain.
+  See `docs/ADVANCED_LAYOUTS.md` for reproducible evidence and limits.

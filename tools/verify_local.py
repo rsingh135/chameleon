@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import io
 import json
 import math
@@ -250,6 +251,24 @@ def verify(url: str, timeout: float) -> dict:
         require(isinstance(relationships, dict), "Missing source-relationship report")
         require(isinstance(relationships.get("warnings"), list), "Missing relationship warnings")
         require(isinstance(relationships.get("relations"), list), "Missing relationship evidence")
+        state = evaluation.get("layout_state")
+        require(isinstance(state, dict), "Missing selected layout state")
+        require(
+            isinstance(state.get("name"), str) and bool(state["name"]), "Missing layout state name"
+        )
+        require(isinstance(state.get("cluster_axes"), dict), "Missing declared cluster flows")
+        require(
+            all(
+                axis in {"vertical", "horizontal", "wrap"}
+                for axis in state["cluster_axes"].values()
+            ),
+            "Invalid declared cluster flow",
+        )
+        require(
+            state.get("source_digest")
+            == hashlib.sha256(json.dumps(before, sort_keys=True).encode()).hexdigest(),
+            "Selected state is not tied to the request source",
+        )
         source_ids = {element["id"] for element in before["elements"]}
         for warning in style["warnings"]:
             require(

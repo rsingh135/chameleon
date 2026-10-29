@@ -34,6 +34,7 @@ from engine.resources import (
     using_resources,
 )
 from renderer.converter.convert import convert_chameleon_to_crello
+from viewer import poster_library
 from viewer.document_bridge import (
     DOCUMENT_ORIGIN,
     MAX_DOCUMENT_REQUEST_BYTES,
@@ -256,12 +257,22 @@ def sample_catalogue() -> dict:
 
 
 class ViewerHandler(BaseHTTPRequestHandler):
-    def _send(self, status: int, body: bytes, content_type: str, *, head: bool = False) -> None:
+    def _send(
+        self,
+        status: int,
+        body: bytes,
+        content_type: str,
+        *,
+        head: bool = False,
+        extra_headers: dict | None = None,
+    ) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        for name, value in (extra_headers or {}).items():
+            self.send_header(name, value)
         if (
             urlsplit(self.path).path == "/api/document/resize"
             and self.headers.get("Origin") == DOCUMENT_ORIGIN
@@ -318,6 +329,58 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 self._json(
                     HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Samples unavailable: {exc}"}
                 )
+            return
+        if route == "/api/posters":
+            try:
+                self._json(HTTPStatus.OK, poster_library.library_metadata(), head=head)
+            except (ValueError, OSError, KeyError) as exc:
+                self._json(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": f"Poster library unavailable: {exc}"},
+                )
+            return
+        if (
+            route.startswith("/api/posters/")
+            or route in {"/posters", "/posters/"}
+            or route.startswith("/posters/")
+        ):
+            try:
+                attachment = False
+                if route.startswith("/api/posters/"):
+                    parts = route.removeprefix("/api/posters/").split("/")
+                    if len(parts) != 2:
+                        raise FileNotFoundError("Poster endpoint not found.")
+                    poster_id, kind = parts
+                    if kind == "bundle":
+                        payload = poster_library.read_bundle(poster_id)
+                        validate_request(payload)
+                        self._json(HTTPStatus.OK, payload, head=head)
+                        return
+                    if kind == "original":
+                        path, attachment = poster_library.original_file(poster_id), True
+                    elif kind == "preview":
+                        path = poster_library.preview_file(poster_id)
+                    else:
+                        raise FileNotFoundError("Poster endpoint not found.")
+                else:
+                    relative = unquote(route.removeprefix("/posters").lstrip("/"))
+                    path = poster_library.gallery_file(relative)
+                if not path.is_file():
+                    raise FileNotFoundError("Poster file is not available.")
+                headers = {
+                    "Content-Security-Policy": (
+                        "default-src 'none'; img-src 'self' data:; "
+                        "style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'none'"
+                    )
+                }
+                if attachment:
+                    headers["Content-Disposition"] = "attachment"
+                kind = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+                self._send(HTTPStatus.OK, path.read_bytes(), kind, head=head, extra_headers=headers)
+            except FileNotFoundError as exc:
+                self._json(HTTPStatus.NOT_FOUND, {"error": str(exc)}, head=head)
+            except (ValueError, OSError, KeyError) as exc:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)}, head=head)
             return
         root = FONTS_DIR if route.startswith("/fonts/") else VIEWER_DIR
         relative = route.removeprefix("/fonts/") if root == FONTS_DIR else route.lstrip("/")

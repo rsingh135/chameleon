@@ -2,7 +2,8 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const colors = {text: '#86baff', image: '#e9bc73', shape: '#7dcca4'};
-  const state = {samples: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
+  const state = {samples: [], posters: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
+  const hasResources = task => task && Array.isArray(task.assets) && Array.isArray(task.fonts) && task.document;
 
   function errorMessage(error) {
     $('error').textContent = error.message || String(error);
@@ -58,7 +59,25 @@
     syncPreset();
     $('sourceSummary').textContent = `${source.canvas.width} × ${source.canvas.height} px · ${source.elements.length} elements`;
     $('taskName').textContent = label || state.task.task_id || 'Imported design';
-    $('taskJson').value = JSON.stringify(state.task, null, 2);
+    const editable = {...state.task};
+    for (const key of ['assets', 'fonts', 'document']) delete editable[key];
+    $('taskJson').value = JSON.stringify(editable, null, 2);
+    const poster = state.posters.find(item => item.id === state.task.poster_id);
+    $('posterCredit').replaceChildren();
+    $('posterCredit').hidden = !poster;
+    if (poster) {
+      const credit = document.createElement('span');
+      credit.textContent = `${poster.attribution_text || poster.author} · ${poster.license_id}. `;
+      $('posterCredit').append(credit);
+      const original = document.createElement('a');
+      original.href = poster.original_url; original.textContent = 'Editable original';
+      $('posterCredit').append(original);
+      if (poster.source_url) {
+        const source = document.createElement('a'); source.href = poster.source_url;
+        source.textContent = ' · Source and attribution'; source.target = '_blank'; source.rel = 'noopener';
+        $('posterCredit').append(source);
+      }
+    }
     $('sourceSize').textContent = `${source.canvas.width} × ${source.canvas.height}`;
     $('outputSize').textContent = 'Not resized yet';
     $('sourceCanvas').hidden = $('outputCanvas').hidden = true;
@@ -77,6 +96,22 @@
     if (![...$('sample').options].some(option => option.value === 'imported')) $('sample').add(new Option('Imported design', 'imported'));
     $('sample').value = 'imported';
     resize();
+  }
+  async function loadPoster(id) {
+    const poster = state.posters.find(item => item.id === id);
+    if (!poster?.ready) { errorMessage(new Error('This poster needs import support. See the poster library for its notes.')); return; }
+    const version = ++state.version;
+    markDirty(); setBusy(true); $('error').hidden = true;
+    $('status').textContent = 'Loading poster images and fonts…';
+    let loaded = false;
+    try {
+      const bundle = await requestJSON(poster.bundle_url);
+      if (version !== state.version) return;
+      bundle.poster_id = id; bundle.task_id = id;
+      setTask(bundle, poster.title); loaded = true;
+    } catch (error) { if (version === state.version) errorMessage(error); }
+    finally { setBusy(false); }
+    if (loaded) await resize();
   }
   async function requestJSON(url, options = {}) {
     let response;
@@ -173,7 +208,8 @@
     $('geometry').hidden = true;
   }
   function enableDownloads() {
-    state.jsonUrl = URL.createObjectURL(new Blob([JSON.stringify(state.result.design, null, 2)], {type: 'application/json'}));
+    const downloadable = hasResources(state.task) ? {...state.task, source: state.result.design, target_canvas: state.result.design.canvas} : state.result.design;
+    state.jsonUrl = URL.createObjectURL(new Blob([JSON.stringify(downloadable, null, 2)], {type: 'application/json'}));
     const pngBytes = Uint8Array.from(atob(state.result.output_png.split(',')[1]), char => char.charCodeAt(0));
     state.pngUrl = URL.createObjectURL(new Blob([pngBytes], {type: 'image/png'}));
     const name = String(state.task.task_id || 'chameleon').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -197,7 +233,8 @@
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
     try {
-      const result = await requestJSON('/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({source: state.task.source, target_canvas: {width, height}}), signal: controller.signal});
+      const payload = hasResources(state.task) ? {...state.task, target_canvas: {width, height}} : {source: state.task.source, target_canvas: {width, height}};
+      const result = await requestJSON(hasResources(state.task) ? '/api/document/resize' : '/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal: controller.signal});
       const [source, output] = await Promise.all([loadImage(result.source_png), loadImage(result.output_png)]);
       if (version !== state.version) return;
       state.result = result; state.images = {source, output}; state.dirty = false; state.selected = null;
@@ -260,6 +297,7 @@
   $('closeSettings').addEventListener('click', () => setSetupOpen(false));
   $('theme').addEventListener('change', () => { document.documentElement.dataset.theme = $('theme').value; });
   $('sample').addEventListener('change', () => {
+    if ($('sample').value.startsWith('poster:')) { loadPoster($('sample').value.slice(7)); return; }
     const item = $('sample').value === 'imported' ? state.imported : state.samples.find(sample => sample.id === $('sample').value);
     if (item) { setTask(item.task, item.label); resize(); }
   });
@@ -270,12 +308,24 @@
   for (const id of ['width', 'height']) $(id).addEventListener('input', () => { syncPreset(); markDirty(); });
   $('showBoxes').addEventListener('change', redraw);
   $('applyJson').addEventListener('click', () => {
-    try { importTask(JSON.parse($('taskJson').value), 'Imported design'); }
+    try {
+      const edited = JSON.parse($('taskJson').value);
+      const task = edited.source ? edited : {source: edited, target_canvas: state.task?.target_canvas};
+      if (hasResources(state.task) && !hasResources(task)) {
+        for (const key of ['assets', 'fonts', 'document', 'poster_id']) task[key] = state.task[key];
+      }
+      importTask(task, 'Edited design');
+    }
     catch (error) { errorMessage(new Error(`Cannot load JSON. ${error.message}`)); }
   });
   $('taskFile').addEventListener('change', async event => {
     const file = event.target.files[0]; if (!file) return;
-    try { if (file.size > 2000000) throw new Error('The task file must be smaller than 2 MB.'); importTask(JSON.parse(await file.text()), file.name); }
+    try {
+      if (file.size > 24 * 1024 * 1024) throw new Error('The file must be smaller than 24 MiB.');
+      const task = JSON.parse(await file.text());
+      if (!hasResources(task) && file.size > 2000000) throw new Error('Plain tasks must be smaller than 2 MB. Larger files need an image/font bundle.');
+      importTask(task, file.name);
+    }
     catch (error) { errorMessage(new Error(`Cannot load the task file. ${error.message}`)); }
     finally { event.target.value = ''; }
   });
@@ -284,13 +334,27 @@
 
   async function init() {
     try {
-      const meta = await requestJSON('/api/samples');
-      state.samples = meta.samples; state.targets = meta.targets;
+      const [meta, library] = await Promise.all([requestJSON('/api/samples'), requestJSON('/api/posters').catch(() => ({examples: []}))]);
+      state.samples = meta.samples; state.targets = meta.targets; state.posters = library.examples;
       $('sample').replaceChildren(...state.samples.map(item => new Option(item.label, item.id)));
+      for (const [split, label] of [['reviewed', 'Open posters · reviewed'], ['reserve', 'Open posters · personal tests']]) {
+        const entries = state.posters.filter(item => item.split === split);
+        if (!entries.length) continue;
+        const group = document.createElement('optgroup'); group.label = label;
+        for (const item of entries) {
+          const option = new Option(`${item.title}${item.ready ? '' : ' · needs import support'}`, `poster:${item.id}`);
+          option.disabled = !item.ready; group.append(option);
+        }
+        $('sample').append(group);
+      }
       $('preset').replaceChildren(new Option('Custom dimensions', 'custom'), ...state.targets.map(item => new Option(`${item.label} · ${item.width} × ${item.height}`, item.id)));
       $('sample').disabled = $('preset').disabled = $('run').disabled = false;
       $('connection').textContent = 'Engine connected'; $('connection').classList.add('online');
       if (!state.samples.length) throw new Error('No bundled samples were found. Import a task JSON to start.');
+      const requestedPoster = new URLSearchParams(location.search).get('poster');
+      if (state.posters.some(item => item.id === requestedPoster && item.ready)) {
+        $('sample').value = `poster:${requestedPoster}`; await loadPoster(requestedPoster); return;
+      }
       const sample = state.samples[Math.min(1, state.samples.length - 1)];
       $('sample').value = sample.id; setTask(sample.task, sample.label); await resize();
     } catch (error) { errorMessage(error); $('connection').textContent = 'Engine unavailable'; $('status').textContent = 'Start the local server, then reload this page.'; }

@@ -19,6 +19,7 @@
     <span id="connection" class="connection">Connecting to engine</span>
     <label class="theme-control" for="theme"><span class="sr-only">Appearance</span><select id="theme" class="theme-select"><option value="dark" selected>Dark</option><option value="light">Light</option></select></label>
     <a class="inspector-link" href="/inspector.html" target="_blank" rel="noopener">File inspector <span aria-hidden="true">↗</span></a>
+    <a class="inspector-link" href="/posters/">Poster library <span aria-hidden="true">↗</span></a>
   </div>
 </header>
 <main id="workspace" class="workspace">
@@ -35,13 +36,14 @@
           <label for="sample">Source design</label>
           <select id="sample" disabled><option>Loading samples…</option></select>
           <div id="sourceSummary" class="field-help">Loading bundled designs</div>
+          <p id="posterCredit" class="field-help" hidden></p>
           <details id="importPanel" class="import-panel">
             <summary>Import your own design</summary>
             <label class="file-label" for="taskFile">Choose a JSON file<input id="taskFile" type="file" accept=".json,application/json"></label>
             <label for="taskJson">Or paste a task or source design</label>
             <textarea id="taskJson" rows="7" spellcheck="false" placeholder='{"source": {"canvas": …, "elements": […]}, "target_canvas": …}'></textarea>
             <button id="applyJson" type="button" class="secondary">Load JSON</button>
-            <p class="field-help">Uses the bundled brand assets. Unknown assets appear as labeled placeholders.</p>
+            <p class="field-help">Open-poster bundles include their own images and fonts. Plain task files use the bundled brand assets.</p>
           </details>
         </section>
         <section class="control-section" aria-labelledby="canvasHeading">

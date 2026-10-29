@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const colors = {text: '#2963a4', image: '#97600a', shape: '#287049'};
+  const colors = {text: '#86baff', image: '#e9bc73', shape: '#7dcca4'};
   const state = {samples: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
 
   function errorMessage(error) {
@@ -22,7 +22,7 @@
   function markDirty() {
     state.dirty = true;
     disableDownloads();
-    $('resultSummary').hidden = $('warnings').hidden = true;
+    $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
     if (state.result) {
       const canvas = state.result.design.canvas;
       $('outputSize').textContent = `${canvas.width} × ${canvas.height} · previous result`;
@@ -33,7 +33,8 @@
     state.busy = value;
     $('settings').disabled = value;
     $('previews').setAttribute('aria-busy', String(value));
-    $('run').textContent = value ? 'Resizing design…' : 'Resize design ↗';
+    $('runLabel').textContent = value ? 'Resizing design…' : 'Resize design';
+    $('run').setAttribute('aria-busy', String(value));
   }
   function validateDesign(design) {
     if (!design || !design.canvas || !Array.isArray(design.elements) || !design.elements.length) throw new Error('A design needs a canvas and a nonempty elements array.');
@@ -62,7 +63,7 @@
     $('outputSize').textContent = 'Not resized yet';
     $('sourceCanvas').hidden = $('outputCanvas').hidden = true;
     $('sourceEmpty').hidden = $('outputEmpty').hidden = false;
-    $('inspection').hidden = $('resultSummary').hidden = $('warnings').hidden = true;
+    $('inspection').hidden = $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
     $('error').hidden = true;
     $('status').textContent = 'Design loaded. Choose a format and resize.';
   }
@@ -141,6 +142,10 @@
     $('propertyTitle').textContent = el.id;
     $('propertyType').textContent = el.type;
     $('properties').textContent = JSON.stringify(el, null, 2);
+    $('propertyHint').hidden = true;
+    $('geometry').hidden = false;
+    $('propertyPanel').open = true;
+    for (const [field, id] of [['x', 'propX'], ['y', 'propY'], ['width', 'propWidth'], ['height', 'propHeight']]) $(id).textContent = `${Number(el[field].toFixed(1))} px`;
     for (const button of $('elements').children) button.setAttribute('aria-pressed', String(button.dataset.id === id));
     redraw();
   }
@@ -164,6 +169,8 @@
     $('propertyTitle').textContent = 'Element properties';
     $('propertyType').textContent = '';
     $('properties').textContent = '';
+    $('propertyHint').hidden = false;
+    $('geometry').hidden = true;
   }
   function enableDownloads() {
     state.jsonUrl = URL.createObjectURL(new Blob([JSON.stringify(state.result.design, null, 2)], {type: 'application/json'}));
@@ -185,7 +192,7 @@
     const version = state.version;
     $('error').hidden = true;
     disableDownloads(); setBusy(true);
-    $('resultSummary').hidden = $('warnings').hidden = true;
+    $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
     $('status').textContent = 'Reflowing elements and rendering real previews…';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
@@ -197,7 +204,7 @@
       redraw();
       $('sourceEmpty').hidden = $('outputEmpty').hidden = true;
       $('outputSize').textContent = `${width} × ${height}`;
-      $('status').textContent = 'Resize complete. Review the composition and any warnings below.';
+      $('status').textContent = 'Resize complete. Your new composition is ready to review.';
       const style = result.report.style;
       const relationships = result.report.relationships;
       const uncertain = Boolean(relationships?.ambiguities?.length);
@@ -215,8 +222,11 @@
       if (uncertain) warnings.push('Some product/message associations are ambiguous in the source. Review the resized connections.');
       if (minFont !== null && minFont < 10) warnings.push('Some text is smaller than 10 px at this canvas size. Review readability or choose a larger format.');
       $('warnings').replaceChildren();
-      for (const warning of [...new Set(warnings)]) { const li = document.createElement('li'); li.textContent = warning; $('warnings').append(li); }
-      $('warnings').hidden = !warnings.length;
+      const uniqueWarnings = [...new Set(warnings)];
+      for (const warning of uniqueWarnings) { const li = document.createElement('li'); li.textContent = warning; $('warnings').append(li); }
+      $('warnings').hidden = $('reviewPanel').hidden = !uniqueWarnings.length;
+      $('warningCount').textContent = `${uniqueWarnings.length} ${uniqueWarnings.length === 1 ? 'note' : 'notes'}`;
+      $('reviewPanel').open = false;
       renderElements(); enableDownloads();
     } catch (error) {
       if (version !== state.version) return;
@@ -226,6 +236,22 @@
   }
 
   $('resizeForm').addEventListener('submit', resize);
+  function setView(view) {
+    $('previews').dataset.view = view;
+    $('originalPanel').hidden = view === 'result';
+    $('resizedPanel').hidden = view === 'source';
+    for (const button of document.querySelectorAll('.view-switch button')) button.setAttribute('aria-pressed', String(button.dataset.view === view));
+  }
+  for (const button of document.querySelectorAll('.view-switch button')) button.addEventListener('click', () => setView(button.dataset.view));
+  setView(window.matchMedia('(max-width: 760px)').matches ? 'result' : 'compare');
+  function setSetupOpen(open) {
+    $('workspace').dataset.setupOpen = String(open);
+    $('settingsToggle').setAttribute('aria-expanded', String(open));
+    (open ? $('sample') : $('settingsToggle')).focus();
+  }
+  $('settingsToggle').addEventListener('click', () => setSetupOpen($('workspace').dataset.setupOpen !== 'true'));
+  $('closeSettings').addEventListener('click', () => setSetupOpen(false));
+  $('theme').addEventListener('change', () => { document.documentElement.dataset.theme = $('theme').value; });
   $('sample').addEventListener('change', () => {
     const item = $('sample').value === 'imported' ? state.imported : state.samples.find(sample => sample.id === $('sample').value);
     if (item) { setTask(item.task, item.label); resize(); }

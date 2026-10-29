@@ -39,13 +39,14 @@ artifacts for that task so stale previews cannot appear to be new results.
 
 ## How the engine works
 
-1. Infer backgrounds, image roles, typography hierarchy, explicit groups and
-   ungrouped text/shape containment from source geometry.
-2. Generate bounded composition candidates: preserve the source arrangement,
-   stack content, or split media and copy into columns on wide canvases.
-3. Fit text using the renderer's brand-font measurements and wrapping. Move
-   rotated groups with a shared uniform transform, and preserve non-cover image
-   proportions.
+1. Capture an immutable source hierarchy using explicit groups, text/shape
+   containment, message ownership, image alpha bounds and conservative proximity.
+2. Generate bounded parent layouts: preserve the source arrangement, stack
+   related campaigns, or place them in columns. Fit rigid leaves with one shared
+   scale; keep badge rows and product/message associations together.
+3. Measure text with the document's actual fonts. Preserve source size ratios
+   across related products and controls, and align sibling rows when the source
+   provides evidence. Declared legal-text exceptions remain visible in reports.
 4. Reject candidates that violate the local contract, then rank valid candidates
    using source-aware collision, readability, hierarchy, grouping, prominence,
    alignment and spacing metrics.
@@ -70,6 +71,26 @@ Verify a running instance with `python -m tools.verify_local`. Results are saved
 to `output/local-verification.json`. The standalone file inspector remains at
 `viewer/inspector.html`.
 
+## Adobe Express development add-on
+
+The [native Express adapter](integrations/adobe-express/README.md) captures
+supported editable text, images, shapes and nested groups through Adobe's
+document SDK. It sends original image bytes and supplied exact font files to
+`POST /api/document/resize`, then creates a separate editable page using native
+clones. Missing fonts and unsupported effects stop the operation explicitly.
+
+The engine isolates each document's assets and fonts in a content-addressed
+package. The 24 MiB transport permits at most 16 MiB of decoded resources and
+8 MiB per file. Only the explicit development origin `https://localhost:5241`
+has cross-origin access to this route; existing studio endpoints remain local
+and same-origin. No remote asset URLs or filesystem paths are accepted.
+
+Run `npm test --prefix integrations/adobe-express` for official SDK compilation
+and adapter/writeback tests. Loading inside Express requires an HTTPS development
+certificate and Adobe's local add-on workflow. Offline adapter tests establish
+the supported mapping; live host execution and rendered parity require separate
+verification. See the adapter README for the precise supported subset.
+
 ## Verify and compare
 
 ```powershell
@@ -89,8 +110,9 @@ confirmed organizer list. Metrics are local quality proxies, not Adobe's scorer.
 Use the local studio for resizing, or open `viewer/inspector.html` and load a
 task, its output JSON, and its rendered PNG for manual inspection.
 The final challenge PDF requests the engine for stage one and a full Adobe
-Express add-on, pitch and demo video for the finale. An Express add-on is not
-implemented in this repository.
+Express add-on, pitch and demo video for the finale. The experimental development
+add-on is included above; the pitch, demo video and host verification remain
+separate finale work.
 
 An isolated orientation-continuation trial is documented in
 [`docs/REFLOW_EXPERIMENT.md`](docs/REFLOW_EXPERIMENT.md). It compares intermediate

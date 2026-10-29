@@ -295,16 +295,6 @@
   }
   for (const button of document.querySelectorAll('.view-switch button')) button.addEventListener('click', () => setView(button.dataset.view));
   setView('result');
-  function setSetupOpen(open) {
-    $('workspace').dataset.setupOpen = String(open);
-    $('settingsToggle').setAttribute('aria-expanded', String(open));
-    const target = open ? ($('sample').disabled ? $('closeSettings') : $('sample')) : $('settingsToggle');
-    requestAnimationFrame(() => {
-      if ($('workspace').dataset.setupOpen === String(open)) target.focus();
-    });
-  }
-  $('settingsToggle').addEventListener('click', () => setSetupOpen($('workspace').dataset.setupOpen !== 'true'));
-  $('closeSettings').addEventListener('click', () => setSetupOpen(false));
   $('theme').addEventListener('change', () => { document.documentElement.dataset.theme = $('theme').value; });
   $('sample').addEventListener('change', () => {
     if ($('sample').value.startsWith('poster:')) { loadPoster($('sample').value.slice(7)); return; }

@@ -119,14 +119,13 @@ exports. Ensure controls have visible focus, status/error text remains announced
 reduced motion is respected, no desktop-only panel hides essential work, and the
 trial switcher cannot capture arrow keys inside editable controls.
 
-## Implemented preview and validation
+## Trial checkpoint and validation before promotion
 
-Run the existing viewer server (`python -m viewer.server --port 8765`) and open
-[the side-by-side comparison](http://127.0.0.1:8765/trial-comparison.html).
-Live trial URLs use `/trial.html?variant=A`, `B`, or `C`. The default `/` studio
-and `app.js` are unchanged by this experiment. Layout switching changes only
-the frame and appearance; the same live document and export state remain.
-The shell is regenerated with `python -m tools.build_frontend_trial`.
+The original experiment is saved in Git checkpoint `e9d651b`, pushed to
+`origin/codex/hackathon-ready`. It contained a comparison gallery and live A/B/C
+trial URLs, while leaving the default studio unchanged. The old trial-shell
+generator belongs to that checkpoint; it was removed when the selected layout
+became the main application.
 
 Validation completed October 29, 2026:
 
@@ -149,3 +148,35 @@ Validation completed October 29, 2026:
 
 The screenshots capture the existing engine's output and review notes. Selecting
 a frontend direction does not resolve composition warnings in that output.
+
+## Selected production direction
+
+The user selected A as the default GUI, B as comparison mode, and requested a
+foldable left setup panel. Docked studio now opens at `/`; Compare selects the
+Review desk frame and Original/Result return to the docked frame. The real
+preview's `data-view` remains the source of truth, so the frame can change without
+reloading the design or modifying render/export state. Appearance is independent
+of view selection.
+
+Setup can be folded from the header, rail, or panel heading and restored from
+the always-available header button. Hidden setup controls leave keyboard focus
+order. Escape folds the panel and reveals its opener; rail source/canvas actions
+reopen it before focusing the requested control. Browser storage remembers
+explicit setup and theme preferences when available. Narrow screens start with
+setup folded when no preference exists.
+
+Production uses `workspace.css` and `workspace.js`; the trial switcher and C were
+retired, and former trial URLs redirect to the main application. The complete
+experiment and its implementation remain recoverable from the pushed checkpoint.
+
+Production validation: the 28 viewer server tests passed again. Browser checks
+confirmed an A → Compare → Original/Result round trip preserves source,
+dimensions, selected element, appearance, and the exact JSON/PNG download URLs.
+Folded setup remains folded across that round trip, the header restore stays
+visible in Review desk, and the canvas rail shortcut reopens and focuses setup.
+Edited 800 × 600 dimensions and stale-export disabling also survive mode changes.
+The resulting downloaded JSON and PNG both report 800 × 600, with rendered image
+content. At a 390 px viewport, both modes have no horizontal overflow and Escape
+reveals/focuses the header opener. Former B trial links reach `/?view=compare`.
+JavaScript syntax and whitespace checks passed; the verified default page had no
+browser error or warning logs.

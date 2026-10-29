@@ -11,30 +11,31 @@ element properties, and download the resulting JSON or full-resolution PNG.
 All image references use the bundled `brand_kit/assets/` directory; binary asset
 uploads are not implemented. Missing assets are displayed as labeled placeholders.
 
-## Frontend refactor trials
+## Studio and comparison workspaces
 
-With the same server running, open the
-[side-by-side comparison](http://127.0.0.1:8765/trial-comparison.html), or a live option:
+[Docked studio](http://127.0.0.1:8765/) is the default GUI: source and target
+setup on the left, artwork in the center, and elements/properties on the right.
+Choose **Compare** to switch to the Review desk layout, with a horizontal setup
+ribbon, paired original/result previews, and inspection below. Choose **Result**
+or **Original** to return to the docked layout. The comparison view can be opened
+directly at [/?view=compare](http://127.0.0.1:8765/?view=compare).
 
-- [A · Docked studio](http://127.0.0.1:8765/trial.html?variant=A): left setup,
-  central canvas, right inspector. Recommended starting direction.
-- [B · Review desk](http://127.0.0.1:8765/trial.html?variant=B): light appearance,
-  horizontal setup ribbon, paired previews, inspection tray below.
-- [C · Focus canvas](http://127.0.0.1:8765/trial.html?variant=C): wide canvas,
-  right setup dock, inspection tray below.
+Fold the setup panel with its heading chevron, the left rail's panel button, or
+**Setup** in the header. The header button remains available in comparison mode
+and on narrow screens. Escape inside setup folds it and returns focus to the
+opener. Source/canvas shortcuts reopen the panel and focus the relevant control.
+Setup visibility and appearance are remembered in local browser storage when
+available. View changes preserve the document, dimensions, selection, appearance,
+and export state; they do not trigger a resize.
 
-The A/B/C switcher changes the frame in place and keeps the current imported
-design, dimensions, selected element, preview view, and export state. Each option
-also supports both appearances. Arrow keys cycle trials outside editable controls.
-The original studio remains at `/`; trial styles/scripts load only on `trial.html`.
+No frontend build step or new dependency is required. `app.js` owns the document,
+rendering, imports, and exports; `workspace.js` and `workspace.css` own the frame.
+The former trial URLs redirect to these production views. The full three-option
+experiment is captured in
+[checkpoint e9d651b](https://github.com/rsingh135/chameleon/tree/e9d651b), with
+reference screenshots still in `viewer/assets/trials/`.
 
-These are opt-in experiments for choosing a direction, not a replacement for the
-default GUI. They use the same `app.js` and live engine, with no frontend build
-step or new dependency. `python -m tools.build_frontend_trial` refreshes the
-trial shell from `index.html` after shared markup changes. Trial screenshots and
-the original GUI capture are in `viewer/assets/trials/`.
-
-Research, primary-source links, tradeoffs, and validation notes:
+Research and validation notes:
 [`docs/FRONTEND_DESIGN_RESEARCH.md`](../docs/FRONTEND_DESIGN_RESEARCH.md).
 
 The server binds only to loopback and accepts at most 2 MiB per request, 200
@@ -48,7 +49,7 @@ The studio uses an independent, Spectrum-inspired application frame: charcoal
 panels, a neutral artboard background, a red Chameleon identity, and exports next
 to the current document. A single Result canvas is shown by default;
 Compare and Original are explicit options. Design review notes, elements and properties are
-collapsible; canvas setup can be opened on narrow screens. A light appearance is
+collapsible; canvas setup can be folded at every width. A light appearance is
 also available. Changing appearance or preview view does not change exported
 artwork.
 

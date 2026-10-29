@@ -51,6 +51,15 @@ artifacts for that task so stale previews cannot appear to be new results.
    using source-aware collision, readability, hierarchy, grouping, prominence,
    alignment and spacing metrics.
 
+For a single product with a corroborated source centerline, preserve its
+horizontal focal anchor before softer alignment preferences. Landscape proposals
+keep the brand/product spine centered and fit headline and supporting copy into
+adjacent regions. Standalone supporting text has a declared optional scale
+adjustment; product/headline/action size ratios and atomic controls stay intact.
+Asymmetric and multiple-product sources do not receive this centering policy.
+See [focal composition research](docs/FOCAL_REFLOW_RESEARCH.md) for the design
+principles, evidence, measurements and limits.
+
 Output is deterministic. A bounded cache speeds up repeated requests, and each
 caller receives an independent copy. Valid designs requested at the same size
 retain their composition.

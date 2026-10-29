@@ -10,6 +10,8 @@ from typing import Any
 
 from engine.layout import build_context, generate_candidates, get_measurer
 from engine.layout.composition import generate_composition_states
+from engine.layout.focal import analyze_focal, infer_focal_profile
+from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
 from engine.layout.grouped import generate_grouped_states
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
@@ -145,6 +147,7 @@ def _select_candidate(
     valid = []
     violations = set()
     graph = build_relationship_graph(source, resources.assets_dir)
+    focal_profile = infer_focal_profile(source, graph)
     for candidate in candidates:
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
@@ -154,13 +157,14 @@ def _select_candidate(
         axes = (state_axes or {}).get(json.dumps(candidate, sort_keys=True), {})
         relationships = analyze_relationships(graph, candidate, axes)
         proportions = analyze_proportions(source, candidate, graph)
-        valid.append((candidate, result, style, relationships, proportions))
+        focal = analyze_focal(source, candidate, graph, focal_profile)
+        valid.append((candidate, result, style, relationships, proportions, focal))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
 
     def safety(item):
-        candidate, result, style, relationships, proportions = item
+        candidate, result, style, relationships, proportions, focal = item
         metrics = result["metrics"]
         # Reading order and explicit ownership are not compensated by a larger
         # minimum font. Softer association hypotheses remain below readability.
@@ -181,6 +185,9 @@ def _select_candidate(
             -essential,
             _readability(candidate, layout_context, metrics),
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
+            focal["metrics"].get("center_retained", True),
+            focal["metrics"].get("visible_span_retention", 1.0),
+            focal["metrics"].get("occupied_balance_error", 0.0) <= 0.08,
             -detached,
         )
 
@@ -233,9 +240,11 @@ def _resize_in_context(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     candidates = generate_candidates(source, target_canvas)
+    graph = build_relationship_graph(source)
     states = (
-        *generate_composition_states(source, target_canvas),
-        *generate_grouped_states(source, target_canvas),
+        *generate_composition_states(source, target_canvas, graph),
+        *generate_grouped_states(source, target_canvas, graph),
+        *generate_focal_states(source, target_canvas, graph),
     )
     candidates.extend(state.design for state in states)
     by_design = {state.design_json: state for state in states}

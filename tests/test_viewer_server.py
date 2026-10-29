@@ -12,6 +12,7 @@ from PIL import Image
 
 from engine.eval.proportions import analyze_proportions
 from engine.eval.style import analyze_style
+from engine.layout.focal import analyze_focal
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from viewer import server
 
@@ -208,6 +209,7 @@ def test_real_samples_render_and_preserve_style_runs_and_warnings(http_server, s
     assert result["report"]["violations"] == []
     assert result["report"]["metrics"]
     assert 0 <= result["report"]["total"] <= 1
+    assert result["report"]["focal"] == analyze_focal(task["source"], result["design"])
     assert result["report"]["style"] == analyze_style(
         task["source"], result["design"], server.ASSETS_DIR
     )

@@ -208,8 +208,9 @@
       const style = result.report.style;
       const relationships = result.report.relationships;
       const proportions = result.report.proportions;
+      const focal = result.report.focal;
       const uncertain = Boolean(relationships?.ambiguities?.length);
-      const review = Boolean(style?.warnings.length || relationships?.warnings.length || proportions?.warnings.length || uncertain);
+      const review = Boolean(style?.warnings.length || relationships?.warnings.length || proportions?.warnings.length || focal?.warnings.length || uncertain);
       const structure = result.report.violations.length ? 'Structure needs attention' : 'Structure checks passed';
       const composition = uncertain ? 'Composition inference uncertain' : review ? 'Composition needs review' : relationships?.relations.length ? 'No modeled relationship losses' : 'Composition inference limited';
       $('checkSummary').textContent = `${structure} · ${composition}`;
@@ -221,6 +222,7 @@
       $('resultSummary').hidden = false;
       const warnings = [...(result.warnings || []), ...result.report.violations, ...(style?.warnings || []).map(warning => `Style: ${warning.message}`), ...(relationships?.warnings || []).map(warning => `Relationship: ${warning.message}`)];
       warnings.push(...(proportions?.warnings || []).map(warning => `Proportions: ${warning.message}`));
+      warnings.push(...(focal?.warnings || []).map(warning => `Focal point: ${warning.message}`));
       if (uncertain) warnings.push('Some product/message associations are ambiguous in the source. Review the resized connections.');
       if (minFont !== null && minFont < 10) warnings.push('Some text is smaller than 10 px at this canvas size. Review readability or choose a larger format.');
       $('warnings').replaceChildren();

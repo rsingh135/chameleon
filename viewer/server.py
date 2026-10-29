@@ -23,6 +23,7 @@ from engine.eval.catalogue import CATALOGUE
 from engine.eval.proportions import analyze_proportions
 from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
+from engine.layout.focal import analyze_focal
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.resize import resize_with_state
 from engine.resources import (
@@ -218,6 +219,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         style = analyze_style(source, design, assets_dir, relationship_graph=graph)
         relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
         proportions = analyze_proportions(source, design, graph)
+        focal = analyze_focal(source, design, graph)
         source_png, source_warnings = _render_png(source)
         output_png, output_warnings = _render_png(design)
     return {
@@ -231,6 +233,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
             "style": style,
             "relationships": relationships,
             "proportions": proportions,
+            "focal": focal,
             "layout_state": plan["state"],
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),

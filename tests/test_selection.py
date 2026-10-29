@@ -268,9 +268,11 @@ def test_resize_plan_returns_independent_design_and_state_copies(design):
         == hashlib.sha256(json.dumps(design, sort_keys=True).encode()).hexdigest()
     )
     first["state"]["cluster_axes"]["invented"] = "horizontal"
+    first["state"]["sizing_exceptions"].append("invented")
     first["design"]["elements"][0]["x"] = 9000
     second = module.resize_with_state(design, target)
     assert "invented" not in second["state"]["cluster_axes"]
+    assert "invented" not in second["state"]["sizing_exceptions"]
     assert second["design"]["elements"][0]["x"] != 9000
 
 
@@ -330,3 +332,120 @@ def test_selected_declared_axes_survive_the_public_resize_plan(monkeypatch):
     )
     assert analyze_relationships(graph, plan["design"])["warnings"]
     assert asdict(graph) == before
+
+
+def test_larger_label_cannot_win_by_distorting_its_rigid_control(monkeypatch):
+    import engine.eval as evaluation
+    import engine.eval.style as style_analysis
+
+    source = {
+        "canvas": {"width": 400, "height": 200},
+        "elements": [
+            {
+                "id": "plate",
+                "type": "shape",
+                "x": 20,
+                "y": 20,
+                "width": 200,
+                "height": 60,
+                "shape_type": "rectangle",
+                "fill_color": "#cc3300",
+                "corner_radius": 30,
+                "group_id": "control",
+            },
+            {
+                "id": "label",
+                "type": "text",
+                "x": 30,
+                "y": 32,
+                "width": 180,
+                "height": 36,
+                "font_size": 14,
+                "font_family": "Solstice Sans",
+                "content": "New",
+                "color": "#ffffff",
+                "group_id": "control",
+            },
+        ],
+    }
+    faithful = deepcopy(source)
+    target = {"width": 600, "height": 200}
+    faithful["canvas"] = target
+    inflated = deepcopy(faithful)
+    inflated["elements"][1]["font_size"] = 21
+    monkeypatch.setattr(
+        evaluation,
+        "score",
+        lambda _source, candidate, *_args, **_kwargs: {
+            "violations": [],
+            "metrics": {"raw_collisions": 0, "text_size": 1},
+            "total": 1.0 if candidate == inflated else 0.5,
+        },
+    )
+    monkeypatch.setattr(style_analysis, "analyze_style", lambda *_args, **_kwargs: {"score": 1})
+    assert module._select_candidate(source, target, [inflated, faithful]) == faithful
+
+
+@pytest.mark.parametrize("footer", [True, False])
+def test_fine_print_floor_does_not_apply_to_small_body_copy(monkeypatch, footer):
+    import engine.eval as evaluation
+    import engine.eval.style as style_analysis
+
+    source = {
+        "canvas": {"width": 500, "height": 400},
+        "elements": [
+            {
+                "id": "title",
+                "type": "text",
+                "x": 40,
+                "y": 40,
+                "width": 400,
+                "height": 70,
+                "font_size": 40,
+                "font_family": "Solstice Sans",
+                "content": "A title",
+                "color": "#000000",
+            },
+            {
+                "id": "detail",
+                "type": "text",
+                "x": 40,
+                "y": 365 if footer else 200,
+                "width": 400,
+                "height": 30,
+                "font_size": 10,
+                "font_family": "Solstice Sans",
+                "content": "Detailed conditions. " * 4,
+                "color": "#000000",
+            },
+        ],
+    }
+    target = {"width": 800, "height": 400}
+    faithful = deepcopy(source)
+    faithful["canvas"] = target
+    for element in faithful["elements"]:
+        element["font_size"] *= 0.96
+    distorted = deepcopy(faithful)
+    distorted["elements"][0]["font_size"] = 28
+    distorted["elements"][1]["font_size"] = 12
+    monkeypatch.setattr(
+        evaluation,
+        "score",
+        lambda _source, candidate, *_args, **_kwargs: {
+            "violations": [],
+            "metrics": {
+                "raw_collisions": 0,
+                "text_size": 0.96 if candidate == faithful else 1,
+            },
+            "total": 1,
+        },
+    )
+    monkeypatch.setattr(
+        style_analysis,
+        "analyze_style",
+        lambda _source, candidate, *_args, **_kwargs: {
+            "score": 1 if candidate == faithful else 0.8,
+        },
+    )
+    expected = faithful if footer else distorted
+    assert module._select_candidate(source, target, [distorted, faithful]) == expected

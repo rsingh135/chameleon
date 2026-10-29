@@ -140,3 +140,15 @@ def test_singleton_image_aspect_drift_is_measured_even_if_area_is_unchanged(sour
     result = analyze_proportions(source, output)
     assert result["score"] < 1.0
     assert result["metrics"]["rigid_group_error"] > 0
+
+
+def test_source_span_detects_an_undersized_composition_on_a_taller_canvas(source):
+    output = deepcopy(source)
+    output["canvas"] = {"width": 1080, "height": 1920}
+    result = analyze_proportions(source, output)
+    assert result["metrics"]["composition_span_retention"] == pytest.approx(1080 / 1920)
+
+
+def test_source_span_is_capped_instead_of_rewarding_unlimited_growth(source):
+    result = analyze_proportions(source, transformed(source, 1.4))
+    assert result["metrics"]["composition_span_retention"] == 1.0

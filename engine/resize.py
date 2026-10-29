@@ -11,6 +11,7 @@ from typing import Any
 from engine.layout import build_context, generate_candidates, get_measurer
 from engine.layout.composition import generate_composition_states
 from engine.layout.geometry import bounds, intersection
+from engine.layout.grouped import generate_grouped_states
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 
 
@@ -82,6 +83,35 @@ def _safe_identity(source: dict, target: dict) -> bool:
     return True
 
 
+def _readability(candidate: dict, context, metrics: dict) -> float:
+    """Reach a readable floor, then compare hierarchy rather than inflate labels.
+
+    Genuine source footer fine print has a separate, explicit floor. This does
+    not change official metrics or UI warnings: all text under 10 px remains
+    reported. Small body text elsewhere is still primary content.
+    """
+    from engine.eval.metrics import MIN_FONT_FRACTION, MIN_FONT_PX
+
+    texts = [element for element in candidate["elements"] if element["type"] == "text"]
+    if not texts:
+        return metrics.get("text_size", 1.0)
+    fine_print = {
+        element["id"]
+        for unit in context.units
+        if unit.role == "legal" and unit.box.y + unit.box.height / 2 >= context.height * 0.85
+        for element in unit.text
+    }
+    threshold = max(MIN_FONT_PX, MIN_FONT_FRACTION * min(candidate["canvas"].values()))
+    return min(
+        1.0,
+        min(
+            element["font_size"]
+            / (max(8.0, threshold * 0.8) if element["id"] in fine_print else threshold)
+            for element in texts
+        ),
+    )
+
+
 def _select_candidate(
     source: dict, target: dict, candidates: list[dict], state_axes: dict | None = None
 ) -> dict:
@@ -150,8 +180,8 @@ def _select_candidate(
         return (
             -metrics.get("raw_collisions", 0.0),
             -essential,
+            _readability(candidate, layout_context, metrics),
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
-            metrics.get("text_size", 1.0),
             -detached,
         )
 
@@ -159,7 +189,12 @@ def _select_candidate(
     feasible = [item for item in valid if safety(item) == safest]
 
     def fidelity(item):
-        return (item[2]["score"] + item[3]["score"] + item[4]["score"]) / 3
+        return (
+            item[2]["score"]
+            + item[3]["score"]
+            + item[4]["score"]
+            + item[4]["metrics"].get("composition_span_retention", 1.0)
+        ) / 4
 
     # Small changes to inferred gaps must not dominate typography or visual
     # hierarchy. Keep a near-best fidelity set before comparing source scale.
@@ -192,7 +227,10 @@ def _resize_cached(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     candidates = generate_candidates(source, target_canvas)
-    states = generate_composition_states(source, target_canvas)
+    states = (
+        *generate_composition_states(source, target_canvas),
+        *generate_grouped_states(source, target_canvas),
+    )
     candidates.extend(state.design for state in states)
     by_design = {state.design_json: state for state in states}
     axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}
@@ -205,6 +243,7 @@ def _resize_cached(source_json: str, width: int, height: int) -> dict:
             "topology": state.topology if state else "source" if selected == source else "legacy",
             "source_digest": hashlib.sha256(source_json.encode()).hexdigest(),
             "cluster_axes": dict(state.cluster_axes) if state else {},
+            "sizing_exceptions": list(getattr(state, "exceptions", ())),
         },
     }
 

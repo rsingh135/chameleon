@@ -10,6 +10,7 @@ from __future__ import annotations
 import math
 from statistics import median
 
+from engine.layout.appearance import unit_visible_box
 from engine.layout.relationships import SourceRelationshipGraph, build_relationship_graph
 
 
@@ -144,6 +145,24 @@ def analyze_proportions(
         )
     rigid = max(rigid_errors, default=0.0)
     campaign = sum(campaign_errors) / max(1, len(campaign_errors))
+    primary_ids = {
+        eid
+        for cluster in graph.clusters
+        if cluster.kind == "campaign"
+        for eid in cluster.element_ids
+    }
+    span_retention = 1.0
+    if primary_ids:
+        before = unit_visible_box([originals[eid] for eid in primary_ids], graph.assets_dir)
+        after = unit_visible_box([outputs[eid] for eid in primary_ids], graph.assets_dir)
+        # Retain the source composition's designed span, not arbitrary maximum
+        # coverage. Source corner promotions, legal copy and decorations do not
+        # hide an undersized central composition by widening this envelope.
+        span_retention = min(
+            1.0,
+            after.width / candidate["canvas"]["width"] / max(before.width / graph.width, 1e-9),
+            after.height / candidate["canvas"]["height"] / max(before.height / graph.height, 1e-9),
+        )
     # Equal exact scales score one. The exponential is only a ranking utility;
     # retain raw deformation values so callers can assess the actual tradeoff.
     return {
@@ -154,6 +173,7 @@ def analyze_proportions(
             "campaign_scale_rms_log": round(campaign, 6),
             "sibling_product_scale_rms_log": round(sibling_rms, 6),
             "sibling_product_scale_ratio": round(sibling_ratio, 6),
+            "composition_span_retention": round(span_retention, 6),
         },
         "clusters": rows,
     }

@@ -122,7 +122,7 @@ render reviews must report their own acceptance or failure.
 | `doory_serif-quote-card` | Quote card | Reserve |
 | `blaketyro_uml_arrows` | Educational poster; disclosed font adaptation | Reserve |
 | `blaketyro_asymptotic_notation` | Educational poster; disclosed font adaptation | Reserve |
-| `opensuse_banner_connect` | Promotional banner | Reserve |
+| `opensuse_banner_we_believe` | Values/community promotional banner | Reserve |
 | `opensuse_banner_makers_choice` | Promotional banner | Reserve |
 | `opensuse_banner_leap` | Release celebration banner | Reserve |
 
@@ -131,10 +131,40 @@ brand and concert treatments. Source diversity is limited to three collections;
 five reviewed works share the Doory publisher. This is a useful bounded test
 set, not a representative sample of professional design or an unseen benchmark.
 
+## Strict validation replacement and retained stress original
+
+Fresh source parsing rejected the Connect banner: its visible legacy Inkscape
+`flowRoot` captions, “LINUX” and “FOR OPEN MINDS”, were omitted by the native
+reference renderer. Its requested Open Sans Condensed 300 face was also absent
+from the original resource inventory. It is no longer counted among the selected
+18 or the ten usable reserves. The catalogue retains its complete record under
+`excluded_examples`, including the reason, original URL/hash, prepared path and
+license; its original SVG and existing files are unchanged. This is an excluded
+parser stress source, not an accepted import.
+
+The replacement is the distinct author-published
+[We Believe banner](https://github.com/openSUSE/artwork/blob/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/banners/vector/banner-we-believe.svg)
+from the same licensed revision. Its unmodified original SHA-256 is
+`c3e021b36f08bc29924538f70606e0a98bbd7819f936fcd9e086006b45ba7590`.
+It uses existing exact Open Sans 400 and Source Sans Pro 300 faces, with no font
+addition or font adaptation. Source Sans Pro's legacy family name is “Source Sans
+Pro Light”; the source's weight-300 request resolves to the pinned
+`SourceSansPro-Light` face through an explicitly recorded provider alias.
+
+Strict preparation produces five objects: two live text elements, one native
+background rectangle and two disclosed rigid artwork assets. The illustration's
+already outlined lettering remains artwork, not editable text. The full native
+and imported source renders visibly contain the headline, URL, logo and cube in
+matching positions; their normalized mean RGB error is approximately 0.000496.
+Validation also fixed a generic render-only CSS style join that had incorrectly
+hidden the headline in the first reference render. The original SVG bytes were
+never changed. No reserve resize was run. Native source raster agreement does
+not establish historical author-machine font-byte identity or resize quality.
+
 ## Exact resources and remaining qualifications
 
 [`fonts/source-manifest.json`](../fixtures/open_posters/fonts/source-manifest.json)
-records 30 faces with named family, weight/style, PostScript name, source URL,
+records 31 faces with named family, weight/style, PostScript name, source URL,
 SHA-256 and license. Fontsource originals are retained as WOFF2 alongside TTF
 conversions for the renderer. Conversion changes the container, not the named
 family or requested face. No unavailable face is silently substituted and no

@@ -21,7 +21,24 @@
         1.0,
         0.0,
         0.0
-      ]
+      ],
+      "rectangle_path_proven": false,
+      "nonbinding_clip_released": false,
+      "source_path_data": null,
+      "source_rectangle_bounds": [
+        -5.983614,
+        -148.51337,
+        530.0,
+        272.53455
+      ],
+      "source_frame": {
+        "x": -5.983613999999989,
+        "y": -148.51337,
+        "width": 530.0,
+        "height": 272.53455,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": null,
@@ -46,6 +63,7 @@
       "source_text_owner": "n00023",
       "postscript_name": "OpenSansCondensed-Bold",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     }
@@ -787,7 +805,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00000",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans Condensed';font-size:40.0;font-weight:bold;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans Condensed';font-size:40.0;font-weight:bold;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black;opacity:1"
       }
     }
   ],

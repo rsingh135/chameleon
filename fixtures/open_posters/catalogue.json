@@ -1499,20 +1499,20 @@
       "adaptation_note": "Author original remains byte-identical. Closed Helvetica/Consolas faces replaced with named open DejaVu faces before baseline. Asymptotic source declares Cantarell Regular/Oblique as weight500; adapted baseline explicitly selects available400face. This is not unchanged author typography. No resized output used to choose these changes."
     },
     {
-      "id": "opensuse_banner_connect",
-      "title": "openSUSE Connect promotional banner",
+      "id": "opensuse_banner_we_believe",
+      "title": "openSUSE We Believe promotional banner",
       "category": "promotional banner",
       "split": "reserve",
       "author": "openSUSE Artwork contributors (individual designer not identified in source)",
-      "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/banners/vector/banner-connect.svg",
+      "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/banners/vector/banner-we-believe.svg",
       "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
       "license_id": "CC-BY-SA-3.0",
       "license_url": "https://github.com/openSUSE/artwork/blob/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/LICENSE.md",
       "license_path": "licenses/opensuse-CC-BY-SA-3.0.txt",
       "license_scope_path": "licenses/opensuse-LICENSE-SCOPE.md",
       "attribution_text": "openSUSE Artwork contributors — CC BY-SA3.0 — https://github.com/openSUSE/artwork",
-      "original_path": "originals/opensuse_banner_connect.svg",
-      "sha256": "7205e02ae371621a7f4a626400c15f6f6e02f794888700e840480bd940ce165b",
+      "original_path": "originals/opensuse_banner_we_believe.svg",
+      "sha256": "c3e021b36f08bc29924538f70606e0a98bbd7819f936fcd9e086006b45ba7590",
       "font_requirements": [
         {
           "family": "Open Sans",
@@ -1529,12 +1529,52 @@
           "source_family_alias": "Open Sans",
           "resolution": "exact_named_family_weight_style",
           "historical_source_bytes_verified": false
+        },
+        {
+          "family": "Source Sans Pro",
+          "weight": "300",
+          "style": "normal",
+          "path": "fonts/source-sans-pro/source-sans-pro-latin-300-normal.ttf",
+          "postscript_name": "SourceSansPro-Light",
+          "sha256": "ef790b1935a30628b8a60d0777478d96bb2e8cd8238c8218823d3149e37daf37",
+          "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/files/source-sans-pro-latin-300-normal.woff2",
+          "license_id": "OFL-1.1",
+          "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/LICENSE",
+          "license_path": "fonts/source-sans-pro/OFL.txt",
+          "source_family_stack": "'Source Sans Pro'",
+          "source_family_alias": "Source Sans Pro",
+          "resolution": "exact_named_family_weight_style",
+          "historical_source_bytes_verified": false
         }
       ],
-      "prepared_path": "prepared/opensuse_banner_connect",
-      "curation_status": "source_license_and_font_screened; importer acceptance pending",
+      "prepared_path": "prepared/opensuse_banner_we_believe",
+      "curation_status": "source_license_font_and_strict_import_screened; source_only_native_parity_reviewed",
       "engine_evaluated": false,
-      "source_modified": false
+      "source_modified": false,
+      "source_inventory": {
+        "ordinary_text_nodes": 2,
+        "visible_copy": [
+          "WE BELIEVE",
+          "www.opensuse.org"
+        ],
+        "flowRoot_nodes": 0,
+        "textPath_nodes": 0,
+        "filter_nodes": 0,
+        "embedded_images": 0,
+        "live_text_has_clip_ancestor": false,
+        "prepared_ir_objects": 5,
+        "outlined_lettering": "The cube illustration includes author-outlined lettering, retained as disclosed rigid vector artwork rather than labeled live text."
+      },
+      "source_validation": {
+        "status": "ready",
+        "source_only": true,
+        "native_imported_normalized_mae": 0.0004960795577904189,
+        "live_text_count": 2,
+        "native_shape_count": 1,
+        "rigid_art_asset_count": 2,
+        "reserve_resize_performed": false,
+        "reference_limit": "Native source raster from original SVG with exact pinned font faces; not historical author-machine font-byte verification."
+      }
     },
     {
       "id": "opensuse_banner_makers_choice",
@@ -1646,5 +1686,56 @@
       "source_note": "The original SVG clips its headline at the source viewport. Kept as an authored-crop stress case in the personal-test set."
     }
   ],
-  "source_count": 18
+  "source_count": 18,
+  "excluded_examples": [
+    {
+      "id": "opensuse_banner_connect",
+      "title": "openSUSE Connect promotional banner",
+      "category": "promotional banner",
+      "split": "reserve",
+      "author": "openSUSE Artwork contributors (individual designer not identified in source)",
+      "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/banners/vector/banner-connect.svg",
+      "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
+      "license_id": "CC-BY-SA-3.0",
+      "license_url": "https://github.com/openSUSE/artwork/blob/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/LICENSE.md",
+      "license_path": "licenses/opensuse-CC-BY-SA-3.0.txt",
+      "license_scope_path": "licenses/opensuse-LICENSE-SCOPE.md",
+      "attribution_text": "openSUSE Artwork contributors — CC BY-SA3.0 — https://github.com/openSUSE/artwork",
+      "original_path": "originals/opensuse_banner_connect.svg",
+      "sha256": "7205e02ae371621a7f4a626400c15f6f6e02f794888700e840480bd940ce165b",
+      "font_requirements": [
+        {
+          "family": "Open Sans",
+          "weight": "400",
+          "style": "normal",
+          "path": "fonts/open-sans/open-sans-latin-400-normal.ttf",
+          "postscript_name": "OpenSans-Regular",
+          "sha256": "c0c9780e88c88f43ac71ae8bb54d4ec0803aa0ff923d96d59be5f2d2ac0b0db2",
+          "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/files/open-sans-latin-400-normal.woff2",
+          "license_id": "OFL-1.1",
+          "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/LICENSE",
+          "license_path": "fonts/open-sans/OFL.txt",
+          "source_family_stack": "'Open Sans'",
+          "source_family_alias": "Open Sans",
+          "resolution": "exact_named_family_weight_style",
+          "historical_source_bytes_verified": false
+        }
+      ],
+      "prepared_path": "prepared/opensuse_banner_connect",
+      "curation_status": "excluded_unsupported_visible_flow_text",
+      "engine_evaluated": false,
+      "source_modified": false,
+      "exclusion_reason": "The original contains visible legacy Inkscape flowRoot captions LINUX and FOR OPEN MINDS that the native reference renderer skipped. Strict import rejects this source rather than silently omitting text. The referenced Open Sans Condensed300 face was also absent from the bundled requirements. Retained unmodified as an excluded parser stress source, not one of the selected18 or usable10reserves.",
+      "replacement_id": "opensuse_banner_we_believe",
+      "known_missing_font_requirements": [
+        {
+          "family": "Open Sans Condensed",
+          "weight": "300",
+          "style": "normal",
+          "bundled": false
+        }
+      ],
+      "excluded_from_selected_corpus": true
+    }
+  ]
 }

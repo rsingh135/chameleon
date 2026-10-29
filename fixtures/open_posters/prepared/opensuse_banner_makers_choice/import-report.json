@@ -21,7 +21,24 @@
         1.0666236371841333,
         0.18744666881821104,
         4924.526242575086
-      ]
+      ],
+      "rectangle_path_proven": false,
+      "nonbinding_clip_released": false,
+      "source_path_data": null,
+      "source_rectangle_bounds": [
+        0.0,
+        -4616.9302,
+        2125.9841,
+        5669.2915
+      ],
+      "source_frame": {
+        "x": 0.18744666881821104,
+        "y": -0.0006399741819222982,
+        "width": 2267.6248933376364,
+        "height": 6047.000319987092,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "rect4395",
@@ -41,7 +58,24 @@
         1.0666236371841333,
         0.18744666881821104,
         4924.526242575086
-      ]
+      ],
+      "rectangle_path_proven": false,
+      "nonbinding_clip_released": false,
+      "source_path_data": null,
+      "source_rectangle_bounds": [
+        0.0,
+        -1782.2843,
+        2125.9841,
+        2834.6458
+      ],
+      "source_frame": {
+        "x": 0.18744666881821104,
+        "y": 3023.4996800129093,
+        "width": 2267.6248933376364,
+        "height": 3023.500213324727,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "g7761",
@@ -112,6 +146,7 @@
       "source_text_owner": "n00114",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -138,6 +173,7 @@
       "source_text_owner": "n00116",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -164,6 +200,7 @@
       "source_text_owner": "n00116",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -190,6 +227,7 @@
       "source_text_owner": "n00120",
       "postscript_name": "SourceSansPro-Light",
       "font_resolution": "provider_evidenced_family_alias",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -241,6 +279,7 @@
       "source_text_owner": "n00123",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -267,6 +306,7 @@
       "source_text_owner": "n00123",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -327,6 +367,7 @@
       "source_text_owner": "n00136",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -353,6 +394,7 @@
       "source_text_owner": "n00136",
       "postscript_name": "SourceSansPro-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     }
@@ -2183,7 +2225,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00000",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:198.94433594;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:198.94433594;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2193,7 +2235,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00001",
-        "style": "fill:#35b9ab;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:75.00000671;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#35b9ab;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:75.00000671;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2203,7 +2245,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00002",
-        "style": "fill:#35b9ab;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:75.00000671;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#35b9ab;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:75.00000671;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2213,7 +2255,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00003",
-        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:SourceSansPro-Light;font-size:98.27079773;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:SourceSansPro-Light;font-size:98.27079773;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -2223,7 +2265,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00004",
-        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:SourceSansPro-Light;font-size:98.27079773;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:SourceSansPro-Light;font-size:98.27079773;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -2233,7 +2275,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00005",
-        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:98.27079773;font-weight:300;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#3ab6a9;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:98.27079773;font-weight:300;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -2243,7 +2285,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00006",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:77.73223877;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:77.73223877;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2253,7 +2295,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00007",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:77.73223877;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:77.73223877;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2263,7 +2305,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00008",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:73.04390717;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:73.04390717;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -2273,7 +2315,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00009",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:73.04390717;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Source Sans Pro';font-size:73.04390717;font-weight:normal;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black;opacity:1"
       }
     }
   ],

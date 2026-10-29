@@ -301,7 +301,24 @@
         1.65202,
         -141.69754,
         -351.237
-      ]
+      ],
+      "rectangle_path_proven": false,
+      "nonbinding_clip_released": false,
+      "source_path_data": null,
+      "source_rectangle_bounds": [
+        1484.35,
+        651.467,
+        720.707,
+        1694.89
+      ],
+      "source_frame": {
+        "x": 1300.0041158,
+        "y": 724.99951334,
+        "width": 699.999646476,
+        "height": 2799.9921778000003,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": null,
@@ -326,6 +343,7 @@
       "source_text_owner": "n00165",
       "postscript_name": "Cantarell-Bold",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -352,6 +370,7 @@
       "source_text_owner": "n00167",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -378,6 +397,7 @@
       "source_text_owner": "n00168",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -404,6 +424,7 @@
       "source_text_owner": "n00170",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -430,6 +451,7 @@
       "source_text_owner": "n00172",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -456,6 +478,7 @@
       "source_text_owner": "n00173",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -482,6 +505,7 @@
       "source_text_owner": "n00175",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -508,6 +532,7 @@
       "source_text_owner": "n00176",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -534,6 +559,7 @@
       "source_text_owner": "n00178",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -560,6 +586,7 @@
       "source_text_owner": "n00179",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -586,6 +613,7 @@
       "source_text_owner": "n00181",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -612,6 +640,7 @@
       "source_text_owner": "n00182",
       "postscript_name": "Cantarell-Italic",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -638,6 +667,7 @@
       "source_text_owner": "n00183",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -664,6 +694,7 @@
       "source_text_owner": "n00184",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -690,6 +721,7 @@
       "source_text_owner": "n00185",
       "postscript_name": "Cantarell-Italic",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -716,6 +748,7 @@
       "source_text_owner": "n00186",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -742,6 +775,7 @@
       "source_text_owner": "n00188",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -768,6 +802,7 @@
       "source_text_owner": "n00190",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -794,6 +829,7 @@
       "source_text_owner": "n00191",
       "postscript_name": "Cantarell-Italic",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -820,6 +856,7 @@
       "source_text_owner": "n00192",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -846,6 +883,7 @@
       "source_text_owner": "n00193",
       "postscript_name": "Cantarell-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1160,6 +1198,7 @@
       "source_text_owner": "n00339",
       "postscript_name": "DejaVuSansMono",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     }
@@ -5143,7 +5182,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00000",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Bold', 'Cantarell';font-size:310.5;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Bold', 'Cantarell';font-size:310.5;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5153,7 +5192,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00001",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5163,7 +5202,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00002",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5173,7 +5212,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00003",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5183,7 +5222,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00004",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5193,7 +5232,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00005",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5203,7 +5242,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00006",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5213,7 +5252,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00007",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5223,7 +5262,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00008",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5233,7 +5272,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00009",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5243,7 +5282,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00010",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5253,7 +5292,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00011",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:226.423;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:226.423;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5263,7 +5302,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00012",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5273,7 +5312,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00013",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5283,7 +5322,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00014",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:226.423;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:226.423;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5293,7 +5332,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00015",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:226.423;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5303,7 +5342,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00016",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5313,7 +5352,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00017",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5323,7 +5362,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00018",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:224.507;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Oblique', 'Cantarell';font-size:224.507;font-weight:400;font-style:italic;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5333,7 +5372,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00019",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5343,7 +5382,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00020",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Cantarell-Regular', 'Cantarell';font-size:224.507;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -5353,7 +5392,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00021",
-        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans Mono', monospace;font-size:40.0;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans Mono', monospace;font-size:40.0;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     }
   ],

@@ -33,7 +33,7 @@ ET.register_namespace("", SVG)
 ET.register_namespace("xlink", "http://www.w3.org/1999/xlink")
 IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
 DRAWABLE = {"rect", "circle", "ellipse", "line", "path", "polygon", "polyline", "image", "use"}
-IGNORED = {"defs", "metadata", "title", "desc", "style", "namedview", "symbol"}
+IGNORED = {"defs", "metadata", "title", "desc", "style", "namedview", "symbol", "clipPath"}
 INHERITED = {
     "fill": "black",
     "fill-opacity": "1",
@@ -98,6 +98,14 @@ def _point(m, x, y):
     return m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]
 
 
+def _inverse(m):
+    determinant = m[0] * m[3] - m[1] * m[2]
+    if not math.isfinite(determinant) or abs(determinant) < 1e-12:
+        return None
+    a, b, c, d = m[3] / determinant, -m[1] / determinant, -m[2] / determinant, m[0] / determinant
+    return a, b, c, d, -a * m[4] - c * m[5], -b * m[4] - d * m[5]
+
+
 def parse_transform(value: str | None):
     result, consumed = IDENTITY, ""
     for match in re.finditer(r"([A-Za-z]+)\s*\(([^)]*)\)", value or ""):
@@ -129,6 +137,101 @@ def parse_transform(value: str | None):
     return result
 
 
+def rectangle_path_bounds(value: str):
+    """Prove one rectangular fill contour, with only point-only extra subpaths.
+
+    This is deliberately not a general SVG path parser. Curves, open contours,
+    diagonals, holes, compound areas and retraced polygons stay native SVG art.
+    Boundary/perimeter/area checks prevent a rectilinear L-shape or a winding
+    polygon from being mistaken for its bounding rectangle.
+    Command semantics: https://www.w3.org/TR/SVG2/paths.html#PathDataMovetoCommands
+    """
+    token = re.compile(r"[MmLlHhVvZz]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?")
+    tokens = token.findall(value)
+    if not tokens or token.sub("", value).strip(" ,\t\r\n"):
+        return None
+    contours, points = [], []
+    current, command, index = (0.0, 0.0), None, 0
+    while index < len(tokens):
+        if tokens[index].isalpha():
+            command = tokens[index]
+            index += 1
+            if command in "Zz":
+                if not points:
+                    return None
+                contours.append((points, True))
+                current, points, command = points[0], [], None
+                continue
+        if command is None:
+            return None
+        count = 2 if command in "MmLl" else 1
+        if index + count > len(tokens) or any(
+            part.isalpha() for part in tokens[index : index + count]
+        ):
+            return None
+        numbers = tuple(float(part) for part in tokens[index : index + count])
+        if not all(math.isfinite(number) for number in numbers):
+            return None
+        index += count
+        relative = command.islower()
+        if command in "MmLl":
+            point = tuple(
+                number + current[axis] if relative else number
+                for axis, number in enumerate(numbers)
+            )
+        elif command in "Hh":
+            point = (numbers[0] + current[0] if relative else numbers[0], current[1])
+        else:
+            point = (current[0], numbers[0] + current[1] if relative else numbers[0])
+        if not all(math.isfinite(number) for number in point):
+            return None
+        if command in "Mm":
+            if points:
+                contours.append((points, False))
+            points = [point]
+            command = "l" if relative else "L"
+        elif not points:
+            return None
+        else:
+            points.append(point)
+        current = point
+    if points:
+        contours.append((points, False))
+
+    def equal(a, b):
+        return math.isclose(a, b, rel_tol=1e-12, abs_tol=1e-9)
+
+    rectangles = []
+    for contour, closed in contours:
+        if all(equal(x, contour[0][0]) and equal(y, contour[0][1]) for x, y in contour):
+            continue
+        if not closed:
+            return None
+        x0, y0 = min(x for x, _ in contour), min(y for _, y in contour)
+        x1, y1 = max(x for x, _ in contour), max(y for _, y in contour)
+        width, height = x1 - x0, y1 - y0
+        if (
+            not all(math.isfinite(number) for number in (width, height))
+            or width <= 0
+            or height <= 0
+        ):
+            return None
+        area, travel = 0.0, 0.0
+        for a, b in zip(contour, contour[1:] + contour[:1], strict=True):
+            vertical = equal(a[0], b[0]) and (equal(a[0], x0) or equal(a[0], x1))
+            horizontal = equal(a[1], b[1]) and (equal(a[1], y0) or equal(a[1], y1))
+            if not vertical and not horizontal:
+                return None
+            travel += abs(b[0] - a[0]) + abs(b[1] - a[1])
+            area += a[0] * b[1] - b[0] * a[1]
+        if not all(math.isfinite(number) for number in (area, travel, width * height)) or (
+            not equal(travel, 2 * (width + height)) or not equal(abs(area) / 2, width * height)
+        ):
+            return None
+        rectangles.append((x0, y0, width, height))
+    return rectangles[0] if len(rectangles) == 1 else None
+
+
 def _decls(value: str) -> dict:
     declarations = {}
     for item in value.split(";"):
@@ -140,6 +243,15 @@ def _decls(value: str) -> dict:
             key, value = item.split(":", 1)
             declarations[key.strip()] = value.strip()
     return declarations
+
+
+def _set_style(node, updates=None, remove=()):
+    """Edit render-copy CSS without empty declarations or duplicate properties."""
+    declarations = _decls(node.get("style", ""))
+    for name in remove:
+        declarations.pop(name, None)
+    declarations.update(updates or {})
+    node.set("style", ";".join(f"{name}:{value}" for name, value in declarations.items()))
 
 
 def _rgba(value: str, alpha=1.0) -> str:
@@ -234,6 +346,28 @@ class _Importer:
                 if "@" in css or re.sub(r"[^{}]+\{[^{}]*\}", "", css).strip():
                     raise ImportBlock("unsupported_css", "Unsupported stylesheet syntax.")
         self._index(self.root, None, INHERITED, self.viewport)
+        self.empty_flow_roots = {
+            key
+            for key, node in self.nodes.items()
+            if _tag(node) == "flowRoot"
+            and not "".join(node.itertext()).strip()
+            and all(
+                _tag(child) in {"flowRoot", "flowRegion", "flowPara", "flowSpan", "rect", "path"}
+                for child in node.iter()
+            )
+            and all(
+                _tag(child) not in DRAWABLE
+                or any(
+                    _tag(self.nodes[ancestor]) == "flowRegion"
+                    for ancestor in self._ancestors(child.get(KEY))
+                )
+                for child in node.iter()
+            )
+        }
+        self.ignored.extend(
+            {"source_key": key, "reason": "empty nonpainting Inkscape flow container"}
+            for key in self.empty_flow_roots
+        )
         self.original_root = deepcopy(self.root)
         self._expand_text(self.root)
 
@@ -265,6 +399,117 @@ class _Importer:
             self.nodes[k].get("clip-path", self.styles[k].get("clip-path", "none")) != "none"
             for k in self._ancestors(key)
         )
+
+    def _declared_property(self, key, name):
+        """Read this node's declaration, without inheriting ancestor clip paths."""
+        node = self.nodes[key]
+        value = node.get(name, "none")
+        rules = sorted(
+            enumerate(self.css),
+            key=lambda item: (
+                100 if item[1][0].startswith("#") else 10 if item[1][0].startswith(".") else 1,
+                item[0],
+            ),
+        )
+        for _, (selector, declarations) in rules:
+            if (
+                selector == _tag(node)
+                or selector == "#" + node.get("id", "")
+                or (selector.startswith(".") and selector[1:] in node.get("class", "").split())
+            ):
+                value = declarations.get(name, value)
+        return _decls(node.get("style", "")).get(name, value)
+
+    def _rectangular_clips(self, key):
+        """Prove rectangular clip intersections in the primitive's local axes."""
+        inverse = _inverse(self.world[key])
+        if inverse is None:
+            return None
+        records = []
+        for owner in self._ancestors(key):
+            reference = self._declared_property(owner, "clip-path")
+            if reference == "none":
+                continue
+            clip = self._reference(reference, owner)
+            if (
+                _tag(clip) != "clipPath"
+                or clip.get("clipPathUnits", "userSpaceOnUse") != "userSpaceOnUse"
+            ):
+                return None
+            geometries = []
+
+            def visit(node, matrix, geometries=geometries):
+                node_key = node.get(KEY)
+                style = self.styles[node_key]
+                if any(
+                    node.get(attr, style.get(attr, "none")) != "none"
+                    for attr in ("filter", "mask", "clip-path")
+                ) or (
+                    style.get("transform", "none") != "none"
+                    or style.get("display") == "none"
+                    or style.get("visibility") == "hidden"
+                ):
+                    return False
+                if any(name in style for name in ("x", "y", "width", "height", "rx", "ry", "d")):
+                    # The attribute geometry alone cannot prove an SVG2 CSS
+                    # geometry override. Preserve the native art instead.
+                    return False
+                matrix = _mul(matrix, parse_transform(node.get("transform")))
+                kind = _tag(node)
+                if kind in {"clipPath", "g"}:
+                    return all(visit(child, matrix) for child in node if _tag(child) not in IGNORED)
+                if style.get("stroke", "none") != "none":
+                    return False
+                if kind == "rect" and not any(_number(node.get(attr)) for attr in ("rx", "ry")):
+                    bounds = tuple(
+                        _number(node.get(attr)) for attr in ("x", "y", "width", "height")
+                    )
+                elif kind == "path":
+                    bounds = rectangle_path_bounds(node.get("d", ""))
+                else:
+                    return False
+                if bounds is None or min(bounds[2:]) <= 0:
+                    return False
+                geometries.append((node, bounds, matrix))
+                return True
+
+            if not visit(clip, IDENTITY) or len(geometries) != 1:
+                return None
+            geometry, bounds, matrix = geometries[0]
+            world = _mul(self.world[owner], matrix)
+            relative = _mul(inverse, world)
+            diagonal = abs(relative[1]) < 1e-9 and abs(relative[2]) < 1e-9
+            swapped = abs(relative[0]) < 1e-9 and abs(relative[3]) < 1e-9
+            if not diagonal and not swapped:
+                return None
+            x, y, width, height = bounds
+            corners = [
+                _point(relative, px, py)
+                for px, py in (
+                    (x, y),
+                    (x + width, y),
+                    (x, y + height),
+                    (x + width, y + height),
+                )
+            ]
+            left, top = min(p[0] for p in corners), min(p[1] for p in corners)
+            right, bottom = max(p[0] for p in corners), max(p[1] for p in corners)
+            if not all(math.isfinite(value) for value in (left, top, right, bottom)):
+                return None
+            records.append(
+                {
+                    "owner_source_key": owner,
+                    "clip_source_key": clip.get(KEY),
+                    "clip_id": clip.get("id"),
+                    "clip_attributes": dict(clip.attrib),
+                    "geometry_source_key": geometry.get(KEY),
+                    "geometry_attributes": dict(geometry.attrib),
+                    "world_transform": list(world),
+                    "relative_transform": list(relative),
+                    "element_local_bounds": [left, top, right - left, bottom - top],
+                }
+            )
+        return records or None
 
     def _canvas(self):
         view = [float(v) for v in re.split(r"[\s,]+", self.root.get("viewBox", "").strip()) if v]
@@ -397,6 +642,8 @@ class _Importer:
                 parent = node.get(KEY)
                 self.nodes[key], self.parents[key] = wrapper, parent
                 self.styles[key], self.world[key] = dict(self.styles[parent]), self.world[parent]
+                self.styles[key]["opacity"] = "1"
+                _set_style(wrapper, {"opacity": "1"})
                 self.text_runs.append(
                     {
                         "key": key,
@@ -429,10 +676,11 @@ class _Importer:
                         dict(self.styles[parent]),
                         self.world[parent],
                     )
-                    wrapper.set(
-                        "style",
-                        ";".join(
-                            f"{name}:{self.styles[parent][name]}"
+                    self.styles[key]["opacity"] = "1"
+                    _set_style(
+                        wrapper,
+                        {
+                            name: self.styles[parent][name]
                             for name in (
                                 "fill",
                                 "fill-opacity",
@@ -446,7 +694,8 @@ class _Importer:
                                 "letter-spacing",
                                 "color",
                             )
-                        ),
+                        }
+                        | {"opacity": "1"},
                     )
                     normalized = re.sub(r"[\t\r\n]", " ", value)
                     preserve = any(
@@ -478,6 +727,7 @@ class _Importer:
     def _visible(self, key):
         return all(
             _tag(self.nodes[k]) not in IGNORED
+            and k not in self.empty_flow_roots
             and self.styles[k].get("display") != "none"
             and self.styles[k].get("visibility") != "hidden"
             for k in self._ancestors(key)
@@ -494,6 +744,26 @@ class _Importer:
             )
         for key, node in self.nodes.items():
             if not self._visible(key):
+                continue
+            flow_owner = next(
+                (
+                    ancestor
+                    for ancestor in self._ancestors(key)
+                    if _tag(self.nodes[ancestor]) == "flowRoot"
+                ),
+                None,
+            )
+            if flow_owner is not None:
+                if key == flow_owner:
+                    failure = ImportBlock(
+                        "unsupported_flow_text",
+                        "Legacy Inkscape flowed text needs editable normalization and exact fonts; "
+                        "resvg does not supply a complete author-reference for this content.",
+                        key,
+                    ).record()
+                    failure["source_text"] = "".join(node.itertext())
+                    failure["source_attributes"] = dict(node.attrib)
+                    issues.append(failure)
                 continue
             style = self.styles[key]
             if _tag(node) not in DRAWABLE | IGNORED | {"svg", "g", "text", "tspan"}:
@@ -650,6 +920,36 @@ class _Importer:
                 "unsupported_text_transform",
                 "Skewed, reflected or nonuniform text cannot remain editable.",
             )
+        opacity = 1.0
+        for ancestor in self._ancestors(key):
+            if ancestor.startswith("run") or _tag(self.nodes[ancestor]) not in {"text", "tspan"}:
+                continue
+            value = self._declared_property(ancestor, "opacity")
+            if value == "none":
+                continue
+            try:
+                alpha = float(value[:-1]) / 100 if value.endswith("%") else float(value)
+            except ValueError as exc:
+                raise ImportBlock(
+                    "unsupported_text_opacity", "Text opacity needs a numeric value."
+                ) from exc
+            if not math.isfinite(alpha):
+                raise ImportBlock("unsupported_text_opacity", "Text opacity must be finite.")
+            alpha = min(1.0, max(0.0, alpha))
+            if (
+                alpha != 1
+                and sum(
+                    bool(other["content"].strip()) and ancestor in self._ancestors(other["key"])
+                    for other in self.text_runs
+                )
+                > 1
+            ):
+                raise ImportBlock(
+                    "text_group_compositing",
+                    "Multi-run ancestor opacity needs one editable compositing object.",
+                )
+            opacity *= alpha
+        run["opacity"] = opacity
 
     def _font(self, style, content):
         from fontTools.ttLib import TTFont
@@ -796,7 +1096,7 @@ class _Importer:
             if node is None:
                 node = by_key.get(self.parents[run["key"]])
             if node is not None:
-                node.set("style", node.get("style", "") + f";font-family:'{face.family}'")
+                _set_style(node, {"font-family": f"'{face.family}'"})
         data = ET.tostring(rendered_root, encoding="unicode")
         png = resvg_py.svg_to_bytes(
             svg_string=data,
@@ -829,10 +1129,7 @@ class _Importer:
                 else:
                     prune(child)
             if text and node.get(KEY, "").startswith("run") and node.get(KEY) != key:
-                node.set(
-                    "style",
-                    ";".join(filter(None, (node.get("style", ""), "fill:none", "stroke:none"))),
-                )
+                _set_style(node, {"fill": "none", "stroke": "none"})
 
         prune(clone)
         present_ids = {n.get("id") for n in clone.iter() if n.get("id")}
@@ -848,9 +1145,8 @@ class _Importer:
                     present_ids.update(n.get("id") for n in target.iter() if n.get("id"))
             if remove_clips:
                 node.attrib.pop("clip-path", None)
-                declarations = _decls(node.get("style", ""))
-                declarations.pop("clip-path", None)
-                node.set("style", ";".join(f"{k}:{v}" for k, v in declarations.items()))
+                # Override stylesheet rules as well as presentation/inline clips.
+                _set_style(node, {"clip-path": "none"})
         if padding:
             # Measure the complete original glyph shape across the root viewport
             # edge, then retain its original position so the engine canvas clips
@@ -930,7 +1226,18 @@ class _Importer:
     def _shape(self, key):
         node, style, m = self.nodes[key], self.styles[key], self.world[key]
         kind = _tag(node)
-        if self._has_clip(key):
+        path_rectangle = rectangle_path_bounds(node.get("d", "")) if kind == "path" else None
+        if path_rectangle is not None and "d" in style:
+            return False
+        if path_rectangle is not None:
+            kind = "rect"
+        if any(
+            self.nodes[ancestor].get(attr, self.styles[ancestor].get(attr, "none")) != "none"
+            for ancestor in self._ancestors(key)
+            for attr in ("marker", "marker-start", "marker-mid", "marker-end")
+        ):
+            # Vertex markers paint outside the proven contour. Keep the full
+            # artwork instead of promoting only its rectangular fill.
             return False
         if (
             kind not in {"rect", "circle", "ellipse"}
@@ -942,9 +1249,11 @@ class _Importer:
         if min(sx, sy) <= 0 or abs(m[0] * m[2] + m[1] * m[3]) > 1e-6:
             return False
         if kind == "rect":
-            x, y, w, h = (_number(node.get(k)) for k in ("x", "y", "width", "height"))
-            rx = _number(node.get("rx", node.get("ry", "0"))) * sx
-            ry = _number(node.get("ry", node.get("rx", "0"))) * sy
+            x, y, w, h = path_rectangle or tuple(
+                _number(node.get(k)) for k in ("x", "y", "width", "height")
+            )
+            rx = 0 if path_rectangle else _number(node.get("rx", node.get("ry", "0"))) * sx
+            ry = 0 if path_rectangle else _number(node.get("ry", node.get("rx", "0"))) * sy
             if abs(rx - ry) > 1e-6:
                 return False
         else:
@@ -956,6 +1265,43 @@ class _Importer:
             )
             x, y, w, h = cx - rx, cy - ry, rx * 2, ry * 2
             rx = 0
+        raw_bounds = x, y, w, h
+        raw_cx, raw_cy = _point(m, x + w / 2, y + h / 2)
+        raw_frame = {
+            "x": raw_cx - w * sx / 2,
+            "y": raw_cy - h * sy / 2,
+            "width": w * sx,
+            "height": h * sy,
+            "rotation": math.degrees(math.atan2(m[1], m[0])),
+        }
+        clip_released, clip_chain, clipped = False, [], None
+        if self._has_clip(key):
+            if any(
+                float(self.styles[ancestor].get("opacity", 1)) != 1
+                for ancestor in self._ancestors(key)
+                if ancestor != key
+            ):
+                return False
+            clipped = self.isolated(key)
+            unclipped = self.isolated(key, remove_clips=True)
+            if clipped.tobytes() == unclipped.tobytes():
+                clip_released = True
+            elif kind == "rect" and rx == 0 and ry == 0:
+                clip_chain = self._rectangular_clips(key)
+                if clip_chain is None:
+                    return False
+                right, bottom = x + w, y + h
+                for record in clip_chain:
+                    left, top, width, height = record["element_local_bounds"]
+                    x, y, right, bottom = (
+                        max(x, left),
+                        max(y, top),
+                        min(right, left + width),
+                        min(bottom, top + height),
+                    )
+                w, h = right - x, bottom - y
+            else:
+                return False
         if min(w, h) <= 0:
             self.ignored.append({"source_key": key, "reason": "zero-area SVG shape"})
             return True
@@ -977,7 +1323,30 @@ class _Importer:
             key,
             "native_shape",
             (cx - w * sx / 2, cy - h * sy / 2, cx + w * sx / 2, cy + h * sy / 2),
+            rectangle_path_proven=path_rectangle is not None,
+            nonbinding_clip_released=clip_released,
+            source_path_data=node.get("d") if path_rectangle else None,
+            source_rectangle_bounds=list(raw_bounds) if kind == "rect" else None,
+            source_frame=raw_frame,
+            rectangular_clip_chain=clip_chain,
         )
+        if clip_chain:
+            from engine.eval.render import render_image
+
+            primitive = render_image(
+                {
+                    "canvas": {"width": self.width, "height": self.height},
+                    "elements": [self.elements[-1]],
+                },
+                max_size=max(self.width, self.height),
+            ).convert("RGB")
+            paper = Image.new("RGBA", clipped.size, "white")
+            native = Image.alpha_composite(paper, clipped).convert("RGB")
+            difference = ImageChops.difference(native, primitive)
+            self.mapping[-1]["native_normalized_mae"] = sum(ImageStat.Stat(difference).mean) / (
+                3 * 255
+            )
+            self.mapping[-1]["native_raster_difference_bbox"] = difference.getbbox()
         return True
 
     def _text(self, run):
@@ -1099,7 +1468,7 @@ class _Importer:
         element["y"] += bounds[1] - ink[1]
         fill = style["color"] if style["fill"] == "currentColor" else style["fill"]
         element["color"] = _rgba(fill, float(style.get("fill-opacity", 1)))
-        element["opacity"] = float(style.get("opacity", 1))
+        element["opacity"] = run["opacity"]
         element.update(
             svg_font_family=style["font-family"],
             svg_font_weight=style["font-weight"],
@@ -1114,6 +1483,7 @@ class _Importer:
             source_text_owner=run["owner"],
             postscript_name=face.postscript_name,
             font_resolution=face.resolution,
+            effective_text_opacity=run["opacity"],
             source_complete_text=run.get("source_complete_text"),
             segmentation=run.get("segmentation"),
         )
@@ -1269,6 +1639,11 @@ def prepare_poster(entry: dict, corpus_root: str | Path, outdir: str | Path) -> 
         report["canvas"] = {"width": importer.width, "height": importer.height}
         report["viewport_convention"] = importer.viewport_convention
         issues = importer.audit()
+        if any(issue["code"] == "unsupported_flow_text" for issue in issues):
+            report["native_reference_complete"] = False
+            report["native_reference_warning"] = (
+                "Legacy Inkscape flow text is not rendered by resvg."
+            )
         report["font_resolutions"] = importer.font_resolutions
         report["source_tree"] = [
             {
@@ -1413,7 +1788,7 @@ def prepare_poster(entry: dict, corpus_root: str | Path, outdir: str | Path) -> 
         )
     if report["status"] != "ready":
         # A stale previous bundle must never make a failed preparation runnable.
-        for name in ("bundle.json", "source.json"):
+        for name in ("bundle.json", "source.json", "imported.png"):
             (out / name).unlink(missing_ok=True)
     (out / "import-report.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"

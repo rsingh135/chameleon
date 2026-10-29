@@ -1,9 +1,10 @@
-"""Document-only renderer compatibility for genuine fractional text sizes.
+"""Document-only renderer compatibility for fractional text sizes and opacity.
 
 The installed cr-renderer truncates fontSize to int when creating text blobs,
 although its converter measures using floats. This adapter keeps the vendor's
-span, paint, image, coordinate and encoding helpers, changing only blob creation
-for manifest-backed documents. It never replaces vendor functions or globals.
+span, paint, image, coordinate and encoding helpers, using fractional blobs and
+one text opacity layer for manifest-backed documents. It never replaces vendor
+functions or globals.
 """
 
 from __future__ import annotations
@@ -40,6 +41,21 @@ def make_native_text_blob(element, span, font_manager):
 
 
 def render_native_text(canvas, font_manager, element, descriptor=None):
+    """Composite the complete native text paint at its authored opacity once."""
+    if float(element.opacity) == 1:
+        _paint_native_text(canvas, font_manager, element, descriptor)
+        return
+    # Vendor fill paints overwrite their initial alpha when setting a span's
+    # color. A layer also keeps overlapping fill/outline paints at one shared
+    # opacity. Normalize only this render's model so live native effects do not
+    # apply the authored opacity a second time; retain span and color alpha.
+    paint_element = element.model_copy(update={"opacity": 1.0})
+    with skia.AutoCanvasRestore(canvas):
+        canvas.saveLayer(paint=skia.Paint(Alphaf=float(element.opacity)))
+        _paint_native_text(canvas, font_manager, paint_element, descriptor)
+
+
+def _paint_native_text(canvas, font_manager, element, descriptor):
     """Use vendor text paint/effects with document-local fractional blobs."""
     if descriptor is not None:
         from engine.native_text_effects import draw_native_text

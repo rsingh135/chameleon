@@ -1,158 +1,37 @@
 {
   "id": "opensuse_banner_connect",
-  "status": "ready",
-  "failures": [],
-  "node_mapping": [
+  "status": "unsupported",
+  "failures": [
     {
-      "node_id": "rect3339",
-      "source_key": "n00080",
-      "element_id": "svg-n00080",
-      "mode": "native_shape",
-      "reference_bounds": [
-        0.18744666881821104,
-        -0.0006399741819222982,
-        2267.8123400064546,
-        6046.99968001291
-      ],
-      "world_transform": [
-        1.0666236371841333,
-        0.0,
-        0.0,
-        1.0666236371841333,
-        0.18744666881821104,
-        4924.526242575086
-      ]
+      "code": "unsupported_flow_text",
+      "node_id": "n00133",
+      "message": "Legacy Inkscape flowed text needs editable normalization and exact fonts; resvg does not supply a complete author-reference for this content.",
+      "source_text": "LINUX ",
+      "source_attributes": {
+        "transform": "translate(1274.398,146.4561)",
+        "style": "font-style:normal;font-variant:normal;font-weight:300;font-stretch:condensed;font-size:80px;line-height:125%;font-family:'Open Sans';-inkscape-font-specification:'Open Sans Light Condensed';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#ffffff;fill-opacity:1;stroke:none",
+        "id": "flowRoot3201-4",
+        "{http://www.w3.org/XML/1998/namespace}space": "preserve",
+        "data-chameleon-import-key": "n00133"
+      }
     },
     {
-      "node_id": "g7761",
-      "source_key": "n00086",
-      "element_id": "svg-n00086",
-      "mode": "rigid_vector_art",
-      "reference_bounds": [
-        1511,
-        189,
-        2079,
-        545
-      ],
-      "world_transform": [
-        2.1115126845133654,
-        0.0,
-        0.0,
-        2.1115126845133654,
-        -328.8631401823211,
-        2284.898649817106
-      ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00086",
-        "n00087",
-        "n00088",
-        "n00089",
-        "n00090",
-        "n00091",
-        "n00092",
-        "n00093",
-        "n00094",
-        "n00095",
-        "n00096",
-        "n00097",
-        "n00098",
-        "n00099",
-        "n00100",
-        "n00101",
-        "n00102",
-        "n00103",
-        "n00104",
-        "n00105",
-        "n00106",
-        "n00107"
-      ]
-    },
-    {
-      "node_id": null,
-      "source_key": "run00000",
-      "element_id": "svg-run00000",
-      "mode": "editable_text",
-      "reference_bounds": [
-        189,
-        5691,
-        2075,
-        5859
-      ],
-      "world_transform": [
-        1.0666236371841333,
-        0.0,
-        0.0,
-        1.0666236371841333,
-        0.18744666881821104,
-        4924.526242575086
-      ],
-      "raw_text": "www.opensuse.org",
-      "source_text_owner": "n00108",
-      "postscript_name": "OpenSans-Regular",
-      "font_resolution": "exact_named_family_weight_style",
-      "source_complete_text": null,
-      "segmentation": null
-    },
-    {
-      "node_id": "g7914",
-      "source_key": "n00110",
-      "element_id": "svg-n00110",
-      "mode": "rigid_vector_art",
-      "reference_bounds": [
-        205,
-        1468,
-        2079,
-        4475
-      ],
-      "world_transform": [
-        2.866555184764543,
-        0.0,
-        0.0,
-        2.866555184764543,
-        -3429.557391363139,
-        7608.15803345928
-      ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00110",
-        "n00111",
-        "n00112",
-        "n00113",
-        "n00114",
-        "n00115",
-        "n00116",
-        "n00117",
-        "n00118",
-        "n00119",
-        "n00120",
-        "n00121",
-        "n00122",
-        "n00123",
-        "n00124",
-        "n00125",
-        "n00126",
-        "n00127",
-        "n00128",
-        "n00129",
-        "n00130",
-        "n00131",
-        "n00132",
-        "n00133",
-        "n00134",
-        "n00135",
-        "n00136",
-        "n00137",
-        "n00138",
-        "n00139",
-        "n00140"
-      ]
+      "code": "unsupported_flow_text",
+      "node_id": "n00137",
+      "message": "Legacy Inkscape flowed text needs editable normalization and exact fonts; resvg does not supply a complete author-reference for this content.",
+      "source_text": "           FOR OPEN MINDS",
+      "source_attributes": {
+        "transform": "translate(1280.398,146.4561)",
+        "style": "font-style:normal;font-variant:normal;font-weight:300;font-stretch:condensed;font-size:80px;line-height:125%;font-family:'Open Sans';-inkscape-font-specification:'Open Sans Light Condensed';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;display:inline;fill:#80b04e;fill-opacity:1;stroke:none",
+        "id": "flowRoot3201",
+        "{http://www.w3.org/XML/1998/namespace}space": "preserve",
+        "data-chameleon-import-key": "n00137"
+      }
     }
   ],
-  "editable_text_count": 1,
-  "vector_art_count": 2,
+  "node_mapping": [],
+  "editable_text_count": 0,
+  "vector_art_count": 0,
   "parity_review": "pending",
   "attribution": {
     "title": "openSUSE Connect promotional banner",
@@ -189,6 +68,8 @@
     "height": 6047
   },
   "viewport_convention": "absolute SVG dimensions",
+  "native_reference_complete": false,
+  "native_reference_warning": "Legacy Inkscape flow text is not rendered by resvg.",
   "font_resolutions": [
     {
       "declared_families": [
@@ -1933,203 +1814,6 @@
         "data-chameleon-import-key": "run00000",
         "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:198.94433594;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
       }
-    }
-  ],
-  "native_imported_normalized_mae": 0.00048533493432979054,
-  "native_shape_count": 1,
-  "ignored_nodes": [],
-  "source_warnings": [],
-  "authored_groups": [
-    {
-      "source_key": "n00084",
-      "id": "g4188-1",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00084"
-      ]
-    },
-    {
-      "source_key": "n00083",
-      "id": "g4186-6",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00083",
-        "n00084"
-      ]
-    },
-    {
-      "source_key": "n00082",
-      "id": "g4180-3",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00082",
-        "n00083",
-        "n00084"
-      ]
-    },
-    {
-      "source_key": "n00081",
-      "id": "g4178-9",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00081",
-        "n00082",
-        "n00083",
-        "n00084"
-      ]
-    },
-    {
-      "source_key": "n00085",
-      "id": "g7743",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00085"
-      ]
-    },
-    {
-      "source_key": "n00086",
-      "id": "g7761",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00086",
-        "n00087",
-        "n00088",
-        "n00089",
-        "n00090",
-        "n00091",
-        "n00092",
-        "n00093",
-        "n00094",
-        "n00095",
-        "n00096",
-        "n00097",
-        "n00098",
-        "n00099",
-        "n00100",
-        "n00101",
-        "n00102",
-        "n00103",
-        "n00104",
-        "n00105",
-        "n00106",
-        "n00107"
-      ]
-    },
-    {
-      "source_key": "n00110",
-      "id": "g7914",
-      "layer": false,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00110",
-        "n00111",
-        "n00112",
-        "n00113",
-        "n00114",
-        "n00115",
-        "n00116",
-        "n00117",
-        "n00118",
-        "n00119",
-        "n00120",
-        "n00121",
-        "n00122",
-        "n00123",
-        "n00124",
-        "n00125",
-        "n00126",
-        "n00127",
-        "n00128",
-        "n00129",
-        "n00130",
-        "n00131",
-        "n00132",
-        "n00133",
-        "n00134",
-        "n00135",
-        "n00136",
-        "n00137",
-        "n00138",
-        "n00139",
-        "n00140"
-      ]
-    },
-    {
-      "source_key": "n00079",
-      "id": "layer1",
-      "layer": true,
-      "whole_document": false,
-      "descendant_keys": [
-        "n00079",
-        "n00080",
-        "n00081",
-        "n00082",
-        "n00083",
-        "n00084",
-        "n00085",
-        "n00086",
-        "n00087",
-        "n00088",
-        "n00089",
-        "n00090",
-        "n00091",
-        "n00092",
-        "n00093",
-        "n00094",
-        "n00095",
-        "n00096",
-        "n00097",
-        "n00098",
-        "n00099",
-        "n00100",
-        "n00101",
-        "n00102",
-        "n00103",
-        "n00104",
-        "n00105",
-        "n00106",
-        "n00107",
-        "n00108",
-        "n00109",
-        "run00000",
-        "n00110",
-        "n00111",
-        "n00112",
-        "n00113",
-        "n00114",
-        "n00115",
-        "n00116",
-        "n00117",
-        "n00118",
-        "n00119",
-        "n00120",
-        "n00121",
-        "n00122",
-        "n00123",
-        "n00124",
-        "n00125",
-        "n00126",
-        "n00127",
-        "n00128",
-        "n00129",
-        "n00130",
-        "n00131",
-        "n00132",
-        "n00133",
-        "n00134",
-        "n00135",
-        "n00136",
-        "n00137",
-        "n00138",
-        "n00139",
-        "n00140"
-      ]
     }
   ]
 }

@@ -9,7 +9,13 @@ import pytest
 from fontTools.ttLib import TTFont
 from PIL import Image
 
-from tools.poster_import import ImportBlock, main, parse_transform, prepare_poster
+from tools.poster_import import (
+    ImportBlock,
+    main,
+    parse_transform,
+    prepare_poster,
+    rectangle_path_bounds,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -254,7 +260,8 @@ def test_internal_use_and_nontext_clips_keep_their_actual_pixels(tmp_path):
     )
     report, out = prepare(tmp_path, raw)
     assert report["status"] == "ready", report["failures"]
-    assert report["vector_art_count"] == 2
+    assert report["vector_art_count"] == 1
+    assert report["native_shape_count"] == 2
     assert report["native_imported_normalized_mae"] < 0.005
     source = json.loads((out / "source.json").read_text(encoding="utf-8"))
     assert all(
@@ -361,3 +368,340 @@ def test_adapted_reference_hash_mismatch_fails_before_import(tmp_path):
     assert report["status"] == "unsupported"
     assert report["failures"][0]["code"] == "reference_hash_mismatch"
     assert not (tmp_path / "prepared/bundle.json").exists()
+
+
+@pytest.mark.parametrize(
+    "commands",
+    [
+        "M10 20H50V40H10Z",
+        "m10 20h40v20h-40z",
+        "M10,20 50,20 50,40 10,40z",
+        "m10 20 40 0 0 20 -40 0 z m0 0",
+        "M1e1 2e1H5e1V4e1H1e1z",
+        "M10 20V40H50V20Z",
+        "M30 20H50V40H10V20H30Z M0 0 M9 9L9 9Z",
+    ],
+)
+def test_proven_rectangle_paths_accept_relative_implicit_and_degenerate_subpaths(commands):
+    assert rectangle_path_bounds(commands) == pytest.approx((10, 20, 40, 20))
+
+
+def test_genuine_rectangle_path_example_is_proven_without_source_ids():
+    assert rectangle_path_bounds(
+        "m 0,430.86719 1261.418,0 L 1261.418,0 0,0 Z m 0,0"
+    ) == pytest.approx((0, 0, 1261.418, 430.86719))
+
+
+@pytest.mark.parametrize(
+    "commands",
+    [
+        "M0 0L20 20L0 20Z",  # diagonal
+        "M0 0H40V10H10V40H0Z",  # rectilinear L-shape
+        "M0 0H40V20H0",  # open contour
+        "M0 0H40V20V0H0Z",  # boundary backtracking, no rectangular fill
+        "M0 0H40V20H0Z M10 5H20V10H10Z",  # hole/compound area
+        "M0 0H40V20H0Z M0 0H40V20H0Z",  # repeated contours depend on fill-rule
+        "M0 0H40V20H0Z M100 100L101 100",  # extra line is not a point subpath
+        "M0 0C0 0 40 0 40 20H0Z",  # curve commands are never simplified
+        "M0 0Q20 0 40 20H0Z",
+        "M0 0A20 20 0 0 1 40 20H0Z",
+        "M0 0H40V20H0Z M",  # incomplete data
+        "M0 0H40V20H0Z nonsense",
+        "M0 0L0 0Z",  # no area
+        "M-1e308 -1e308H1e308V1e308H-1e308Z",  # overflow cannot be proved
+    ],
+)
+def test_general_or_uncertain_paths_are_not_promoted_to_rectangles(commands):
+    assert rectangle_path_bounds(commands) is None
+
+
+def test_proven_path_and_native_rect_have_identical_editable_geometry_and_pixels(tmp_path):
+    attributes = 'fill="#003342" fill-opacity=".7"'
+    path = f'<path d="M10 20h80v50h-80z" {attributes}/>'
+    rect = f'<rect x="10" y="20" width="80" height="50" {attributes}/>'
+    wrapper = '<g transform="translate(30 20) rotate(25) scale(2 1.5)">{}</g>'
+    report, out = prepare(tmp_path, svg(wrapper.format(path)))
+    assert report["status"] == "ready", report["failures"]
+    from_path = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    rendered_path = Image.open(out / "imported.png").convert("RGBA").tobytes()
+    assert report["node_mapping"][0]["rectangle_path_proven"]
+    assert report["native_shape_count"] == 1
+    assert report["vector_art_count"] == 0
+    assert report["native_imported_normalized_mae"] < 0.01
+    report, out = prepare(tmp_path, svg(wrapper.format(rect)))
+    assert report["status"] == "ready", report["failures"]
+    assert json.loads((out / "source.json").read_text(encoding="utf-8")) == from_path
+    assert Image.open(out / "imported.png").convert("RGBA").tobytes() == rendered_path
+
+
+def test_rectangle_path_in_authored_text_component_keeps_group_and_z_order(tmp_path, face):
+    raw = svg(
+        '<g id="badge"><path d="M20 20h200v70H20Z" fill="orange"/>'
+        + text(face, "Badge")
+        + '</g><circle cx="280" cy="180" r="20"/>'
+    )
+    report, out = prepare(tmp_path, raw, [face])
+    assert report["status"] == "ready", report["failures"]
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert source["elements"][0]["type"] == "shape"
+    assert source["elements"][0]["group_id"] == source["elements"][1]["group_id"]
+    assert [element["z_index"] for element in source["elements"]] == [0, 1, 2]
+
+
+def test_stroked_rectangle_path_retains_art_when_native_stroke_is_not_supported(tmp_path):
+    raw = svg(
+        '<rect width="360" height="260" fill="white"/>'
+        '<path d="M30 30h80v60H30Z" fill="red" stroke="blue" stroke-width="8"/>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    assert report["vector_art_count"] == 1
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert source["elements"][1]["type"] == "image"
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+def test_rectangle_path_with_vertex_marker_retains_complete_art(tmp_path):
+    raw = svg(
+        '<defs><marker id="mark" markerWidth="12" markerHeight="12" refX="6" refY="6">'
+        '<circle cx="6" cy="6" r="6" fill="blue"/></marker></defs>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<path d="M50 50h80v60H50Z" fill="red" marker-start="url(#mark)"/>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    assert report["vector_art_count"] == 1
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert source["elements"][1]["type"] == "image"
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+@pytest.mark.parametrize("clip_width, nonbinding", [(120, True), (20, False)])
+def test_native_rectangle_preserves_a_binding_clip_as_exact_intersection(
+    tmp_path, clip_width, nonbinding
+):
+    raw = svg(
+        '<defs><clipPath id="clip"><rect x="30" y="20" '
+        f'width="{clip_width}" height="100"/></clipPath></defs>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<g clip-path="url(#clip)"><path d="M30 30h80v60H30Z" fill="red"/></g>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert source["elements"][1]["type"] == "shape"
+    if nonbinding:
+        assert report["node_mapping"][1]["nonbinding_clip_released"]
+    else:
+        assert not report["node_mapping"][1]["nonbinding_clip_released"]
+        assert source["elements"][1]["width"] == 20
+        assert report["node_mapping"][1]["source_frame"]["width"] == 80
+        assert report["node_mapping"][1]["rectangular_clip_chain"]
+        assert report["node_mapping"][1]["native_normalized_mae"] < 0.005
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+def test_clip_and_element_transforms_are_composed_exactly_once(tmp_path):
+    raw = svg(
+        '<defs><clipPath id="clip" transform="translate(5 3)">'
+        '<rect x="10" y="0" width="20" height="50"/></clipPath></defs>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<g transform="translate(40 20) scale(2)" clip-path="url(#clip)">'
+        '<path transform="translate(5 0)" d="M0 0h80v60h-80z" fill="red"/></g>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    element = json.loads((out / "source.json").read_text(encoding="utf-8"))["elements"][1]
+    assert [element[field] for field in ("x", "y", "width", "height")] == pytest.approx(
+        [70, 26, 40, 100]
+    )
+    mapping = report["node_mapping"][1]
+    assert mapping["source_frame"] == {"x": 50, "y": 20, "width": 160, "height": 120, "rotation": 0}
+    assert mapping["source_path_data"] == "M0 0h80v60h-80z"
+    assert mapping["rectangular_clip_chain"][0]["element_local_bounds"] == pytest.approx(
+        [10, 3, 20, 50]
+    )
+
+
+def test_nested_rectangular_clips_retain_the_complete_intersection_chain(tmp_path):
+    raw = svg(
+        '<defs><clipPath id="outer"><rect x="20" y="20" width="80" height="80"/></clipPath>'
+        '<clipPath id="inner"><rect x="40" y="40" width="20" height="20"/></clipPath></defs>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<g clip-path="url(#outer)"><g clip-path="url(#inner)">'
+        '<path d="M10 10h120v120h-120z" fill="red"/></g></g>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    element = json.loads((out / "source.json").read_text(encoding="utf-8"))["elements"][1]
+    assert [element[field] for field in ("x", "y", "width", "height")] == [40, 40, 20, 20]
+    chain = report["node_mapping"][1]["rectangular_clip_chain"]
+    assert [record["clip_id"] for record in chain] == ["inner", "outer"]
+    assert report["node_mapping"][1]["source_frame"]["width"] == 120
+
+
+def test_stylesheet_clip_is_disabled_for_the_nonbinding_proof_not_silently_released(tmp_path):
+    raw = svg(
+        '<defs><clipPath id="clip"><rect x="30" y="20" width="20" height="100"/></clipPath></defs>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<g class="cut"><path d="M30 30h80v60H30Z" fill="red"/></g>',
+        style=".cut { clip-path:url(#clip); }",
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    element = json.loads((out / "source.json").read_text(encoding="utf-8"))["elements"][1]
+    assert element["type"] == "shape" and element["width"] == 20
+    assert not report["node_mapping"][1]["nonbinding_clip_released"]
+    assert report["node_mapping"][1]["rectangular_clip_chain"]
+
+
+def test_binding_stylesheet_text_clip_does_not_get_ignored(tmp_path, face):
+    raw = svg(
+        '<defs><clipPath id="clip"><rect x="30" y="20" width="20" height="100"/></clipPath></defs>'
+        + text(face, **{"class": "cut"}),
+        style=".cut { clip-path:url(#clip); }",
+    )
+    report, out = prepare(tmp_path, raw, [face])
+    assert report["status"] == "unsupported"
+    assert any(failure["code"] == "clipped_text" for failure in report["failures"])
+    assert not (out / "bundle.json").exists()
+
+
+@pytest.mark.parametrize(
+    "clip_geometry,target",
+    [
+        ('<circle cx="50" cy="50" r="25"/>', '<path d="M30 30h80v60H30Z" fill="red"/>'),
+        (
+            '<rect x="30" y="30" width="20" height="20"/>'
+            '<rect x="70" y="30" width="20" height="20"/>',
+            '<path d="M30 30h80v60H30Z" fill="red"/>',
+        ),
+        (
+            '<rect x="30" y="30" width="20" height="60" transform="rotate(25 40 40)"/>',
+            '<path d="M30 30h80v60H30Z" fill="red"/>',
+        ),
+        (
+            '<rect x="30" y="30" width="20" height="60" stroke="blue"/>',
+            '<path d="M30 30h80v60H30Z" fill="red"/>',
+        ),
+        (
+            '<rect x="30" y="30" width="20" height="60" rx="8"/>',
+            '<path d="M30 30h80v60H30Z" fill="red"/>',
+        ),
+        (
+            '<rect x="30" y="30" width="20" height="60" style="rx:8;ry:8"/>',
+            '<path d="M30 30h80v60H30Z" fill="red"/>',
+        ),
+        (
+            '<rect x="30" y="30" width="20" height="60"/>',
+            '<rect x="30" y="30" width="80" height="60" rx="8" fill="red"/>',
+        ),
+    ],
+)
+def test_unproven_clip_geometry_and_rounded_edge_cuts_remain_exact_art(
+    tmp_path, clip_geometry, target
+):
+    raw = svg(
+        '<defs><clipPath id="clip">' + clip_geometry + "</clipPath></defs>"
+        '<rect width="360" height="260" fill="white"/>'
+        '<g clip-path="url(#clip)">' + target + "</g>"
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert source["elements"][1]["type"] == "image"
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+def test_genuine_prepared_background_is_an_editable_shape_not_a_full_canvas_image():
+    folder = ROOT / "fixtures/open_posters/prepared/opensuse_cheatsheet"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    canvas = source["canvas"]
+    assert any(
+        element["type"] == "shape"
+        and element["shape_type"] == "rectangle"
+        and element["width"] * element["height"] >= canvas["width"] * canvas["height"] * 0.99
+        and abs(element["x"]) < 1
+        and abs(element["y"]) < 1
+        for element in source["elements"]
+    )
+
+
+def test_root_level_clip_definitions_are_preserved_and_never_drawn_as_content(tmp_path):
+    raw = svg(
+        '<clipPath id="clip"><path d="M20 20h20v60H20Z"/></clipPath>'
+        '<rect width="360" height="260" fill="white"/>'
+        '<path d="M20 20h80v60H20Z" fill="red" clip-path="url(#clip)"/>'
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == "ready", report["failures"]
+    source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+    assert len(source["elements"]) == 2
+    assert source["elements"][1]["type"] == "shape"
+    assert source["elements"][1]["width"] == 20
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+@pytest.mark.parametrize("content,ready", [("", True), ("Do not silently drop live copy", False)])
+def test_only_empty_inkscape_flow_containers_are_nonpainting(tmp_path, content, ready):
+    raw = svg(
+        '<rect x="20" y="20" width="40" height="40" fill="red"/>'
+        '<flowRoot style="font-family:Missing"><flowRegion>'
+        '<rect x="30" y="30" width="100" height="100"/></flowRegion>'
+        "<flowPara>" + content + "</flowPara></flowRoot>"
+    )
+    report, out = prepare(tmp_path, raw)
+    assert report["status"] == ("ready" if ready else "unsupported"), report["failures"]
+    if ready:
+        source = json.loads((out / "source.json").read_text(encoding="utf-8"))
+        assert len(source["elements"]) == 1
+        assert any("empty nonpainting" in record["reason"] for record in report["ignored_nodes"])
+    else:
+        assert not (out / "bundle.json").exists()
+        assert report["native_reference_complete"] is False
+        assert report["failures"][0]["code"] == "unsupported_flow_text"
+        assert report["failures"][0]["source_text"] == content
+
+
+def test_provider_alias_rewrite_with_empty_tspan_style_paints_the_native_reference(tmp_path):
+    catalogue = json.loads(
+        (ROOT / "fixtures/open_posters/catalogue.json").read_text(encoding="utf-8")
+    )
+    face = next(
+        dict(face)
+        for entry in catalogue["examples"]
+        for face in entry.get("font_requirements", [])
+        if face.get("family") == "Source Sans Pro" and str(face.get("weight")) == "300"
+    )
+    (tmp_path / "face.ttf").write_bytes(
+        (ROOT / "fixtures/open_posters" / face["path"]).read_bytes()
+    )
+    face["path"] = "face.ttf"
+    raw = svg(text(face, '<tspan x="30" y="65">Visible alias headline</tspan>'))
+    report, out = prepare(tmp_path, raw, [face])
+    assert report["status"] == "ready", report["failures"]
+    assert report["font_resolutions"][0]["resolution"] == "provider_evidenced_family_alias"
+    native = Image.open(out / "native.png").convert("RGBA")
+    assert native.getchannel("A").getbbox() is not None
+    assert report["editable_text_count"] == 1
+    assert report["native_imported_normalized_mae"] < 0.005
+
+
+def test_single_text_owner_opacity_is_preserved_in_the_editable_leaf(tmp_path, face):
+    raw = svg(text(face, '<tspan x="30" y="65">Half opacity</tspan>', opacity=".5"))
+    report, out = prepare(tmp_path, raw, [face])
+    assert report["status"] == "ready", report["failures"]
+    element = json.loads((out / "source.json").read_text(encoding="utf-8"))["elements"][0]
+    assert element["opacity"] == 0.5
+    assert report["node_mapping"][0]["effective_text_opacity"] == 0.5
+    assert Image.open(out / "native.png").convert("RGBA").getchannel("A").getextrema()[1] == 128
+    # Independent PNG compositors can differ by a channel value or two at .5.
+    assert 125 <= Image.open(out / "imported.png").convert("RGB").getextrema()[0][0] <= 129
+
+
+def test_multi_run_owner_opacity_does_not_silently_become_separate_leaf_opacity(tmp_path, face):
+    raw = svg(text(face, "<tspan>A</tspan><tspan>B</tspan>", opacity=".5"))
+    report, out = prepare(tmp_path, raw, [face])
+    assert report["status"] == "unsupported"
+    assert any(failure["code"] == "text_group_compositing" for failure in report["failures"])
+    assert not (out / "bundle.json").exists()

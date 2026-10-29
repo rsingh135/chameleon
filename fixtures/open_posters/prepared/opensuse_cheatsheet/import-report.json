@@ -7,12 +7,12 @@
       "node_id": "path95",
       "source_key": "n00068",
       "element_id": "svg-n00068",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        0,
-        0,
-        1682,
-        574
+        0.4489853649253064,
+        0.3613928613569328,
+        1680.8992660766958,
+        574.3589789304406
       ],
       "world_transform": [
         1.3321914549433818,
@@ -22,10 +22,67 @@
         0.44898536492534113,
         0.36139286135693216
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00068"
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 0,430.86719 1261.418,0 L 1261.418,0 0,0 Z m 0,0",
+      "source_rectangle_bounds": [
+        0.0,
+        0.0,
+        1261.418,
+        430.86719
+      ],
+      "source_frame": {
+        "x": 0.4489853649253064,
+        "y": 0.3613928613569328,
+        "width": 1680.4502807117706,
+        "height": 573.9975887334665,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": [
+        {
+          "owner_source_key": "n00067",
+          "clip_source_key": "n00065",
+          "clip_id": "clip1",
+          "clip_attributes": {
+            "id": "clip1",
+            "data-chameleon-import-key": "n00065"
+          },
+          "geometry_source_key": "n00066",
+          "geometry_attributes": {
+            "d": "M 0 0 L 1261.421875 0 L 1261.421875 430.867188 L 0 430.867188 Z M 0 0 ",
+            "id": "path90",
+            "data-chameleon-import-key": "n00066"
+          },
+          "world_transform": [
+            1.3321914549433818,
+            0.0,
+            0.0,
+            1.3321914549433818,
+            0.44898536492534113,
+            0.36139286135693216
+          ],
+          "relative_transform": [
+            1.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ],
+          "element_local_bounds": [
+            0.0,
+            0.0,
+            1261.421875,
+            430.867188
+          ]
+        }
+      ],
+      "native_normalized_mae": 0.0005232844372728742,
+      "native_raster_difference_bbox": [
+        0,
+        0,
+        1682,
+        574
       ]
     },
     {
@@ -57,12 +114,12 @@
       "node_id": "path99",
       "source_key": "n00070",
       "element_id": "svg-n00070",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        1352,
-        28,
-        1656,
-        78
+        1352.089256827481,
+        28.485999429060804,
+        1654.4915215529543,
+        77.53250223617852
       ],
       "world_transform": [
         1.3321914549433818,
@@ -72,11 +129,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00070"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 1241.3516,58.199219 -226.9961,0 0,-36.816407 226.9961,0 z m 0,0",
+      "source_rectangle_bounds": [
+        1014.3554999999999,
+        21.382812,
+        226.99610000000007,
+        36.816407
+      ],
+      "source_frame": {
+        "x": 1352.089256827481,
+        "y": 28.485999429060804,
+        "width": 302.40226472547346,
+        "height": 49.046502807117704,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path535",
@@ -107,12 +176,12 @@
       "node_id": "path931",
       "source_key": "n00072",
       "element_id": "svg-n00072",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        589,
-        234,
-        893,
-        284
+        590.0757046341232,
+        234.43446950233135,
+        892.4779560376819,
+        283.4809763060234
       ],
       "world_transform": [
         1.3321914549433818,
@@ -122,11 +191,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00072"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 669.35156,212.79297 -226.99609,0 0,-36.81641 226.99609,0 z m 0,0",
+      "source_rectangle_bounds": [
+        442.35546999999997,
+        175.97656,
+        226.99608999999998,
+        36.81640999999999
+      ],
+      "source_frame": {
+        "x": 590.0757046341232,
+        "y": 234.43446950233135,
+        "width": 302.4022514035588,
+        "height": 49.046506803692054,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path947",
@@ -157,12 +238,12 @@
       "node_id": "path1847",
       "source_key": "n00074",
       "element_id": "svg-n00074",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        801,
-        27,
-        1104,
-        77
+        801.1343838614521,
+        27.294312874678845,
+        1103.5366352650108,
+        76.34081568179656
       ],
       "world_transform": [
         1.3321914549433818,
@@ -172,11 +253,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00074"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 827.78125,57.304688 -226.99609,0 0,-36.816407 226.99609,0 z m 0,0",
+      "source_rectangle_bounds": [
+        600.78516,
+        20.488281,
+        226.99608999999998,
+        36.816407
+      ],
+      "source_frame": {
+        "x": 801.1343838614521,
+        "y": 27.294312874678845,
+        "width": 302.4022514035588,
+        "height": 49.046502807117704,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path1865",
@@ -207,12 +300,12 @@
       "node_id": "path1867",
       "source_key": "n00076",
       "element_id": "svg-n00076",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        241,
-        27,
-        544,
-        77
+        241.93660291178992,
+        27.788681130459604,
+        544.3388676372633,
+        76.83518260538585
       ],
       "world_transform": [
         1.3321914549433818,
@@ -222,11 +315,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00076"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 408.02344,57.675781 -226.9961,0 0,-36.816406 226.9961,0 z m 0,0",
+      "source_rectangle_bounds": [
+        181.02733999999998,
+        20.859375,
+        226.9961,
+        36.816406
+      ],
+      "source_frame": {
+        "x": 241.93660291178992,
+        "y": 27.788681130459604,
+        "width": 302.4022647254734,
+        "height": 49.04650147492625,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path2201",
@@ -257,12 +362,12 @@
       "node_id": "path2203",
       "source_key": "n00078",
       "element_id": "svg-n00078",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        1147,
-        122,
-        1450,
-        172
+        1146.775613283852,
+        122.19213854791131,
+        1449.1779046531544,
+        171.23863735845467
       ],
       "world_transform": [
         1.3321914549433818,
@@ -272,11 +377,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00078"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 1087.2344,128.53906 -226.99612,0 0,-36.816404 226.99612,0 z m 0,0",
+      "source_rectangle_bounds": [
+        860.23828,
+        91.722656,
+        226.99612000000002,
+        36.816404000000006
+      ],
+      "source_frame": {
+        "x": 1146.775613283852,
+        "y": 122.19213854791131,
+        "width": 302.40229136930253,
+        "height": 49.04649881054335,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path2923",
@@ -307,12 +424,12 @@
       "node_id": "path3163",
       "source_key": "n00080",
       "element_id": "svg-n00080",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        240,
-        365,
-        544,
-        415
+        241.05194785422023,
+        365.0256675230754,
+        543.4541992577791,
+        414.0721610048529
       ],
       "world_transform": [
         1.3321914549433818,
@@ -322,11 +439,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00080"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "m 407.35937,310.82031 -226.99609,0 0,-36.8164 226.99609,0 z m 0,0",
+      "source_rectangle_bounds": [
+        180.36328,
+        274.00391,
+        226.99609,
+        36.81639999999999
+      ],
+      "source_frame": {
+        "x": 241.05194785422023,
+        "y": 365.0256675230754,
+        "width": 302.40225140355886,
+        "height": 49.0464934817775,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": "path3189",
@@ -357,12 +486,12 @@
       "node_id": "path3833",
       "source_key": "n00082",
       "element_id": "svg-n00082",
-      "mode": "rigid_vector_art",
+      "mode": "native_shape",
       "reference_bounds": [
-        26,
-        102,
-        330,
-        152
+        27.2934800647065,
+        102.07396669521361,
+        329.69572747169093,
+        151.1256770387287
       ],
       "world_transform": [
         1.3321914549433818,
@@ -372,11 +501,23 @@
         0.773527452659664,
         0.0
       ],
-      "curve_editable_in_engine": false,
-      "retained_original": "original.svg",
-      "descendant_source_keys": [
-        "n00082"
-      ]
+      "rectangle_path_proven": true,
+      "nonbinding_clip_released": false,
+      "source_path_data": "M 246.9031,113.44141 H 19.907013 V 76.621094 H 246.9031 Z m 0,0",
+      "source_rectangle_bounds": [
+        19.907013,
+        76.621094,
+        226.996087,
+        36.820316000000005
+      ],
+      "source_frame": {
+        "x": 27.2934800647065,
+        "y": 102.07396669521361,
+        "width": 302.40224740698443,
+        "height": 49.05171034351508,
+        "rotation": 0.0
+      },
+      "rectangular_clip_chain": []
     },
     {
       "node_id": null,
@@ -401,6 +542,7 @@
       "source_text_owner": "n00083",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -427,6 +569,7 @@
       "source_text_owner": "n00085",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "explicit_generic_policy",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -453,6 +596,7 @@
       "source_text_owner": "n00087",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -479,6 +623,7 @@
       "source_text_owner": "n00089",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -505,6 +650,7 @@
       "source_text_owner": "n00091",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -531,6 +677,7 @@
       "source_text_owner": "n00093",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -557,6 +704,7 @@
       "source_text_owner": "n00095",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -583,6 +731,7 @@
       "source_text_owner": "n00097",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -609,6 +758,7 @@
       "source_text_owner": "n00099",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -635,6 +785,7 @@
       "source_text_owner": "n00101",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -661,6 +812,7 @@
       "source_text_owner": "n00103",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -687,6 +839,7 @@
       "source_text_owner": "n00105",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -713,6 +866,7 @@
       "source_text_owner": "n00107",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -739,6 +893,7 @@
       "source_text_owner": "n00109",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -765,6 +920,7 @@
       "source_text_owner": "n00111",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -791,6 +947,7 @@
       "source_text_owner": "n00113",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -817,6 +974,7 @@
       "source_text_owner": "n00115",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -843,6 +1001,7 @@
       "source_text_owner": "n00117",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -869,6 +1028,7 @@
       "source_text_owner": "n00119",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -895,6 +1055,7 @@
       "source_text_owner": "n00121",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -921,6 +1082,7 @@
       "source_text_owner": "n00123",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -947,6 +1109,7 @@
       "source_text_owner": "n00125",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -973,6 +1136,7 @@
       "source_text_owner": "n00127",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -999,6 +1163,7 @@
       "source_text_owner": "n00129",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1025,6 +1190,7 @@
       "source_text_owner": "n00131",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1051,6 +1217,7 @@
       "source_text_owner": "n00133",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1077,6 +1244,7 @@
       "source_text_owner": "n00135",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1103,6 +1271,7 @@
       "source_text_owner": "n00137",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1129,6 +1298,7 @@
       "source_text_owner": "n00139",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1155,6 +1325,7 @@
       "source_text_owner": "n00141",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1181,6 +1352,7 @@
       "source_text_owner": "n00143",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1207,6 +1379,7 @@
       "source_text_owner": "n00145",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1233,6 +1406,7 @@
       "source_text_owner": "n00147",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1259,6 +1433,7 @@
       "source_text_owner": "n00149",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1285,6 +1460,7 @@
       "source_text_owner": "n00151",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1311,6 +1487,7 @@
       "source_text_owner": "n00153",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1337,6 +1514,7 @@
       "source_text_owner": "n00155",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1363,6 +1541,7 @@
       "source_text_owner": "n00157",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1389,6 +1568,7 @@
       "source_text_owner": "n00159",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1415,6 +1595,7 @@
       "source_text_owner": "n00161",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1441,6 +1622,7 @@
       "source_text_owner": "n00163",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1467,6 +1649,7 @@
       "source_text_owner": "n00165",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1493,6 +1676,7 @@
       "source_text_owner": "n00167",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1519,6 +1703,7 @@
       "source_text_owner": "n00169",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1545,6 +1730,7 @@
       "source_text_owner": "n00171",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1571,6 +1757,7 @@
       "source_text_owner": "n00173",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1597,6 +1784,7 @@
       "source_text_owner": "n00175",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1623,6 +1811,7 @@
       "source_text_owner": "n00177",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1649,6 +1838,7 @@
       "source_text_owner": "n00179",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1675,6 +1865,7 @@
       "source_text_owner": "n00181",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "explicit_generic_policy",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1701,6 +1892,7 @@
       "source_text_owner": "n00183",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "explicit_generic_policy",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1727,6 +1919,7 @@
       "source_text_owner": "n00185",
       "postscript_name": "OpenSans-Regular",
       "font_resolution": "explicit_generic_policy",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1753,6 +1946,7 @@
       "source_text_owner": "n00189",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1779,6 +1973,7 @@
       "source_text_owner": "n00191",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1805,6 +2000,7 @@
       "source_text_owner": "n00193",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1831,6 +2027,7 @@
       "source_text_owner": "n00195",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1857,6 +2054,7 @@
       "source_text_owner": "n00197",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1883,6 +2081,7 @@
       "source_text_owner": "n00199",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1909,6 +2108,7 @@
       "source_text_owner": "n00201",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1935,6 +2135,7 @@
       "source_text_owner": "n00203",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1961,6 +2162,7 @@
       "source_text_owner": "n00205",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -1987,6 +2189,7 @@
       "source_text_owner": "n00207",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2013,6 +2216,7 @@
       "source_text_owner": "n00209",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2039,6 +2243,7 @@
       "source_text_owner": "n00211",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2065,6 +2270,7 @@
       "source_text_owner": "n00213",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2091,6 +2297,7 @@
       "source_text_owner": "n00215",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2117,6 +2324,7 @@
       "source_text_owner": "n00217",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2143,6 +2351,7 @@
       "source_text_owner": "n00219",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2169,6 +2378,7 @@
       "source_text_owner": "n00221",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2195,6 +2405,7 @@
       "source_text_owner": "n00223",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2221,6 +2432,7 @@
       "source_text_owner": "n00225",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2247,6 +2459,7 @@
       "source_text_owner": "n00227",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2273,6 +2486,7 @@
       "source_text_owner": "n00229",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2299,6 +2513,7 @@
       "source_text_owner": "n00231",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2325,6 +2540,7 @@
       "source_text_owner": "n00233",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2351,6 +2567,7 @@
       "source_text_owner": "n00235",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2377,6 +2594,7 @@
       "source_text_owner": "n00237",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2403,6 +2621,7 @@
       "source_text_owner": "n00239",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2429,6 +2648,7 @@
       "source_text_owner": "n00241",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2455,6 +2675,7 @@
       "source_text_owner": "n00243",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2481,6 +2702,7 @@
       "source_text_owner": "n00245",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2507,6 +2729,7 @@
       "source_text_owner": "n00247",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2533,6 +2756,7 @@
       "source_text_owner": "n00249",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2559,6 +2783,7 @@
       "source_text_owner": "n00251",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2585,6 +2810,7 @@
       "source_text_owner": "n00253",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2611,6 +2837,7 @@
       "source_text_owner": "n00255",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2637,6 +2864,7 @@
       "source_text_owner": "n00257",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2663,6 +2891,7 @@
       "source_text_owner": "n00259",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2689,6 +2918,7 @@
       "source_text_owner": "n00261",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2715,6 +2945,7 @@
       "source_text_owner": "n00263",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2741,6 +2972,7 @@
       "source_text_owner": "n00265",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2767,6 +2999,7 @@
       "source_text_owner": "n00267",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2793,6 +3026,7 @@
       "source_text_owner": "n00269",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2819,6 +3053,7 @@
       "source_text_owner": "n00271",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2845,6 +3080,7 @@
       "source_text_owner": "n00273",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2871,6 +3107,7 @@
       "source_text_owner": "n00275",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2897,6 +3134,7 @@
       "source_text_owner": "n00277",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2923,6 +3161,7 @@
       "source_text_owner": "n00279",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2949,6 +3188,7 @@
       "source_text_owner": "n00281",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -2975,6 +3215,7 @@
       "source_text_owner": "n00283",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3001,6 +3242,7 @@
       "source_text_owner": "n00285",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3027,6 +3269,7 @@
       "source_text_owner": "n00287",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3053,6 +3296,7 @@
       "source_text_owner": "n00289",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3079,6 +3323,7 @@
       "source_text_owner": "n00291",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3105,6 +3350,7 @@
       "source_text_owner": "n00293",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3131,6 +3377,7 @@
       "source_text_owner": "n00295",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3157,6 +3404,7 @@
       "source_text_owner": "n00297",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3183,6 +3431,7 @@
       "source_text_owner": "n00299",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     },
@@ -3209,12 +3458,13 @@
       "source_text_owner": "n00301",
       "postscript_name": "Carlito-Regular",
       "font_resolution": "exact_named_family_weight_style",
+      "effective_text_opacity": 1.0,
       "source_complete_text": null,
       "segmentation": null
     }
   ],
   "editable_text_count": 109,
-  "vector_art_count": 15,
+  "vector_art_count": 7,
   "parity_review": "pending",
   "attribution": {
     "title": "openSUSE cheat sheet",
@@ -7371,7 +7621,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00000",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7381,7 +7631,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00001",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7391,7 +7641,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00002",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7401,7 +7651,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00003",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7411,7 +7661,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00004",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7421,7 +7671,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00005",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7431,7 +7681,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00006",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7441,7 +7691,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00007",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7451,7 +7701,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00008",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499998px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499998px;color:black;opacity:1"
       }
     },
     {
@@ -7461,7 +7711,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00009",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7471,7 +7721,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00010",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7481,7 +7731,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00011",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499996px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499996px;color:black;opacity:1"
       }
     },
     {
@@ -7491,7 +7741,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00012",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7501,7 +7751,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00013",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7511,7 +7761,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00014",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.7249999px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.7249999px;color:black;opacity:1"
       }
     },
     {
@@ -7521,7 +7771,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00015",
-        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499996px;color:black"
+        "style": "fill:#003342;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:18.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-1.27499996px;color:black;opacity:1"
       }
     },
     {
@@ -7531,7 +7781,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00016",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7541,7 +7791,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00017",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7551,7 +7801,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00018",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7561,7 +7811,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00019",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7571,7 +7821,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00020",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7581,7 +7831,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00021",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7591,7 +7841,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00022",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:end;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:end;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7601,7 +7851,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00023",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7611,7 +7861,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00024",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7621,7 +7871,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00025",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7631,7 +7881,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00026",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7641,7 +7891,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00027",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7651,7 +7901,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00028",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7661,7 +7911,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00029",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7671,7 +7921,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00030",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7681,7 +7931,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00031",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7691,7 +7941,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00032",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7701,7 +7951,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00033",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7711,7 +7961,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00034",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7721,7 +7971,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00035",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7731,7 +7981,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00036",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7741,7 +7991,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00037",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7751,7 +8001,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00038",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7761,7 +8011,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00039",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7771,7 +8021,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00040",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7781,7 +8031,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00041",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7791,7 +8041,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00042",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7801,7 +8051,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00043",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:end;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:end;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7811,7 +8061,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00044",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7821,7 +8071,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00045",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7831,7 +8081,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00046",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7841,7 +8091,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00047",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7851,7 +8101,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00048",
-        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans';font-size:9.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7861,7 +8111,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00049",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7871,7 +8121,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00050",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7881,7 +8131,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00051",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:sans-serif;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0px;color:black;opacity:1"
       }
     },
     {
@@ -7891,7 +8141,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00052",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7901,7 +8151,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00053",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7911,7 +8161,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00054",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7921,7 +8171,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00055",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7931,7 +8181,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00056",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7941,7 +8191,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00057",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7951,7 +8201,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00058",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7961,7 +8211,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00059",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7971,7 +8221,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00060",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7981,7 +8231,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00061",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -7991,7 +8241,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00062",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8001,7 +8251,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00063",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8011,7 +8261,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00064",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8021,7 +8271,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00065",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8031,7 +8281,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00066",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8041,7 +8291,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00067",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8051,7 +8301,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00068",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8061,7 +8311,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00069",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8071,7 +8321,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00070",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8081,7 +8331,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00071",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8091,7 +8341,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00072",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8101,7 +8351,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00073",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8111,7 +8361,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00074",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8121,7 +8371,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00075",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8131,7 +8381,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00076",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8141,7 +8391,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00077",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8151,7 +8401,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00078",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8161,7 +8411,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00079",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8171,7 +8421,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00080",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8181,7 +8431,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00081",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8191,7 +8441,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00082",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8201,7 +8451,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00083",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8211,7 +8461,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00084",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8221,7 +8471,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00085",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8231,7 +8481,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00086",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8241,7 +8491,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00087",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8251,7 +8501,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00088",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8261,7 +8511,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00089",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8271,7 +8521,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00090",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8281,7 +8531,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00091",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8291,7 +8541,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00092",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8301,7 +8551,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00093",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8311,7 +8561,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00094",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8321,7 +8571,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00095",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8331,7 +8581,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00096",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8341,7 +8591,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00097",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8351,7 +8601,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00098",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8361,7 +8611,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00099",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8371,7 +8621,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00100",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8381,7 +8631,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00101",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8391,7 +8641,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00102",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8401,7 +8651,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00103",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8411,7 +8661,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00104",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8421,7 +8671,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00105",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8431,7 +8681,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00106",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:9.75;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8441,7 +8691,7 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00107",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:14.99999905;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:14.99999905;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:0;color:black;opacity:1"
       }
     },
     {
@@ -8451,12 +8701,12 @@
       "id": null,
       "attributes": {
         "data-chameleon-import-key": "run00108",
-        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:24.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-0.90749997px;color:black"
+        "style": "fill:#66bf2e;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:Carlito;font-size:24.0;font-weight:normal;font-style:normal;text-anchor:start;letter-spacing:-0.90749997px;color:black;opacity:1"
       }
     }
   ],
-  "native_imported_normalized_mae": 0.013134469297710095,
-  "native_shape_count": 0,
+  "native_imported_normalized_mae": 0.013803559957281445,
+  "native_shape_count": 8,
   "ignored_nodes": [],
   "source_warnings": [],
   "authored_groups": [

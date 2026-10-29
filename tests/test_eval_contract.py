@@ -146,3 +146,143 @@ def test_shape_geometry_may_scale(sample):
         el["corner_radius"] = el.get("corner_radius", 0) * 0.5 + 1
         el["stroke_width"] = 3
     assert "frozen_field_changed" not in _codes(source, cand, ctx)
+
+
+def _numeric_geometry_source(kind="shape", out_of_view=False):
+    element = {
+        "id": "source-leaf",
+        "type": kind,
+        "x": 250 if out_of_view else 10,
+        "y": 10,
+        "width": 100,
+        "height": 50,
+    }
+    if kind == "text":
+        element.update(
+            content="Readable", font_family="Solstice Sans", font_size=16, color="#111111"
+        )
+    elif kind == "image":
+        element.update(asset_id="unavailable-contract-fixture.png", fit="contain")
+    else:
+        element.update(shape_type="rectangle", fill_color="#112233")
+    return {"canvas": {"width": 200, "height": 100}, "elements": [element]}
+
+
+@pytest.mark.parametrize("kind", ["shape", "text", "image"])
+@pytest.mark.parametrize("out_of_view", [False, True])
+@pytest.mark.parametrize("field", ["x", "y", "width", "height"])
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+def test_nonfinite_geometry_never_uses_authored_crop_exemption(kind, out_of_view, field, value):
+    source = _numeric_geometry_source(kind, out_of_view)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0][field] = value
+    violations = check_contract(source, candidate, source["canvas"], context)
+    assert [v.code for v in violations] == ["invalid_geometry"]
+    assert violations[0].element_id == "source-leaf"
+    assert field in violations[0].message
+
+
+@pytest.mark.parametrize("field", ["font_size", "rotation", "corner_radius", "stroke_width"])
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])
+def test_optional_nonfinite_geometry_is_rejected_before_measurement(field, value):
+    source = _numeric_geometry_source("text" if field == "font_size" else "shape", True)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0][field] = value
+    assert _codes(source, candidate, context) == ["invalid_geometry"]
+
+
+@pytest.mark.parametrize(
+    "field", ["x", "y", "width", "height", "font_size", "rotation", "corner_radius", "stroke_width"]
+)
+@pytest.mark.parametrize("value", [True, False, "12", None])
+def test_geometry_requires_real_numbers_and_never_accepts_boolean_coercion(field, value):
+    source = _numeric_geometry_source("text" if field == "font_size" else "shape", True)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0][field] = value
+    assert _codes(source, candidate, context) == ["invalid_geometry"]
+
+
+def test_mixed_valid_and_invalid_leaves_report_only_invalid_geometry():
+    source = _numeric_geometry_source(out_of_view=True)
+    good = copy.deepcopy(source["elements"][0])
+    good.update(id="valid-leaf", x=10)
+    source["elements"].append(good)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0].update(x=float("nan"), rotation=float("inf"))
+    violations = check_contract(source, candidate, source["canvas"], context)
+    assert len(violations) == 2
+    assert {v.element_id for v in violations} == {"source-leaf"}
+    assert {v.code for v in violations} == {"invalid_geometry"}
+    assert candidate["elements"][1] == good
+
+
+def test_invalid_geometry_stops_text_measurement_and_quality_scoring(monkeypatch):
+    import importlib
+
+    contract = importlib.import_module("engine.eval.contract")
+    scoring = importlib.import_module("engine.eval.score")
+    source = _numeric_geometry_source("text", True)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0]["font_size"] = float("nan")
+
+    def must_not_run(*_args, **_kwargs):
+        raise AssertionError(
+            "Invalid candidate geometry reached text measurement or quality metrics"
+        )
+
+    class UnusedMeasurer:
+        layout = must_not_run
+
+    monkeypatch.setattr(contract, "get_measurer", lambda *_: UnusedMeasurer())
+    monkeypatch.setattr(scoring, "compute_metrics", must_not_run)
+    result = scoring.score(source, candidate, context, target_canvas=source["canvas"])
+    assert result["total"] == 0
+    assert result["metrics"] == {}
+    assert [v.code for v in result["violations"]] == ["invalid_geometry"]
+
+
+def test_finite_authored_crop_and_image_aspect_rules_remain_unchanged():
+    source = _numeric_geometry_source("image", True)
+    context = build_context(source)
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0].update(x=-20.5, y=0.5, width=160.0, height=80.0)
+    assert check_contract(source, candidate, source["canvas"], context) == []
+    candidate["elements"][0]["width"] = 190.0
+    assert _codes(source, candidate, context) == ["aspect_drift"]
+    source["elements"][0]["fit"] = "cover"
+    candidate["elements"][0]["fit"] = "cover"
+    assert check_contract(source, candidate, source["canvas"], build_context(source)) == []
+
+
+def test_bad_candidate_does_not_prevent_valid_candidates_from_using_shared_context(monkeypatch):
+    import importlib
+
+    scoring = importlib.import_module("engine.eval.score")
+    source = _numeric_geometry_source(out_of_view=True)
+    context = build_context(source)
+    invalid = copy.deepcopy(source)
+    invalid["elements"][0]["x"] = float("nan")
+    evaluated = []
+
+    def metrics(_source, candidate, _context, **_kwargs):
+        evaluated.append(candidate["elements"][0]["x"])
+        return {"containment": 1.0}
+
+    monkeypatch.setattr(scoring, "compute_metrics", metrics)
+    results = [scoring.score(source, candidate, context) for candidate in (source, invalid, source)]
+    assert [result["total"] for result in results] == [1.0, 0.0, 1.0]
+    assert evaluated == [250, 250]
+    assert [v.code for v in results[1]["violations"]] == ["invalid_geometry"]
+
+
+def test_finite_optional_geometry_is_still_permitted():
+    source = _numeric_geometry_source(out_of_view=True)
+    source["elements"][0]["rotation"] = 12.5
+    candidate = copy.deepcopy(source)
+    candidate["elements"][0].update(corner_radius=4.5, stroke_width=1.25)
+    assert check_contract(source, candidate, source["canvas"]) == []

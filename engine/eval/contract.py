@@ -6,8 +6,10 @@ that would be thrown out by the structural check.
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from dataclasses import dataclass
+from numbers import Real
 
 from engine.eval.context import EDGE_SLACK, Context, build_context
 from engine.eval.geometry import canvas_box, contains, element_box
@@ -23,6 +25,16 @@ REQUIRED_BY_TYPE = {
     "image": ("asset_id",),
     "shape": ("shape_type", "fill_color"),
 }
+NUMERIC_GEOMETRY = (
+    "x",
+    "y",
+    "width",
+    "height",
+    "font_size",
+    "rotation",
+    "corner_radius",
+    "stroke_width",
+)
 # Fields the engine may not change: everything that is the design's identity
 # rather than its geometry. Position, size, font_size, and the px-valued shape
 # geometry (`corner_radius`, `stroke_width`) may scale with the element.
@@ -60,6 +72,15 @@ class Violation:
     def __str__(self) -> str:
         where = f"[{self.element_id}] " if self.element_id else ""
         return f"{self.code}: {where}{self.message}"
+
+
+def _finite_real(value) -> bool:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def check_contract(
@@ -104,6 +125,16 @@ def check_contract(
         missing += [f for f in REQUIRED_BY_TYPE.get(el.get("type", ""), ()) if f not in el]
         if missing:
             out.append(Violation("missing_field", eid, f"missing {missing}"))
+            continue
+
+        invalid = [f for f in NUMERIC_GEOMETRY if f in el and not _finite_real(el[f])]
+        if invalid:
+            out.extend(
+                Violation("invalid_geometry", eid, f"{f} must be a finite real number: {el[f]!r}")
+                for f in invalid
+            )
+            # Authored off-canvas content may retain its crop, but invalid
+            # numbers never reach bounds, aspect ratios or text measurement.
             continue
 
         for f in FROZEN_FIELDS:

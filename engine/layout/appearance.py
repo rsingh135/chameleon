@@ -12,10 +12,12 @@ import math
 from functools import lru_cache
 from pathlib import Path
 
+from engine.resources import DEFAULT_ASSETS_DIR, get_resources
+
 from .geometry import Box
 from .text import get_measurer
 
-DEFAULT_ASSETS = Path(__file__).resolve().parents[2] / "brand_kit/assets"
+DEFAULT_ASSETS = DEFAULT_ASSETS_DIR
 
 
 @lru_cache(maxsize=256)
@@ -34,7 +36,7 @@ def _asset_extent(element: dict, assets_dir: str | Path | None):
     asset_id = element.get("asset_id")
     if not asset_id:
         return None
-    root = (Path(assets_dir) if assets_dir is not None else DEFAULT_ASSETS).resolve()
+    root = (Path(assets_dir) if assets_dir is not None else get_resources().assets_dir).resolve()
     path = (root / asset_id).resolve()
     if not path.is_relative_to(root):
         return None

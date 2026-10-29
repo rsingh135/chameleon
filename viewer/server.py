@@ -25,7 +25,13 @@ from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.resize import resize_with_state
-from renderer.converter.convert import _get_renderer, convert_chameleon_to_crello
+from engine.resources import ResourceContext, get_renderer, get_resources, using_resources
+from renderer.converter.convert import convert_chameleon_to_crello
+from viewer.document_bridge import (
+    DOCUMENT_ORIGIN,
+    MAX_DOCUMENT_REQUEST_BYTES,
+    prepare_document,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VIEWER_DIR = REPO_ROOT / "viewer"
@@ -179,26 +185,31 @@ def validate_request(payload) -> None:
 
 
 def _render_png(design: dict) -> tuple[str, list[str]]:
-    renderer = _get_renderer(str(FONTS_DIR))
-    example, warnings = convert_chameleon_to_crello(design, renderer.font_manager, str(ASSETS_DIR))
+    resources = get_resources()
+    renderer = get_renderer(resources.fonts_dir)
+    example, warnings = convert_chameleon_to_crello(
+        design, renderer.font_manager, str(resources.assets_dir)
+    )
     canvas = design["canvas"]
     png = renderer.render(example, max_size=max(canvas["width"], canvas["height"]), format="png")
     return "data:image/png;base64," + base64.b64encode(png).decode("ascii"), warnings
 
 
-def perform_resize(payload: dict) -> dict:
+def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -> dict:
     validate_request(payload)
     # Engine/renderer caches are reused, and one request owns them at a time.
     source, target = deepcopy(payload["source"]), deepcopy(payload["target_canvas"])
     started = time.perf_counter()
-    with _ENGINE_LOCK:
+    resources = resources or ResourceContext(ASSETS_DIR, FONTS_DIR)
+    assets_dir, fonts_dir = resources.assets_dir, resources.fonts_dir
+    with _ENGINE_LOCK, using_resources(assets_dir, fonts_dir):
         plan = resize_with_state(source, target)
         design = plan["design"]
-        context = build_context(source, ASSETS_DIR, FONTS_DIR)
-        plate = render_plate(design, ASSETS_DIR, FONTS_DIR, max_size=1024)
+        context = build_context(source, assets_dir, fonts_dir)
+        plate = render_plate(design, assets_dir, fonts_dir, max_size=1024)
         result = score(source, design, context, plate, target)
-        graph = build_relationship_graph(source, ASSETS_DIR)
-        style = analyze_style(source, design, ASSETS_DIR, relationship_graph=graph)
+        graph = build_relationship_graph(source, assets_dir)
+        style = analyze_style(source, design, assets_dir, relationship_graph=graph)
         relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
         proportions = analyze_proportions(source, design, graph)
         source_png, source_warnings = _render_png(source)
@@ -242,6 +253,19 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        if (
+            urlsplit(self.path).path == "/api/document/resize"
+            and self.headers.get("Origin") == DOCUMENT_ORIGIN
+            and self.headers.get("Host")
+            in {f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}"}
+        ):
+            self.send_header("Access-Control-Allow-Origin", DOCUMENT_ORIGIN)
+            self.send_header("Vary", "Origin")
+            if self.command == "OPTIONS":
+                self.send_header("Access-Control-Allow-Methods", "POST")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type")
+                self.send_header("Access-Control-Max-Age", "600")
+                self.send_header("Access-Control-Allow-Private-Network", "true")
         self.end_headers()
         if not head:
             self.wfile.write(body)
@@ -254,14 +278,17 @@ class ViewerHandler(BaseHTTPRequestHandler):
             head=head,
         )
 
-    def _local_request(self) -> bool:
+    def _local_request(self, *, document: bool = False) -> bool:
         port = self.server.server_port
         allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
         if self.headers.get("Host") not in allowed_hosts:
             self._json(HTTPStatus.FORBIDDEN, {"error": "Use the local server address."})
             return False
         origin = self.headers.get("Origin")
-        if origin and origin not in {f"http://{host}" for host in allowed_hosts}:
+        allowed_origins = {f"http://{host}" for host in allowed_hosts}
+        if document:
+            allowed_origins.add(DOCUMENT_ORIGIN)
+        if origin and origin not in allowed_origins:
             self._json(
                 HTTPStatus.FORBIDDEN, {"error": "Only same-origin local requests are allowed."}
             )
@@ -310,10 +337,33 @@ class ViewerHandler(BaseHTTPRequestHandler):
     def do_HEAD(self) -> None:
         self._get(head=True)
 
-    def do_POST(self) -> None:
-        if not self._local_request():
+    def do_OPTIONS(self) -> None:
+        document = urlsplit(self.path).path == "/api/document/resize"
+        if not self._local_request(document=document):
             return
-        if urlsplit(self.path).path != "/api/resize":
+        if not document:
+            self._json(HTTPStatus.NOT_FOUND, {"error": "API endpoint not found."})
+            return
+        headers = {
+            name.strip().lower()
+            for name in self.headers.get("Access-Control-Request-Headers", "").split(",")
+            if name.strip()
+        }
+        if (
+            self.headers.get("Origin") != DOCUMENT_ORIGIN
+            or self.headers.get("Access-Control-Request-Method") != "POST"
+            or not headers <= {"content-type"}
+        ):
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Unsupported document preflight."})
+            return
+        self._send(HTTPStatus.NO_CONTENT, b"", "application/json")
+
+    def do_POST(self) -> None:
+        route = urlsplit(self.path).path
+        document = route == "/api/document/resize"
+        if not self._local_request(document=document):
+            return
+        if route not in {"/api/resize", "/api/document/resize"}:
             self._json(HTTPStatus.NOT_FOUND, {"error": "API endpoint not found."})
             return
         if self.headers.get_content_type() != "application/json":
@@ -323,8 +373,12 @@ class ViewerHandler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             length = 0
-        if length > MAX_REQUEST_BYTES:
-            self._json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "Request exceeds 2 MiB."})
+        limit = MAX_DOCUMENT_REQUEST_BYTES if document else MAX_REQUEST_BYTES
+        if length > limit:
+            self._json(
+                HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+                {"error": f"Request exceeds {limit // (1024 * 1024)} MiB."},
+            )
             return
         if length <= 0:
             self._json(HTTPStatus.BAD_REQUEST, {"error": "A JSON request body is required."})
@@ -332,11 +386,18 @@ class ViewerHandler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             validate_request(payload)
+            prepared = prepare_document(payload) if document else None
         except (ValueError, UnicodeError, RecursionError) as exc:
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         try:
-            self._json(HTTPStatus.OK, perform_resize(payload))
+            if prepared is None:
+                result = perform_resize(payload)
+            else:
+                result = perform_resize(payload, resources=prepared.resources)
+                result["document"] = prepared.receipt
+                result["preview_url"] = result["output_png"]
+            self._json(HTTPStatus.OK, result)
         except Exception as exc:
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Resize failed: {exc}"})
 

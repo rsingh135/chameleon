@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-FONTS_DIR = Path(__file__).resolve().parents[2] / "brand_kit" / "fonts"
+from engine.resources import DEFAULT_FONTS_DIR, get_resources, load_font_manager
+
+FONTS_DIR = DEFAULT_FONTS_DIR
 
 
 @dataclass(frozen=True)
@@ -22,18 +24,21 @@ class TextMeasurement:
 
 
 class TextMeasurer:
-    def __init__(self, fonts_dir: Path = FONTS_DIR):
+    def __init__(self, fonts_dir: str | Path | None = None):
+        self.fonts_dir = (
+            get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+        )
         self._widths = lru_cache(maxsize=8192)(self._measure_widths)
         self.backend = "estimated"
         self._manager = None
         self._char_widths = None
         self._wrap = None
         try:
-            from renderer.converter.brand_fonts import load_brand_font_manager
             from renderer.converter.wrap import char_widths, wrap_text
+
+            self._manager = load_font_manager(self.fonts_dir)
         except ImportError:
             return
-        self._manager = load_brand_font_manager(str(fonts_dir))
         self._char_widths, self._wrap = char_widths, wrap_text
         self.backend = "skia"
 
@@ -123,9 +128,18 @@ class TextMeasurer:
         return max(1.0, math.floor(lower * 1000) / 1000)
 
 
-@lru_cache(maxsize=1)
-def get_measurer() -> TextMeasurer:
-    return TextMeasurer()
+@lru_cache(maxsize=16)
+def _get_measurer(fonts_dir: str) -> TextMeasurer:
+    return TextMeasurer(fonts_dir)
+
+
+def get_measurer(fonts_dir: str | Path | None = None) -> TextMeasurer:
+    directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+    return _get_measurer(str(directory))
+
+
+get_measurer.cache_clear = _get_measurer.cache_clear
+get_measurer.cache_info = _get_measurer.cache_info
 
 
 def fit_text(

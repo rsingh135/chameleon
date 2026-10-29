@@ -16,6 +16,7 @@ from pathlib import Path
 from engine.layout import build_context, get_measurer
 from engine.layout.geometry import Box, intersection, union
 from engine.layout.relationships import SourceRelationshipGraph, build_relationship_graph
+from engine.resources import DEFAULT_ASSETS_DIR, get_resources, using_resources
 
 MEANINGFUL_FONT_RATIO = 1.15
 MEANINGFUL_CONTROL_RATIO = 1.25
@@ -26,7 +27,7 @@ CORNER_BAND = 0.25
 CORNER_DRIFT = 0.18
 MIN_IMAGE_RETENTION = 0.65
 COHESION_ALLOWANCE = 0.5
-DEFAULT_ASSETS = Path(__file__).resolve().parents[2] / "brand_kit/assets"
+DEFAULT_ASSETS = DEFAULT_ASSETS_DIR
 _METRICS = (
     "text_hierarchy",
     "control_hierarchy",
@@ -153,7 +154,7 @@ def _visible_area(element: dict, extent) -> float:
     return max(0.0, right - left) * max(0.0, bottom - top)
 
 
-def analyze_style(
+def _analyze_style(
     source: dict,
     candidate: dict,
     assets_dir: str | Path | None = None,
@@ -324,7 +325,7 @@ def analyze_style(
             )
 
     # Compare visible image mass, allowing transparent padding and contain-fit letterboxing.
-    assets = Path(assets_dir) if assets_dir is not None else DEFAULT_ASSETS
+    assets = Path(assets_dir) if assets_dir is not None else get_resources().assets_dir
     source_canvas_area, target_canvas_area = source_width * source_height, width * height
     background_ids = {element["id"] for element in context.backgrounds}
     for element in source["elements"]:
@@ -353,3 +354,19 @@ def analyze_style(
     metrics = {name: round(_mean(measured), 6) for name, measured in values.items()}
     applicable = [metrics[name] for name, measured in values.items() if measured]
     return {"score": round(_mean(applicable), 6), "warnings": warnings, "metrics": metrics}
+
+
+def analyze_style(
+    source: dict,
+    candidate: dict,
+    assets_dir: str | Path | None = None,
+    *,
+    relationship_graph: SourceRelationshipGraph | None = None,
+) -> dict:
+    """Analyze source style with current resources or the supplied source graph's fonts."""
+    assets = assets_dir
+    if assets is None and relationship_graph is not None:
+        assets = relationship_graph.assets_dir
+    fonts = relationship_graph.fonts_dir if relationship_graph is not None else None
+    with using_resources(assets, fonts):
+        return _analyze_style(source, candidate, assets, relationship_graph=relationship_graph)

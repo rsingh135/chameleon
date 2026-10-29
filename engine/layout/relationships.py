@@ -11,6 +11,8 @@ import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from engine.resources import get_resources, using_resources
+
 from .appearance import unit_visible_box
 from .geometry import Box, bounds, union
 from .model import build_context
@@ -93,6 +95,7 @@ class SourceRelationshipGraph:
     source_ids: tuple[str, ...]
     assets_dir: str | None
     ambiguities: tuple[RelationshipAmbiguity, ...] = ()
+    fonts_dir: str | None = None
 
 
 def _primary(box: Box, axis: str) -> tuple[float, float]:
@@ -189,7 +192,8 @@ def build_relationship_graph(
     if len(ids) != len(set(ids)):
         raise ValueError("Source relationship graph requires unique element IDs")
     context = build_context(source)
-    assets = str(Path(assets_dir).resolve()) if assets_dir is not None else None
+    resources = get_resources()
+    assets = str(Path(assets_dir).resolve() if assets_dir is not None else resources.assets_dir)
     units = tuple(
         RelationshipUnit(
             index,
@@ -657,6 +661,7 @@ def build_relationship_graph(
         ids,
         assets,
         tuple(ambiguities),
+        str(resources.fonts_dir),
     )
 
 
@@ -685,10 +690,11 @@ def analyze_relationships(
         for key, value in state.items()
     ):
         raise ValueError("Relationship states must map known cluster IDs to permitted flow states")
-    boxes = {
-        unit.index: unit_visible_box([by_id[eid] for eid in unit.element_ids], graph.assets_dir)
-        for unit in graph.units
-    }
+    with using_resources(assets_dir=graph.assets_dir, fonts_dir=graph.fonts_dir):
+        boxes = {
+            unit.index: unit_visible_box([by_id[eid] for eid in unit.element_ids], graph.assets_dir)
+            for unit in graph.units
+        }
     values = {code: [] for code in _CODES}
     message_boxes = {
         cluster.id: _box_union([boxes[index] for index in cluster.unit_indices])

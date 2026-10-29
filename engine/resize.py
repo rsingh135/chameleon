@@ -13,6 +13,7 @@ from engine.layout.composition import generate_composition_states
 from engine.layout.geometry import bounds, intersection
 from engine.layout.grouped import generate_grouped_states
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
+from engine.resources import get_resources, using_resources
 
 
 def _quality(source: dict, candidate: dict, context) -> float:
@@ -134,8 +135,8 @@ def _select_candidate(
             raise ValueError("No layout candidates were generated") from None
         return max(candidates, key=lambda c: _quality(source, c, layout_context))
 
-    root = Path(__file__).resolve().parents[1]
-    context = build_eval_context(source, root / "brand_kit/assets", root / "brand_kit/fonts")
+    resources = get_resources()
+    context = build_eval_context(source, resources.assets_dir, resources.fonts_dir)
     if _safe_identity(source, target):
         identity = score(source, source, context, target_canvas=target)
         if not identity["violations"]:
@@ -143,15 +144,13 @@ def _select_candidate(
 
     valid = []
     violations = set()
-    graph = build_relationship_graph(source, root / "brand_kit/assets")
+    graph = build_relationship_graph(source, resources.assets_dir)
     for candidate in candidates:
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
             violations.update(v.code for v in result["violations"])
             continue
-        style = analyze_style(
-            source, candidate, root / "brand_kit/assets", relationship_graph=graph
-        )
+        style = analyze_style(source, candidate, resources.assets_dir, relationship_graph=graph)
         axes = (state_axes or {}).get(json.dumps(candidate, sort_keys=True), {})
         relationships = analyze_relationships(graph, candidate, axes)
         proportions = analyze_proportions(source, candidate, graph)
@@ -223,7 +222,14 @@ def _select_candidate(
 
 
 @lru_cache(maxsize=64)
-def _resize_cached(source_json: str, width: int, height: int) -> dict:
+def _resize_cached(
+    source_json: str, width: int, height: int, assets_dir: str, fonts_dir: str
+) -> dict:
+    with using_resources(assets_dir, fonts_dir):
+        return _resize_in_context(source_json, width, height)
+
+
+def _resize_in_context(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     candidates = generate_candidates(source, target_canvas)
@@ -248,19 +254,38 @@ def _resize_cached(source_json: str, width: int, height: int) -> dict:
     }
 
 
-def resize_with_state(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict:
+def resize_with_state(
+    source: dict[str, Any],
+    target_canvas: dict[str, Any],
+    *,
+    assets_dir: str | Path | None = None,
+    fonts_dir: str | Path | None = None,
+) -> dict:
     """Return a fresh design and the exact declared state used during selection."""
-    return deepcopy(
-        _resize_cached(
-            json.dumps(source, sort_keys=True), target_canvas["width"], target_canvas["height"]
+    with using_resources(assets_dir, fonts_dir) as resources:
+        return deepcopy(
+            _resize_cached(
+                json.dumps(source, sort_keys=True),
+                target_canvas["width"],
+                target_canvas["height"],
+                str(resources.assets_dir),
+                str(resources.fonts_dir),
+            )
         )
-    )
 
 
-def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:
+def resize(
+    source: dict[str, Any],
+    target_canvas: dict[str, Any],
+    *,
+    assets_dir: str | Path | None = None,
+    fonts_dir: str | Path | None = None,
+) -> dict[str, Any]:
     """Adapt composition without changing the supplied assets, fonts or copy.
 
     Deterministic, offline, and does not mutate either argument. A bounded task
     cache speeds up repeated viewer requests; each caller receives its own copy.
     """
-    return resize_with_state(source, target_canvas)["design"]
+    return resize_with_state(source, target_canvas, assets_dir=assets_dir, fonts_dir=fonts_dir)[
+        "design"
+    ]

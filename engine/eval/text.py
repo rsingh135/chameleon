@@ -10,14 +10,15 @@ exact code path so what we measure is what gets drawn.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
-from renderer.converter.brand_fonts import load_brand_font_manager
+from engine.resources import DEFAULT_FONTS_DIR as DEFAULT_FONTS_DIR
+from engine.resources import get_resources, load_font_manager
 from renderer.converter.convert import _normalize_weight, _weight_style_to_font_style
 from renderer.converter.wrap import char_widths, wrap_text
 
 DEFAULT_LINE_HEIGHT = 1.2
-DEFAULT_FONTS_DIR = Path("brand_kit/fonts")
 
 
 @dataclass(frozen=True)
@@ -53,9 +54,10 @@ class TextMeasurer:
     """Measures text elements with the renderer's own font manager and
     wrapping. One instance per fonts directory; results are cached."""
 
-    def __init__(self, fonts_dir: str | Path = DEFAULT_FONTS_DIR):
-        self.fonts_dir = str(fonts_dir)
-        self._font_manager = load_brand_font_manager(self.fonts_dir)
+    def __init__(self, fonts_dir: str | Path | None = None):
+        directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+        self.fonts_dir = str(directory)
+        self._font_manager = load_font_manager(directory)
         self._width_cache: dict[tuple, tuple[float, ...]] = {}
 
     @staticmethod
@@ -143,11 +145,15 @@ class TextMeasurer:
         return lo
 
 
-_measurers: dict[str, TextMeasurer] = {}
+@lru_cache(maxsize=16)
+def _get_measurer(fonts_dir: str) -> TextMeasurer:
+    return TextMeasurer(fonts_dir)
 
 
-def get_measurer(fonts_dir: str | Path = DEFAULT_FONTS_DIR) -> TextMeasurer:
-    key = str(fonts_dir)
-    if key not in _measurers:
-        _measurers[key] = TextMeasurer(key)
-    return _measurers[key]
+def get_measurer(fonts_dir: str | Path | None = None) -> TextMeasurer:
+    directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+    return _get_measurer(str(directory))
+
+
+get_measurer.cache_clear = _get_measurer.cache_clear
+get_measurer.cache_info = _get_measurer.cache_info

@@ -10,6 +10,7 @@ from PIL import Image
 
 from engine.eval.style import analyze_style
 from engine.layout import generate_candidates
+from engine.layout.relationships import build_relationship_graph
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -341,3 +342,82 @@ def test_style_checks_do_not_depend_on_sample_ids(core):
     assert [warning["code"] for warning in actual["warnings"]] == [
         warning["code"] for warning in expected["warnings"]
     ]
+
+
+def test_peer_row_can_move_with_its_message_without_becoming_a_corner_regression():
+    source = json.loads((ROOT / "input/chameleon_sample_level3_advanced.json").read_text())[
+        "source"
+    ]
+    graph = build_relationship_graph(source)
+    row = next(cluster for cluster in graph.clusters if cluster.kind == "badge_row")
+    message = next(cluster for cluster in graph.clusters if cluster.kind == "message")
+    candidate = deepcopy(source)
+    moving = set(row.element_ids + message.element_ids)
+    for element in candidate["elements"]:
+        if element["id"] in moving:
+            element["y"] -= 300
+    # This isolates anchor semantics; collision/render checks are separate.
+    result = analyze_style(source, candidate, relationship_graph=graph)
+    assert "corner_affinity" not in _codes(result)
+    assert result["metrics"]["corner_affinity"] == 1
+    assert result == analyze_style(source, candidate)
+
+
+@pytest.mark.parametrize("group", ["ribbon", None])
+def test_independent_advanced_corner_units_remain_anchors_outside_peer_rows(group):
+    source = json.loads((ROOT / "input/chameleon_sample_level3_advanced.json").read_text())[
+        "source"
+    ]
+    graph = build_relationship_graph(source)
+    candidate = deepcopy(source)
+    moved = set()
+    for element in candidate["elements"]:
+        if (group and element.get("group_id") == group) or (
+            group is None and element["id"] == "holiday_watermark"
+        ):
+            element["x"] -= 400
+            element["y"] += 500 if group else -500
+            moved.add(element["id"])
+    warnings = analyze_style(source, candidate, relationship_graph=graph)["warnings"]
+    assert any(
+        warning["code"] == "corner_affinity" and set(warning["element_ids"]) == moved
+        for warning in warnings
+    )
+
+
+def test_core_corner_badge_remains_anchored_with_a_prebuilt_graph(core):
+    graph = build_relationship_graph(core)
+    candidate = deepcopy(core)
+    for element in candidate["elements"]:
+        if element.get("group_id") == "badge":
+            element["x"] += 600
+            element["y"] += 300
+    assert "corner_affinity" in _codes(analyze_style(core, candidate, relationship_graph=graph))
+
+
+def test_style_reuses_a_supplied_graph_and_builds_at_most_once_when_needed(monkeypatch):
+    import engine.eval.style as module
+
+    source = json.loads((ROOT / "input/chameleon_sample_level3_advanced.json").read_text())[
+        "source"
+    ]
+    graph = build_relationship_graph(source)
+    calls = []
+
+    def counted(*args, **kwargs):
+        calls.append(True)
+        return build_relationship_graph(*args, **kwargs)
+
+    monkeypatch.setattr(module, "build_relationship_graph", counted)
+    assert analyze_style(source, source, relationship_graph=graph)["warnings"] == []
+    assert calls == []
+    assert analyze_style(source, source)["warnings"] == []
+    assert len(calls) == 1
+    with pytest.raises(ValueError, match="original source"):
+        analyze_style(
+            source,
+            source,
+            relationship_graph=build_relationship_graph(
+                {"canvas": {"width": 100, "height": 100}, "elements": []}
+            ),
+        )

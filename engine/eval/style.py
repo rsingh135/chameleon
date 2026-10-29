@@ -15,6 +15,7 @@ from pathlib import Path
 
 from engine.layout import build_context, get_measurer
 from engine.layout.geometry import Box, intersection, union
+from engine.layout.relationships import SourceRelationshipGraph, build_relationship_graph
 
 MEANINGFUL_FONT_RATIO = 1.15
 MEANINGFUL_CONTROL_RATIO = 1.25
@@ -152,7 +153,13 @@ def _visible_area(element: dict, extent) -> float:
     return max(0.0, right - left) * max(0.0, bottom - top)
 
 
-def analyze_style(source: dict, candidate: dict, assets_dir: str | Path | None = None) -> dict:
+def analyze_style(
+    source: dict,
+    candidate: dict,
+    assets_dir: str | Path | None = None,
+    *,
+    relationship_graph: SourceRelationshipGraph | None = None,
+) -> dict:
     """Compare a candidate with style relationships inferred from its source.
 
     Returns ``{score, warnings, metrics}``. Each warning contains ``code``,
@@ -163,11 +170,16 @@ def analyze_style(source: dict, candidate: dict, assets_dir: str | Path | None =
 
     Missing or unreadable assets use element geometry instead of alpha bounds.
     No source or candidate fields are modified, and no assets are rewritten.
+    Pass the immutable source ``relationship_graph`` to reuse its peer-row
+    inference. Row members may reflow with their message rather than being
+    mistaken for independent corner anchors.
     """
     original = {element["id"]: element for element in source["elements"]}
     resized = {element["id"]: element for element in candidate["elements"]}
     if original.keys() != resized.keys() or len(resized) != len(candidate["elements"]):
         raise ValueError("Style analysis requires every source element exactly once")
+    if relationship_graph is not None and set(relationship_graph.source_ids) != original.keys():
+        raise ValueError("Style relationship graph must describe the original source elements")
     context = build_context(source)
     values = {key: [] for key in _METRICS}
     warnings = []
@@ -273,12 +285,26 @@ def analyze_style(source: dict, candidate: dict, assets_dir: str | Path | None =
     # Preserve actual corner anchors, not the source position of every unit.
     source_width, source_height = source["canvas"]["width"], source["canvas"]["height"]
     width, height = candidate["canvas"]["width"], candidate["canvas"]["height"]
+    anchors = []
     for unit in context.units:
         if unit.role not in {"badge", "logo", "support"}:
             continue
         sx = (unit.box.x + unit.box.width / 2) / source_width
         sy = (unit.box.y + unit.box.height / 2) / source_height
         if CORNER_BAND < sx < 1 - CORNER_BAND or CORNER_BAND < sy < 1 - CORNER_BAND:
+            continue
+        anchors.append((unit, sx, sy))
+    row_members = set()
+    if anchors:
+        graph = relationship_graph or build_relationship_graph(source, assets_dir)
+        row_members = {
+            eid
+            for cluster in graph.clusters
+            if cluster.kind == "badge_row"
+            for eid in cluster.element_ids
+        }
+    for unit, sx, sy in anchors:
+        if set(_ids(unit)) <= row_members:
             continue
         candidate_box = _box(unit, resized)
         cx = (candidate_box.x + candidate_box.width / 2) / width

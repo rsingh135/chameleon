@@ -188,7 +188,7 @@ def test_style_cannot_outweigh_collisions_or_unreadable_text(monkeypatch, design
     monkeypatch.setattr(
         style_analysis,
         "analyze_style",
-        lambda _source, candidate, *_args: {"score": 1 if candidate == unsafe else 0.5},
+        lambda _source, candidate, *_args, **_kwargs: {"score": 1 if candidate == unsafe else 0.5},
     )
     monkeypatch.setattr(module, "generate_candidates", lambda *_: [unsafe, safe])
     assert module.resize(design, target) == safe
@@ -254,3 +254,79 @@ def test_exact_gap_fidelity_cannot_hide_large_typography_and_style_loss():
         analyze_style(source, coherent)["score"] > analyze_style(source, exact_gaps)["score"] + 0.1
     )
     assert module._select_candidate(source, target, [exact_gaps, coherent]) == coherent
+
+
+def test_resize_plan_returns_independent_design_and_state_copies(design):
+    import hashlib
+    import json
+
+    target = {"width": 300, "height": 100}
+    first = module.resize_with_state(design, target)
+    assert first["design"] == module.resize(design, target)
+    assert (
+        first["state"]["source_digest"]
+        == hashlib.sha256(json.dumps(design, sort_keys=True).encode()).hexdigest()
+    )
+    first["state"]["cluster_axes"]["invented"] = "horizontal"
+    first["design"]["elements"][0]["x"] = 9000
+    second = module.resize_with_state(design, target)
+    assert "invented" not in second["state"]["cluster_axes"]
+    assert second["design"]["elements"][0]["x"] != 9000
+
+
+def test_selected_declared_axes_survive_the_public_resize_plan(monkeypatch):
+    import json
+    from dataclasses import asdict
+
+    from engine.layout.composition import CompositionState
+    from engine.layout.relationships import analyze_relationships, build_relationship_graph
+
+    def text(eid, y, size):
+        return {
+            "id": eid,
+            "type": "text",
+            "x": 20,
+            "y": y,
+            "width": 300,
+            "height": 60,
+            "font_size": size,
+            "font_family": "Solstice Sans",
+            "content": "Title" if size == 40 else "Body",
+            "color": "#000000",
+        }
+
+    source = {
+        "canvas": {"width": 700, "height": 500},
+        "elements": [text("a", 20, 40), text("b", 100, 20)],
+    }
+    graph = build_relationship_graph(source)
+    cluster = graph.clusters[0]
+    first, second = (graph.units[i].box for i in cluster.unit_indices)
+    gap = next(e.source_gap for e in graph.edges if e.code == "message_attachment")
+    target = {"width": 800, "height": 500}
+    candidate = deepcopy(source)
+    candidate["canvas"] = target
+    candidate["elements"][1].update(
+        x=first.x + first.width + gap * max(first.width, second.width), y=first.y
+    )
+    state = CompositionState(
+        "declared-flow",
+        "test-horizontal",
+        "fixture",
+        800,
+        500,
+        ((cluster.id, "horizontal"),),
+        json.dumps(candidate, sort_keys=True),
+    )
+    before = asdict(graph)
+    monkeypatch.setattr(module, "generate_candidates", lambda *_: [])
+    monkeypatch.setattr(module, "generate_composition_states", lambda *_: (state,))
+    plan = module.resize_with_state(source, target)
+    assert plan["state"]["name"] == "declared-flow"
+    assert plan["state"]["cluster_axes"] == {cluster.id: "horizontal"}
+    assert (
+        analyze_relationships(graph, plan["design"], plan["state"]["cluster_axes"])["warnings"]
+        == []
+    )
+    assert analyze_relationships(graph, plan["design"])["warnings"]
+    assert asdict(graph) == before

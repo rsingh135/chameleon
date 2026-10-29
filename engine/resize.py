@@ -1,5 +1,6 @@
 """Offline, deterministic design reflow with source-aware candidate selection."""
 
+import hashlib
 import json
 import math
 from copy import deepcopy
@@ -81,7 +82,9 @@ def _safe_identity(source: dict, target: dict) -> bool:
     return True
 
 
-def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dict:
+def _select_candidate(
+    source: dict, target: dict, candidates: list[dict], state_axes: dict | None = None
+) -> dict:
     """Exclude disqualified layouts, then rank source-aware quality metrics.
 
     The evaluation package uses the real renderer's font manager. Minimal
@@ -115,8 +118,11 @@ def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dic
         if result["violations"]:
             violations.update(v.code for v in result["violations"])
             continue
-        style = analyze_style(source, candidate, root / "brand_kit/assets")
-        relationships = analyze_relationships(graph, candidate)
+        style = analyze_style(
+            source, candidate, root / "brand_kit/assets", relationship_graph=graph
+        )
+        axes = (state_axes or {}).get(json.dumps(candidate, sort_keys=True), {})
+        relationships = analyze_relationships(graph, candidate, axes)
         valid.append((candidate, result, style, relationships))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
@@ -128,7 +134,15 @@ def _select_candidate(source: dict, target: dict, candidates: list[dict]) -> dic
         # Reading order and explicit ownership are not compensated by a larger
         # minimum font. Softer association hypotheses remain below readability.
         essential = sum(
-            w["code"] in {"reading_order", "explicit_group"} for w in relationships["warnings"]
+            w["code"]
+            in {
+                "reading_order",
+                "explicit_group",
+                "peer_order",
+                "campaign_ownership",
+                "row_attachment",
+            }
+            for w in relationships["warnings"]
         )
         detached = sum(w["confidence"] >= 0.8 for w in relationships["warnings"])
         return (
@@ -175,8 +189,30 @@ def _resize_cached(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     candidates = generate_candidates(source, target_canvas)
-    candidates.extend(state.design for state in generate_composition_states(source, target_canvas))
-    return _select_candidate(source, target_canvas, candidates)
+    states = generate_composition_states(source, target_canvas)
+    candidates.extend(state.design for state in states)
+    by_design = {state.design_json: state for state in states}
+    axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}
+    selected = _select_candidate(source, target_canvas, candidates, axes)
+    state = by_design.get(json.dumps(selected, sort_keys=True))
+    return {
+        "design": selected,
+        "state": {
+            "name": state.name if state else "source" if selected == source else "candidate",
+            "topology": state.topology if state else "source" if selected == source else "legacy",
+            "source_digest": hashlib.sha256(source_json.encode()).hexdigest(),
+            "cluster_axes": dict(state.cluster_axes) if state else {},
+        },
+    }
+
+
+def resize_with_state(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict:
+    """Return a fresh design and the exact declared state used during selection."""
+    return deepcopy(
+        _resize_cached(
+            json.dumps(source, sort_keys=True), target_canvas["width"], target_canvas["height"]
+        )
+    )
 
 
 def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, Any]:
@@ -185,8 +221,4 @@ def resize(source: dict[str, Any], target_canvas: dict[str, Any]) -> dict[str, A
     Deterministic, offline, and does not mutate either argument. A bounded task
     cache speeds up repeated viewer requests; each caller receives its own copy.
     """
-    return deepcopy(
-        _resize_cached(
-            json.dumps(source, sort_keys=True), target_canvas["width"], target_canvas["height"]
-        )
-    )
+    return resize_with_state(source, target_canvas)["design"]

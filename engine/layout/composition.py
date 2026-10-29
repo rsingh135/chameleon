@@ -10,13 +10,15 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from copy import deepcopy
 from dataclasses import dataclass
 
+from .advanced import generate_advanced_states
 from .appearance import unit_visible_box
+from .blocks import _brand, _message, _translate, _uniform
+from .campaigns import generate_campaign_states
 from .candidates import _base
 from .geometry import union
-from .model import Unit, build_context
+from .model import build_context
 from .relationships import SourceRelationshipGraph, build_relationship_graph
 from .text import get_measurer
 
@@ -35,83 +37,6 @@ class CompositionState:
     def design(self) -> dict:
         """Each caller gets a copy; fitted frames never become the new source."""
         return json.loads(self.design_json)
-
-
-def _translate(elements: list[dict], dx: float, dy: float) -> None:
-    for element in elements:
-        element["x"] += dx
-        element["y"] += dy
-
-
-def _uniform(unit: Unit, scale: float, cx: float, top: float, assets) -> list[dict]:
-    visible = unit_visible_box(unit.elements, assets)
-    dx = cx - (visible.x + visible.width / 2) * scale
-    dy = top - visible.y * scale
-    elements = deepcopy(unit.elements)
-    for element in elements:
-        element["x"] = element["x"] * scale + dx
-        element["y"] = element["y"] * scale + dy
-        element["width"] *= scale
-        element["height"] *= scale
-        for field in ("font_size", "corner_radius", "stroke_width"):
-            if field in element:
-                element[field] *= scale
-    return elements
-
-
-def _brand(units: list[Unit], width: float, height: float, gap: float, assets) -> list[dict]:
-    """Fit full frames while arranging their visible silhouettes on one axis."""
-    visible = [unit_visible_box(unit.elements, assets) for unit in units]
-
-    def arrange(scale):
-        elements, y = [], 0.0
-        for unit, box in zip(units, visible, strict=True):
-            elements.extend(_uniform(unit, scale, 0, y, assets))
-            y += box.height * scale + gap
-        return elements
-
-    upper = min(
-        width / max(unit.box.width for unit in units),
-        height / max(1, sum(box.height for box in visible)),
-    )
-    lower = 0.0
-    for _ in range(24):
-        scale = (lower + upper) / 2
-        frame = union(arrange(scale))
-        if frame.width <= width and frame.height <= height:
-            lower = scale
-        else:
-            upper = scale
-    result = arrange(lower)
-    frame = union(result)
-    _translate(result, 0, -frame.y)
-    return result
-
-
-def _message(units: list[Unit], width: float, scale: float, short: float, assets) -> list[dict]:
-    elements, y = [], 0.0
-    previous = None
-    for unit in units:
-        source_box = unit_visible_box(unit.elements, assets)
-        if previous is not None:
-            source_gap = max(0, source_box.y - previous.y - previous.height)
-            y += max(short * 0.02, min(short * 0.06, source_gap * scale))
-        if len(unit.elements) == 1 and unit.elements[0]["type"] == "text":
-            element = deepcopy(unit.elements[0])
-            element["font_size"] = max(1.0, element["font_size"] * scale)
-            element.update(x=-width / 2, y=y, width=width)
-            measured = get_measurer().measure(element, element["font_size"], width)
-            element["height"] = max(1.0, measured.height + 0.01)
-            if element.get("max_lines") is not None and measured.lines > element["max_lines"]:
-                return []
-            placed = [element]
-        else:
-            placed = _uniform(unit, scale, 0, y, assets)
-        elements.extend(placed)
-        box = unit_visible_box(placed, assets)
-        y = box.y + box.height
-        previous = source_box
-    return elements
 
 
 def _realize(source, target, graph, brand, message, accents, topology, typography):
@@ -200,6 +125,23 @@ def generate_composition_states(
 ) -> tuple[CompositionState, ...]:
     """Try coherent compound states; decline unsupported/ambiguous structures."""
     graph = graph or build_relationship_graph(source)
+    digest = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
+    compound = generate_campaign_states(source, target, graph)
+    if not compound:
+        compound = generate_advanced_states(source, target, graph)
+    if compound:
+        return tuple(
+            CompositionState(
+                state.name,
+                state.topology,
+                digest,
+                target["width"],
+                target["height"],
+                state.cluster_axes,
+                state.design_json,
+            )
+            for state in compound
+        )
     brands = [cluster for cluster in graph.clusters if cluster.kind == "brand"]
     messages = [cluster for cluster in graph.clusters if cluster.kind == "message"]
     if len(brands) != 1 or len(messages) != 1:
@@ -219,13 +161,18 @@ def generate_composition_states(
         if unit.role != "badge" or not ((cx < 0.25 or cx > 0.75) and cy < 0.25):
             return ()
         accents.append(unit.index)
-    digest = hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest()
-    axes = tuple((cluster.id, "vertical") for cluster in (brand, message))
     states = []
     topologies = (
         ("columns", "stacked") if target["width"] / target["height"] >= 1.35 else ("stacked",)
     )
     for topology in topologies:
+        axes = tuple((cluster.id, "vertical") for cluster in (brand, message))
+        owned_campaigns = [
+            c for c in graph.clusters if c.kind == "campaign" and set(c.unit_indices) <= owned
+        ]
+        axes += tuple(
+            (c.id, "horizontal" if topology == "columns" else "vertical") for c in owned_campaigns
+        )
         for typography in (0.85, 1.0):
             design = _realize(source, target, graph, brand, message, accents, topology, typography)
             if design is not None:

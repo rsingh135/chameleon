@@ -25,7 +25,7 @@ from engine.eval.render import render_image
 from engine.eval.style import analyze_style
 from engine.layout.composition import generate_composition_states
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
-from engine.resize import resize
+from engine.resize import resize_with_state
 from renderer.converter.convert import _get_renderer, convert_chameleon_to_crello
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,7 +138,8 @@ def main(argv: list[str] | None = None) -> int:
             {"source_digest": source_digest, "graph_digest": graph_digest, "graph": graph_data},
         )
         context = build_context(source, ASSETS, FONTS)
-        baseline = _load_design(args.baseline) if args.baseline else resize(source, target)
+        plan = None if args.baseline else resize_with_state(source, target)
+        baseline = _load_design(args.baseline) if args.baseline else plan["design"]
         if baseline["canvas"] != target:
             raise ValueError("Saved baseline canvas must match the requested target")
         baseline_label = "SAVED BASELINE" if args.baseline else "CURRENT DEFAULT (includes states)"
@@ -175,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 summary["quality_proxy"] = evaluation["total"]
                 summary["metrics"] = evaluation["metrics"]
-                summary["style"] = analyze_style(source, design, ASSETS)
+                summary["style"] = analyze_style(source, design, ASSETS, relationship_graph=graph)
                 summary["relationships"] = analyze_relationships(graph, design, axes)
                 metrics = evaluation["metrics"]
                 minimum = metrics.get("raw_min_font_px")
@@ -235,7 +236,14 @@ def main(argv: list[str] | None = None) -> int:
             return summary
 
         report["source"] = save(source, "source", "ORIGINAL SOURCE")
-        report["baseline"] = save(baseline, "baseline", baseline_label)
+        report["baseline"] = save(
+            baseline,
+            "baseline",
+            baseline_label,
+            None if plan is None else plan["state"]["cluster_axes"],
+        )
+        if plan is not None:
+            report["baseline"]["layout_state"] = plan["state"]
         states = generate_composition_states(source, target, graph)
         report["proposal_status"] = "generated" if states else "unsupported_or_no_feasible_state"
         for index, state in enumerate(states):

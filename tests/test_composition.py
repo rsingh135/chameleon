@@ -188,10 +188,22 @@ def test_opaque_element_and_group_names_do_not_change_geometry():
             } == {key: value for key, value in actual.items() if key not in {"id", "group_id"}}
 
 
-def test_unsupported_advanced_source_declines_instead_of_forcing_a_single_message_family():
+def test_advanced_badge_peers_have_complete_owned_states():
     original = source("level3_advanced")
     before = deepcopy(original)
-    assert generate_composition_states(original, {"width": 1600, "height": 400}) == ()
+    target = {"width": 1600, "height": 400}
+    graph = build_relationship_graph(original)
+    states = generate_composition_states(original, target, graph)
+    assert states
+    assert any(
+        min(e.get("font_size", 1000) for e in state.design["elements"]) >= 10 for state in states
+    )
+    for state in states:
+        assert check_contract(original, state.design, target) == []
+        assert (
+            dict(state.cluster_axes)[next(c.id for c in graph.clusters if c.kind == "badge_row")]
+            == "wrap"
+        )
     assert original == before
 
 

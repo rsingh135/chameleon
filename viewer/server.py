@@ -23,7 +23,7 @@ from engine.eval.catalogue import CATALOGUE
 from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
-from engine.resize import resize
+from engine.resize import resize_with_state
 from renderer.converter.convert import _get_renderer, convert_chameleon_to_crello
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -191,12 +191,14 @@ def perform_resize(payload: dict) -> dict:
     source, target = deepcopy(payload["source"]), deepcopy(payload["target_canvas"])
     started = time.perf_counter()
     with _ENGINE_LOCK:
-        design = resize(source, target)
+        plan = resize_with_state(source, target)
+        design = plan["design"]
         context = build_context(source, ASSETS_DIR, FONTS_DIR)
         plate = render_plate(design, ASSETS_DIR, FONTS_DIR, max_size=1024)
         result = score(source, design, context, plate, target)
-        style = analyze_style(source, design, ASSETS_DIR)
-        relationships = analyze_relationships(build_relationship_graph(source, ASSETS_DIR), design)
+        graph = build_relationship_graph(source, ASSETS_DIR)
+        style = analyze_style(source, design, ASSETS_DIR, relationship_graph=graph)
+        relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
         source_png, source_warnings = _render_png(source)
         output_png, output_warnings = _render_png(design)
     return {
@@ -209,6 +211,7 @@ def perform_resize(payload: dict) -> dict:
             "total": result["total"],
             "style": style,
             "relationships": relationships,
+            "layout_state": plan["state"],
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),
         "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),

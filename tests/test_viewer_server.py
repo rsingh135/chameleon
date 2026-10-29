@@ -212,7 +212,9 @@ def test_real_samples_render_and_preserve_style_runs_and_warnings(http_server, s
     )
     assert 0 <= result["report"]["style"]["score"] <= 1
     assert result["report"]["relationships"] == analyze_relationships(
-        build_relationship_graph(task["source"], server.ASSETS_DIR), result["design"]
+        build_relationship_graph(task["source"], server.ASSETS_DIR),
+        result["design"],
+        result["report"]["layout_state"]["cluster_axes"],
     )
     assert result["elapsed_ms"] >= 0
     if sample == "level3_advanced":

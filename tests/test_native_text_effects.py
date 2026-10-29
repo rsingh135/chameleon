@@ -138,15 +138,22 @@ def test_em_tracking_preserves_source_pixels_and_scales_with_current_glyphs():
         def drawTextBlob(self, blob, x, y, paint):
             self.xs.append(x)
 
-    full, half = Canvas(), Canvas()
-    draw_native_text(full, load_font_manager(), element, {"version": 1, "tracking_em": 0.3})
+    full, full_untracked, half, half_untracked = Canvas(), Canvas(), Canvas(), Canvas()
+    manager = load_font_manager()
+    draw_native_text(full_untracked, manager, element, {"version": 1})
+    draw_native_text(full, manager, element, {"version": 1, "tracking_em": 0.3})
+    full_size = element.fontSize
     element.fontSize /= 2
     element.width /= 2
     element.height /= 2
-    draw_native_text(half, load_font_manager(), element, {"version": 1, "tracking_em": 0.3})
-    # Hinting may round individual glyph advances by half a pixel; the authored
-    # inter-glyph tracking itself remains exactly half-sized.
-    assert half.xs == pytest.approx([x / 2 for x in full.xs], abs=1.5)
+    draw_native_text(half_untracked, manager, element, {"version": 1})
+    draw_native_text(half, manager, element, {"version": 1, "tracking_em": 0.3})
+    # Real glyph advances are hinted separately at each size/platform. Subtract
+    # the measured untracked positions before asserting authored tracking scale.
+    full_tracking = [a - b for a, b in zip(full.xs, full_untracked.xs, strict=True)]
+    half_tracking = [a - b for a, b in zip(half.xs, half_untracked.xs, strict=True)]
+    assert full_tracking == pytest.approx([index * 0.3 * full_size for index in range(4)])
+    assert half_tracking == pytest.approx([value / 2 for value in full_tracking])
 
 
 def test_exact_run_face_is_requested_after_wrapping_without_italic_fallback():

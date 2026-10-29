@@ -174,6 +174,9 @@ def test_final_glyph_has_no_extra_tracking_and_long_words_are_not_split(native_f
 
 def test_native_em_tracking_preserves_source_pixels_and_scales_with_type(native_fonts):
     element = _tracked(native_fonts)
+    manager = load_font_manager(native_fonts)
+    design = {"canvas": {"width": 220, "height": 170}, "elements": [element]}
+    source_pixels = render_image(design, fonts_dir=native_fonts).tobytes()
     pixel = EvalMeasurer(native_fonts).layout(element)
     element["native_text_effects"] = {
         "version": 1,
@@ -184,9 +187,24 @@ def test_native_em_tracking_preserves_source_pixels_and_scales_with_type(native_
     assert EvalMeasurer(native_fonts).layout(element).line_widths == pytest.approx(
         pixel.line_widths
     )
-    half = EvalMeasurer(native_fonts).layout(element, font_size=16, width=element["width"] / 2)
+    assert render_image(design, fonts_dir=native_fonts).tobytes() == source_pixels
+    full_glyph_widths = [
+        sum(char_widths(manager, "ExactSans", "regular", "regular", 32, line))
+        for line in pixel.lines
+    ]
+    half_glyph_widths = [
+        sum(char_widths(manager, "ExactSans", "regular", "regular", 16, line))
+        for line in pixel.lines
+    ]
+    # Fit the same authored line at the actual half-size hinted advance rather
+    # than assuming that different platform font rasterizers halve every glyph.
+    half_width = half_glyph_widths[0] + 10 * (len(pixel.lines[0]) - 1) + 0.01
+    half = EvalMeasurer(native_fonts).layout(element, font_size=16, width=half_width)
     assert half.lines == pixel.lines
-    assert half.line_widths == pytest.approx([w / 2 for w in pixel.line_widths])
+    full_tracking = [a - b for a, b in zip(pixel.line_widths, full_glyph_widths, strict=True)]
+    half_tracking = [a - b for a, b in zip(half.line_widths, half_glyph_widths, strict=True)]
+    assert full_tracking == pytest.approx([20 * (len(line) - 1) for line in pixel.lines])
+    assert half_tracking == pytest.approx([value / 2 for value in full_tracking])
     assert effective_tracking(element, 16) == 10
 
 

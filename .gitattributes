@@ -1,0 +1,6 @@
+# Keep attributed upstream sources and their recorded hashes byte-for-byte.
+fixtures/open_posters/originals/** -text
+fixtures/open_posters/adapted/** -text
+fixtures/open_posters/fonts/** -text
+fixtures/open_posters/licenses/** -text
+fixtures/open_posters/prepared/** -text

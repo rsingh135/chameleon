@@ -4,6 +4,10 @@
   const colors = {text: '#86baff', image: '#e9bc73', shape: '#7dcca4'};
   const state = {samples: [], posters: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
   const hasResources = task => task && Array.isArray(task.assets) && Array.isArray(task.fonts) && task.document;
+  const webLink = value => {
+    try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && url.hostname ? url.href : null; }
+    catch { return null; }
+  };
 
   function errorMessage(error) {
     $('error').textContent = error.message || String(error);
@@ -62,18 +66,20 @@
     const editable = {...state.task};
     for (const key of ['assets', 'fonts', 'document']) delete editable[key];
     $('taskJson').value = JSON.stringify(editable, null, 2);
-    const poster = state.posters.find(item => item.id === state.task.poster_id);
+    const poster = state.posters.find(item => item.id === state.task.poster_id) || state.task.attribution;
     $('posterCredit').replaceChildren();
     $('posterCredit').hidden = !poster;
     if (poster) {
       const credit = document.createElement('span');
-      credit.textContent = `${poster.attribution_text || poster.author} · ${poster.license_id}. `;
+      credit.textContent = `${poster.attribution_text || poster.text || poster.author || 'Imported artwork'} · ${poster.license_id || 'See source license'}. `;
       $('posterCredit').append(credit);
-      const original = document.createElement('a');
-      original.href = poster.original_url; original.textContent = 'Editable original';
-      $('posterCredit').append(original);
-      if (poster.source_url) {
-        const source = document.createElement('a'); source.href = poster.source_url;
+      if (poster.original_url?.startsWith('/api/posters/')) {
+        const original = document.createElement('a');
+        original.href = poster.original_url; original.textContent = 'Editable original';
+        $('posterCredit').append(original);
+      }
+      if (webLink(poster.source_url)) {
+        const source = document.createElement('a'); source.href = webLink(poster.source_url);
         source.textContent = ' · Source and attribution'; source.target = '_blank'; source.rel = 'noopener';
         $('posterCredit').append(source);
       }
@@ -312,7 +318,7 @@
       const edited = JSON.parse($('taskJson').value);
       const task = edited.source ? edited : {source: edited, target_canvas: state.task?.target_canvas};
       if (hasResources(state.task) && !hasResources(task)) {
-        for (const key of ['assets', 'fonts', 'document', 'poster_id']) task[key] = state.task[key];
+        for (const key of ['assets', 'fonts', 'document', 'poster_id', 'attribution']) task[key] = state.task[key];
       }
       importTask(task, 'Edited design');
     }

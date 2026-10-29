@@ -73,6 +73,29 @@ def post(port, payload):
     return status, json.loads(body)
 
 
+def test_png_download_keeps_source_credit_without_changing_pixels(payload):
+    plain, _ = server._render_png(payload["source"])
+    credited, _ = server._render_png(
+        payload["source"],
+        {
+            "text": "Doory by Siam, creator and maintainer of Doory, https://github.com/shaongitbd/doory",
+            "author": "Siam",
+            "source_url": "https://github.com/shaongitbd/doory",
+            "license_id": "LicenseRef-Doory-AAL",
+            "original_sha256": "a" * 64,
+        },
+    )
+    with (
+        Image.open(BytesIO(base64.b64decode(plain.split(",")[1]))) as before,
+        Image.open(BytesIO(base64.b64decode(credited.split(",")[1]))) as after,
+    ):
+        assert before.size == after.size == (100, 100)
+        assert before.tobytes() == after.tobytes()
+        assert after.info["Attribution"].startswith("Doory by Siam")
+        assert after.info["License"] == "LicenseRef-Doory-AAL"
+        assert after.info["Original SHA256"] == "a" * 64
+
+
 def test_health_samples_static_and_font_routes(http_server):
     status, _, body = request(http_server, "GET", "/api/health")
     assert status == 200

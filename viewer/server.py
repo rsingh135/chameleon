@@ -15,6 +15,7 @@ import time
 from copy import deepcopy
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -192,7 +193,7 @@ def validate_request(payload) -> None:
                 _string(element, "stroke_color", name, maximum=200)
 
 
-def _render_png(design: dict) -> tuple[str, list[str]]:
+def _render_png(design: dict, attribution: dict | None = None) -> tuple[str, list[str]]:
     resources = get_resources()
     renderer = get_renderer(resources.fonts_dir)
     example, warnings = convert_chameleon_to_crello(
@@ -200,6 +201,25 @@ def _render_png(design: dict) -> tuple[str, list[str]]:
     )
     canvas = design["canvas"]
     png = renderer.render(example, max_size=max(canvas["width"], canvas["height"]), format="png")
+    if isinstance(attribution, dict):
+        from PIL import Image, PngImagePlugin
+
+        metadata = PngImagePlugin.PngInfo()
+        for field, keyword in (
+            ("text", "Attribution"),
+            ("author", "Author"),
+            ("source_url", "Source"),
+            ("license_id", "License"),
+            ("license_url", "License URL"),
+            ("original_sha256", "Original SHA256"),
+        ):
+            value = attribution.get(field)
+            if isinstance(value, str) and value.strip():
+                metadata.add_text(keyword, value[:2000])
+        with Image.open(BytesIO(png)) as image:
+            exported = BytesIO()
+            image.save(exported, format="PNG", pnginfo=metadata)
+            png = exported.getvalue()
     return "data:image/png;base64," + base64.b64encode(png).decode("ascii"), warnings
 
 
@@ -221,8 +241,8 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
         proportions = analyze_proportions(source, design, graph)
         focal = analyze_focal(source, design, graph)
-        source_png, source_warnings = _render_png(source)
-        output_png, output_warnings = _render_png(design)
+        source_png, source_warnings = _render_png(source, payload.get("attribution"))
+        output_png, output_warnings = _render_png(design, payload.get("attribution"))
     return {
         "design": design,
         "source_png": source_png,

@@ -276,6 +276,28 @@ def test_original_hash_failure_is_visible_before_engine(corpus, runtime, tmp_pat
     assert "SHA-256" in report["examples"][0]["failures"][0]["error"]
 
 
+def test_json_original_and_author_thumbnail_are_labeled_truthfully(corpus, runtime, tmp_path):
+    manifest, entries = corpus
+    entry = entries[0]
+    original = b'{"editable":"author page data"}'
+    entry.update(
+        original_path="tested.json",
+        sha256=hashlib.sha256(original).hexdigest(),
+        native_reference={"role": "author thumbnail"},
+        attribution_text="Required visible credit",
+    )
+    (manifest.parent / "tested.json").write_bytes(original)
+    (manifest.parent / "prepared/tested/original.json").write_bytes(original)
+    _write(manifest, {"schema_version": 1, "examples": entries})
+    out = tmp_path / "gallery"
+    report = audit.run_audit(manifest, out)
+    assert (out / "tested/original.json").read_bytes() == original
+    assert report["examples"][0]["original_file"] == "original.json"
+    page = (out / "index.html").read_text(encoding="utf-8")
+    assert "Required visible credit" in page
+    assert "original app thumbnail" in page
+
+
 def test_unknown_invariant_is_a_red_configuration_error():
     source = {"canvas": {"width": 100, "height": 100}, "elements": []}
     result = audit.evaluate_invariants(source, source, [{"kind": "invented"}], "landscape")

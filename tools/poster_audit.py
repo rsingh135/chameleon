@@ -329,10 +329,11 @@ def _copy_evidence(entry, root, prepared, folder, row):
     digest = hashlib.sha256(original.read_bytes()).hexdigest()
     if digest != entry["sha256"]:
         raise ValueError("Original poster bytes do not match the curated SHA-256")
-    if (prepared / "original.svg").read_bytes() != original.read_bytes():
-        raise ValueError("Prepared original.svg differs from the curated original")
-    shutil.copyfile(original, folder / "original.svg")
-    row["original_file"] = "original.svg"
+    original_name = "original" + original.suffix.lower()
+    if (prepared / original_name).read_bytes() != original.read_bytes():
+        raise ValueError("Prepared original differs from the curated original")
+    shutil.copyfile(original, folder / original_name)
+    row["original_file"] = original_name
     license_path = _inside(root, entry["license_path"])
     shutil.copyfile(license_path, folder / "license.txt")
     row["license_file"] = "license.txt"
@@ -362,9 +363,19 @@ def _case(entry, root, out, gallery_only):
         "id": entry["id"],
         "title": entry.get("title", entry["id"]),
         "split": entry["split"],
+        "native_label": "Author's original app thumbnail"
+        if entry.get("native_reference")
+        else "Native SVG raster",
         "attribution": {
             key: entry.get(key)
-            for key in ("author", "source_url", "license_id", "license_url", "sha256")
+            for key in (
+                "author",
+                "attribution_text",
+                "source_url",
+                "license_id",
+                "license_url",
+                "sha256",
+            )
         },
         "targets": [],
         "failures": [],
@@ -536,7 +547,7 @@ def _cells(row, out):
     folder = out / row["id"]
     cells = []
     for key, label in (
-        ("native_file", "Native original SVG raster"),
+        ("native_file", row.get("native_label", "Native reference")),
         ("converted_file", "Imported source renderer"),
     ):
         if row.get(key):
@@ -545,8 +556,9 @@ def _cells(row, out):
         status = (
             "CHECKS FAILED"
             if target.get("technical_pass") is False or target["failures"]
-            else "visual review pending"
+            else "checks passed"
         )
+        status += " · visual " + target.get("visual_review", {}).get("status", "pending")
         cells.append(
             (
                 f"{row['id']} · {target['name']}",
@@ -610,6 +622,9 @@ def _gallery(report, out):
         license_link = _link(
             attribution.get("license_url"), str(attribution.get("license_id", "License"))
         )
+        credit = html.escape(
+            str(attribution.get("attribution_text") or attribution.get("author", ""))
+        )
         failures = row["failures"] + [
             failure for target in row["targets"] for failure in target["failures"]
         ]
@@ -620,9 +635,12 @@ def _gallery(report, out):
         sections.append(
             f'<section id="{row["id"]}"><h2>{html.escape(row["title"])}</h2>'
             f'<p class="status">{html.escape(row.get("status", "failed"))} · '
-            f"{html.escape(row['split'])} set · human review pending</p>"
-            f"<p>{html.escape(str(attribution.get('author', '')))} · {source} · "
+            f"{html.escape(row['split'])} set</p>"
+            f"<p>{credit} · {source} · "
             f'{license_link} · <a href="{row["id"]}/report.json">Full checks</a></p>'
+            f'<p><a href="/?poster={row["id"]}">Open in studio</a> · '
+            f'<a href="/api/posters/{row["id"]}/original">Editable original</a> · '
+            f'<a href="/api/posters/{row["id"]}/bundle">Portable JSON bundle</a></p>'
             f'<ul class="errors">{errors}</ul><div class="grid">'
             f"{''.join(pictures)}</div></section>"
         )
@@ -649,6 +667,8 @@ diagnostics; human visual review remains pending unless a matching review record
 approves the rendered evidence. Reserve posters are prepared imports only and have never been
 resized by this harness.</p><p><a href="report.json">Summary JSON</a> ·
 <a href="contact_sheet.png">Contact sheet</a></p><pre>{summary}</pre>
+<p><a href="reserve-10.zip">Download ten personal-test examples</a> ·
+<a href="/">Back to studio</a></p>
 {"".join(sections)}</main></html>"""
     (out / "index.html").write_text(page, encoding="utf-8")
 

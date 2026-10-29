@@ -25,7 +25,13 @@ from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.resize import resize_with_state
-from engine.resources import ResourceContext, get_renderer, get_resources, using_resources
+from engine.resources import (
+    ResourceContext,
+    get_renderer,
+    get_resources,
+    render_input,
+    using_resources,
+)
 from renderer.converter.convert import convert_chameleon_to_crello
 from viewer.document_bridge import (
     DOCUMENT_ORIGIN,
@@ -188,7 +194,7 @@ def _render_png(design: dict) -> tuple[str, list[str]]:
     resources = get_resources()
     renderer = get_renderer(resources.fonts_dir)
     example, warnings = convert_chameleon_to_crello(
-        design, renderer.font_manager, str(resources.assets_dir)
+        render_input(design), renderer.font_manager, str(resources.assets_dir)
     )
     canvas = design["canvas"]
     png = renderer.render(example, max_size=max(canvas["width"], canvas["height"]), format="png")

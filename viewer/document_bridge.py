@@ -25,10 +25,13 @@ MAX_DOCUMENT_REQUEST_BYTES = 24 * 1024 * 1024
 MAX_RESOURCE_BYTES = 8 * 1024 * 1024
 MAX_TOTAL_RESOURCE_BYTES = 16 * 1024 * 1024
 MAX_RESOURCE_PIXELS = 20_000_000
+MAX_CACHE_BYTES = 256 * 1024 * 1024
+MAX_CACHE_PACKAGES = 64
 DOCUMENT_ORIGIN = "https://localhost:5241"
 DOCUMENT_ROOT = Path(__file__).resolve().parents[1] / "output" / "documents"
 _WRITE_LOCK = threading.Lock()
 _SAFE_FILENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,199}\Z")
+_PACKAGE_NAME = re.compile(r"[0-9a-f]{64}\Z")
 
 
 @dataclass(frozen=True)
@@ -79,7 +82,13 @@ def _image(data: bytes, mime: object, name: str) -> None:
             if getattr(image, "n_frames", 1) != 1:
                 raise ValueError(f"{name} must be a still image.")
             image.verify()
-    except (OSError, Image.DecompressionBombError) as exc:
+    except (OSError, SyntaxError, EOFError, Image.DecompressionBombError) as exc:
+        raise ValueError(f"{name} is not a valid supported image.") from exc
+    # Header/CRC verification alone does not validate compressed pixel data.
+    try:
+        with Image.open(BytesIO(data)) as image:
+            image.load()
+    except (OSError, SyntaxError, ValueError, EOFError, Image.DecompressionBombError) as exc:
         raise ValueError(f"{name} is not a valid supported image.") from exc
 
 
@@ -173,6 +182,26 @@ def prepare_document(payload: dict, root: Path | None = None) -> PreparedDocumen
     if not directory.resolve().is_relative_to(package_root):
         raise ValueError("Document resource cache path escaped its package root.")
     with _WRITE_LOCK:
+        packages = (
+            [path for path in package_root.iterdir() if _PACKAGE_NAME.fullmatch(path.name)]
+            if package_root.exists()
+            else []
+        )
+        if not directory.exists():
+            used = sum(
+                path.stat().st_size
+                for package in packages
+                for path in package.rglob("*")
+                if path.is_file()
+            )
+            if (
+                len(packages) >= MAX_CACHE_PACKAGES
+                or used + sum(map(len, files.values())) > MAX_CACHE_BYTES
+            ):
+                raise ValueError(
+                    "Native document cache is full (64 packages / 256 MiB). "
+                    "Clear output/documents while the local server is stopped, then retry."
+                )
         for name, data in files.items():
             path = (directory / name).resolve()
             if not path.is_relative_to(directory):

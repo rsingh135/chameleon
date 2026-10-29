@@ -11,7 +11,7 @@ import json
 from collections import OrderedDict
 from contextlib import contextmanager
 from contextvars import ContextVar
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path, PureWindowsPath
@@ -218,6 +218,36 @@ def get_renderer(fonts_dir: str | Path | None = None) -> CrelloV5Renderer:
             if convert._renderer_cache.get(evicted_key) is evicted:
                 del convert._renderer_cache[evicted_key]
         return renderer
+
+
+def render_input(design: dict, fonts_dir: str | Path | None = None) -> dict:
+    """Adapt native end-exclusive ranges on a render-only copy for the vendor.
+
+    Chameleon's schema and Adobe snapshots use end-exclusive text ranges, while
+    the vendored converter draws inclusive ends. Existing brand renders retain
+    their established behavior; only native manifest-backed contexts opt in.
+    """
+    directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+    if directory == DEFAULT_FONTS_DIR or not _manifest_path(directory).is_file():
+        return design
+    rendered = deepcopy(design)
+    document = rendered.get("source", rendered)
+    for element in document["elements"]:
+        if element.get("type") != "text" or "style_runs" not in element:
+            continue
+        runs = []
+        for run in element["style_runs"]:
+            start, end = run.get("start"), run.get("end")
+            if (
+                type(start) is not int
+                or type(end) is not int
+                or not 0 <= start <= end <= len(element["content"])
+            ):
+                raise ValueError("Native style_runs ranges must be inside the text content.")
+            if start < end:
+                runs.append({**run, "end": end - 1})
+        element["style_runs"] = runs
+    return rendered
 
 
 def clear_resource_caches() -> None:

@@ -351,6 +351,77 @@ def test_context_constructor_normalizes_relative_paths(tmp_path, monkeypatch):
     assert context.fonts_dir == tmp_path / "fonts"
 
 
+def test_native_render_ranges_are_end_exclusive_without_changing_source(tmp_path):
+    from copy import deepcopy
+
+    from renderer.converter.convert import convert_chameleon_to_crello
+
+    _font(tmp_path)
+    design = _native_design()
+    text = design["elements"][0]
+    text.update(
+        content="ABCD",
+        style_runs=[
+            {"start": 1, "end": 2, "color": "#ff0000"},
+            {"start": 2, "end": 2, "color": "#00ff00"},
+            {"start": 3, "end": 4, "color": "#0000ff"},
+        ],
+    )
+    original = deepcopy(design)
+    with resources.using_resources(fonts_dir=tmp_path):
+        rendered = resources.render_input(design)
+        converted, _ = convert_chameleon_to_crello(rendered, resources.load_font_manager())
+    assert rendered is not design
+    assert rendered["elements"][0]["style_runs"] == [
+        {"start": 1, "end": 1, "color": "#ff0000"},
+        {"start": 3, "end": 3, "color": "#0000ff"},
+    ]
+    assert converted["text_color"][0] == ["#111111", "#ff0000", "#111111", "#0000ff"]
+    assert design == original
+    assert resources.render_input(design) is design
+
+
+def test_legacy_brand_render_ranges_retain_existing_behavior(tmp_path):
+    design = _native_design()
+    design["elements"][0]["style_runs"] = [{"start": 1, "end": 2, "color": "#ff0000"}]
+    assert resources.render_input(design, resources.DEFAULT_FONTS_DIR) is design
+    assert resources.render_input(design, tmp_path) is design
+
+
+def test_both_native_render_entry_points_use_only_a_render_copy(tmp_path, monkeypatch):
+    from copy import deepcopy
+
+    from engine.eval import render as evaluation_render
+    from viewer import server
+
+    _font(tmp_path)
+    design = _native_design()
+    design["elements"][0]["style_runs"] = [{"start": 1, "end": 2, "color": "#ff0000"}]
+    original = deepcopy(design)
+    converted_ranges = []
+
+    def record_converter(rendered, *_args):
+        converted_ranges.append(rendered["elements"][0]["style_runs"])
+        return {}, []
+
+    class Renderer:
+        font_manager = object()
+
+        def render(self, *_args, **_kwargs):
+            result = io.BytesIO()
+            Image.new("RGBA", (400, 200), "white").save(result, format="PNG")
+            return result.getvalue()
+
+    for module in [evaluation_render, server]:
+        monkeypatch.setattr(module, "get_renderer", lambda *_: Renderer())
+        monkeypatch.setattr(module, "convert_chameleon_to_crello", record_converter)
+    with resources.using_resources(fonts_dir=tmp_path):
+        assert evaluation_render.render_image(design).size == (400, 200)
+        assert server._render_png(design)[0].startswith("data:image/png;base64,")
+    assert converted_ranges == [[{"start": 1, "end": 1, "color": "#ff0000"}]] * 2
+    assert design == original
+
+
 def _native_design(alias="Native-Poster-PSAlias-9"):
     return {
         "canvas": {"width": 400, "height": 200},

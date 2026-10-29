@@ -5,6 +5,7 @@ import hashlib
 import http.client
 import json
 import threading
+import zlib
 from copy import deepcopy
 from io import BytesIO
 
@@ -148,6 +149,23 @@ def test_changed_package_is_not_silently_reused(payload, tmp_path):
         bridge.prepare_document(payload, tmp_path)
 
 
+@pytest.mark.parametrize("limit", ["MAX_CACHE_PACKAGES", "MAX_CACHE_BYTES"])
+def test_aggregate_cache_quota_rejects_new_packages_without_removing_existing(
+    payload, tmp_path, monkeypatch, limit
+):
+    first = bridge.prepare_document(payload, tmp_path)
+    original = (first.resources.assets_dir / "native.png").read_bytes()
+    monkeypatch.setattr(bridge, limit, 1)
+    assert bridge.prepare_document(payload, tmp_path).resources == first.resources
+    image = BytesIO()
+    Image.new("RGBA", (20, 30), "red").save(image, format="PNG")
+    payload["assets"][0]["data_base64"] = encoded(image.getvalue())
+    with pytest.raises(ValueError, match="cache is full"):
+        bridge.prepare_document(payload, tmp_path)
+    assert (first.resources.assets_dir / "native.png").read_bytes() == original
+    assert len(list(tmp_path.iterdir())) == 1
+
+
 @pytest.mark.parametrize(
     "name", ["../outside.png", "C:\\outside.png", "CON", "NUL.png", "bad.", ".", ".."]
 )
@@ -203,6 +221,24 @@ def test_image_only_documents_do_not_inherit_brand_fonts(payload, tmp_path):
     payload["fonts"] = []
     prepared = bridge.prepare_document(payload, tmp_path)
     assert json.loads((prepared.resources.fonts_dir / "font-manifest.json").read_text()) == []
+
+
+@pytest.mark.parametrize("fix_crc", [False, True])
+def test_corrupt_image_pixels_return_json_error_before_materialization(
+    http_server, payload, fix_crc
+):
+    data = bytearray(base64.b64decode(payload["assets"][0]["data_base64"]))
+    marker = data.index(b"IDAT")
+    length = int.from_bytes(data[marker - 4 : marker], "big")
+    data[marker + 4] ^= 0xFF  # Break the compressed stream after a valid PNG header.
+    if fix_crc:
+        end = marker + 4 + length
+        data[end : end + 4] = zlib.crc32(data[marker:end]).to_bytes(4, "big")
+    payload["assets"][0]["data_base64"] = encoded(data)
+    status, _, raw = request(http_server, payload=payload)
+    assert status == 400
+    assert "valid supported image" in json.loads(raw)["error"]
+    assert not bridge.DOCUMENT_ROOT.exists()
 
 
 def test_resource_size_limits_precede_materialization(payload, tmp_path, monkeypatch):
@@ -272,8 +308,10 @@ def test_exact_development_origin_preflight_is_scoped_to_document_route(http_ser
 @pytest.mark.parametrize(
     "origin", ["https://outside.example", "https://localhost:5242", "http://localhost:5241", "null"]
 )
-def test_other_sites_cannot_use_document_bridge(http_server, payload, origin):
-    status, headers, _ = request(http_server, payload=payload, headers={"Origin": origin})
+def test_other_sites_cannot_use_document_bridge(http_server, origin):
+    # Origin rejection precedes body parsing. Keep the denied upload small so
+    # Windows can receive the 403 before the server closes the unread body.
+    status, headers, _ = request(http_server, payload={}, headers={"Origin": origin})
     assert status == 403
     assert "Access-Control-Allow-Origin" not in headers
 

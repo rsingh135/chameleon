@@ -127,6 +127,13 @@ be bounded PNG base64 data URLs or URLs on the configured local engine origin.
 The echoed snapshot ID and returned
 canvas must match the request; a stale response is refused. Error responses use `{error}`.
 
+The backend checks image pixel decoding and exact font PostScript names before
+materializing a package. Native end-exclusive color ranges are adapted on a
+render-only copy for the legacy converter; returned source/design ranges remain
+unchanged. Resource transport is capped at 24 MiB, decoded bytes at 16 MiB and
+each file at 8 MiB. The immutable local cache accepts at most 64 packages or
+256 MiB and then reports an error; it never removes an existing document.
+
 Target/font/engine edits invalidate the previous result. An in-flight result is
 discarded if these inputs change. Before writing, the sandbox re-reads source
 geometry/styles and re-exports image resources to detect replaced images. It then

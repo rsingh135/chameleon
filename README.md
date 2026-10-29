@@ -81,7 +81,8 @@ clones. Missing fonts and unsupported effects stop the operation explicitly.
 
 The engine isolates each document's assets and fonts in a content-addressed
 package. The 24 MiB transport permits at most 16 MiB of decoded resources and
-8 MiB per file. Only the explicit development origin `https://localhost:5241`
+8 MiB per file. The cache stops accepting new packages at 64 packages or 256 MiB;
+existing packages remain available. Only the development origin `https://localhost:5241`
 has cross-origin access to this route; existing studio endpoints remain local
 and same-origin. No remote asset URLs or filesystem paths are accepted.
 

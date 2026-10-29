@@ -11,6 +11,32 @@ element properties, and download the resulting JSON or full-resolution PNG.
 All image references use the bundled `brand_kit/assets/` directory; binary asset
 uploads are not implemented. Missing assets are displayed as labeled placeholders.
 
+## Frontend refactor trials
+
+With the same server running, open the
+[side-by-side comparison](http://127.0.0.1:8765/trial-comparison.html), or a live option:
+
+- [A · Docked studio](http://127.0.0.1:8765/trial.html?variant=A): left setup,
+  central canvas, right inspector. Recommended starting direction.
+- [B · Review desk](http://127.0.0.1:8765/trial.html?variant=B): light appearance,
+  horizontal setup ribbon, paired previews, inspection tray below.
+- [C · Focus canvas](http://127.0.0.1:8765/trial.html?variant=C): wide canvas,
+  right setup dock, inspection tray below.
+
+The A/B/C switcher changes the frame in place and keeps the current imported
+design, dimensions, selected element, preview view, and export state. Each option
+also supports both appearances. Arrow keys cycle trials outside editable controls.
+The original studio remains at `/`; trial styles/scripts load only on `trial.html`.
+
+These are opt-in experiments for choosing a direction, not a replacement for the
+default GUI. They use the same `app.js` and live engine, with no frontend build
+step or new dependency. `python -m tools.build_frontend_trial` refreshes the
+trial shell from `index.html` after shared markup changes. Trial screenshots and
+the original GUI capture are in `viewer/assets/trials/`.
+
+Research, primary-source links, tradeoffs, and validation notes:
+[`docs/FRONTEND_DESIGN_RESEARCH.md`](../docs/FRONTEND_DESIGN_RESEARCH.md).
+
 The server binds only to loopback and accepts at most 2 MiB per request, 200
 elements, and 20 million pixels per canvas with a maximum side of 8192 px.
 `python -m tools.verify_local` checks the running API and writes

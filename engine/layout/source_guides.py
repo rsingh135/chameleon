@@ -1,7 +1,7 @@
 """Bounded proposals derived from authored rows instead of inferred role order.
 
-Every foreground leaf shares one geometry/font scale. Source rows are rigid:
-rules, icons, text runs and their authored offsets move together. Only an
+Source rows and media/information regions retain a shared internal geometry/font
+scale: rules, icons, text and their authored offsets move together. Only an
 ungrouped singleton text frame may widen to accommodate immutable tracking.
 These proposals supplement the other families; they do not select a winner.
 """
@@ -12,6 +12,9 @@ import json
 import math
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import lru_cache
+
+from engine.resources import get_resources
 
 from .appearance import unit_visible_box
 from .geometry import Box, bounds, intersection, union
@@ -84,8 +87,10 @@ def _owned_units(context):
             or (e["type"] == "image" and e.get("source_art", {}).get("kind") == "svg-nontext")
             for e in unit.elements
         )
+        overlay = len(unit.elements) == 1 and _translucent_overlay(unit.elements[0])
         if (
             not art
+            or overlay
             or unit.box.width < context.width * 0.35
             or unit.box.height < context.height * 0.035
             or unit.box.width * unit.box.height < area * 0.04
@@ -157,7 +162,79 @@ def _owned_units(context):
     media = [Unit(elements, union(elements), "media") for elements in composites.values()]
     claimed = {id(u) for u in image_units}
     ordinary = [u for u in remaining if id(u) not in claimed]
+    # A dark label readable on the original bright photo cannot be moved onto
+    # a dark page background. Retain that original photographic support, while
+    # compatible white message copy can form a separate information region.
+    backgrounds = [e for e in context.backgrounds if e["type"] == "shape"]
+    if backgrounds:
+        background = _luminance(backgrounds[-1].get("fill_color", "#ffffff"))
+        independent = []
+        for unit in ordinary:
+            bad_support = (
+                unit.text
+                and all(e["type"] == "text" for e in unit.elements)
+                and any(
+                    _contrast(_luminance(e.get("color", "#000000")), background) < 3
+                    for e in unit.text
+                )
+            )
+            owners = [
+                m
+                for m in media
+                if intersection(m.box, unit.box) >= unit.box.width * unit.box.height * 0.95
+            ]
+            if bad_support and owners:
+                owner = min(owners, key=lambda m: m.box.width * m.box.height)
+                owner.elements.extend(unit.elements)
+                owner.box = union(owner.elements)
+            else:
+                independent.append(unit)
+        ordinary = independent
     return ordinary, plates, media
+
+
+def _luminance(color):
+    from PIL import ImageColor
+
+    try:
+        rgb = ImageColor.getrgb(color)[:3]
+    except (ValueError, TypeError):
+        return 0.5
+    channels = [c / 255 for c in rgb]
+    linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return sum(c * w for c, w in zip(linear, (0.2126, 0.7152, 0.0722), strict=True))
+
+
+def _contrast(first, second):
+    return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+
+
+@lru_cache(maxsize=128)
+def _alpha_overlay(path, modified, size):
+    from PIL import Image
+
+    del modified, size
+    try:
+        with Image.open(path) as image:
+            histogram = image.convert("RGBA").getchannel("A").histogram()
+        visible = sum(histogram[1:])
+        return visible > sum(histogram) * 0.3 and histogram[255] / max(1, visible) < 0.65
+    except (OSError, ValueError):
+        return False
+
+
+def _translucent_overlay(element):
+    if element["type"] != "image" or element.get("source_art", {}).get("kind") != "svg-nontext":
+        return False
+    root = get_resources().assets_dir.resolve()
+    path = (root / element.get("asset_id", "")).resolve()
+    if not path.is_relative_to(root):
+        return False
+    try:
+        stat = path.stat()
+    except OSError:
+        return False
+    return _alpha_overlay(str(path), stat.st_mtime_ns, stat.st_size)
 
 
 def _spread(rows, scale, cell, source_width):
@@ -168,8 +245,11 @@ def _spread(rows, scale, cell, source_width):
     gaps = [max(0, b.box.y - a.box.y - a.box.height) for a, b in zip(rows, rows[1:], strict=False)]
     if gaps and not sum(gaps):
         gaps = [1.0] * len(gaps)
-    free = cell.height - content
-    y, result, exceptions = cell.y, [], []
+    available = cell.height - content
+    # Expand meaningful inter-region whitespace, with a bound that prevents a
+    # tight message from becoming four detached lines across a large canvas.
+    free = min(available, sum(gaps) * scale * 2.5)
+    y, result, exceptions = cell.y + (available - free) / 2, [], []
     for index, row in enumerate(rows):
         centre = cell.x + (row.box.x + row.box.width / 2) / source_width * cell.width
         x = max(
@@ -198,6 +278,27 @@ def _unit_rows(context, units):
     return _rows(SimpleNamespace(units=units))
 
 
+def _distributed(source, target, context, rows, cell):
+    scale = min(
+        cell.width / max(row.box.width for row in rows),
+        cell.height * 0.9 / sum(row.box.height for row in rows),
+    )
+    packed = _spread(rows, scale, cell, context.width)
+    return (
+        _state(
+            source,
+            target,
+            context,
+            "bands-distributed",
+            "source-bands-vertical",
+            packed[0],
+            packed[1],
+        )
+        if packed
+        else None
+    )
+
+
 def _photo_regions(source, target, context):
     """Source-derived media/info topology with rigid photo and plate owners."""
     ordinary, plates, media = _owned_units(context)
@@ -211,27 +312,33 @@ def _photo_regions(source, target, context):
         return []
     width, height = float(target["width"]), float(target["height"])
     aspect_change = (width / height) / (context.width / context.height)
-    if .8 <= aspect_change <= 1.25:
+    if 0.8 <= aspect_change <= 1.25:
         return []
     states = []
     info_rows = _unit_rows(context, ordinary + plates)
-    if width / height >= .95:
+    if width / height >= 0.95:
         padding = min(width, height) * 0.035
-        photo_scale = min(height / photo.box.height, width * 0.6 / photo.box.width)
+        photo_scale = min(height / photo.box.height, width * 0.48 / photo.box.width)
         photo_width = photo.box.width * photo_scale
         photo_elements = _transform(
             photo.elements,
             photo_scale,
             width - photo_width - photo.box.x * photo_scale,
-            -photo.box.y * photo_scale,
+            (height - photo.box.height * photo_scale) / 2 - photo.box.y * photo_scale,
         )
         # Original media side determines the new side; only that topology is tried.
         on_right = photo.box.x + photo.box.width / 2 >= context.width / 2
         for fraction in (0.56, 0.62):
             info_width = width * fraction
+            if not plates:
+                # Without an opaque owned panel, the target photo cannot sit
+                # behind light message copy: reserve genuinely clear support.
+                info_width = min(info_width, width - photo_width - padding)
+            if info_width <= 0:
+                continue
             cell = Box(0 if on_right else width - info_width, padding, info_width, height - padding)
             scale = min(
-                info_width / max(r.box.width for r in info_rows),
+                info_width / max(context.width, max(r.box.width for r in info_rows)),
                 cell.height * 0.86 / sum(r.box.height for r in info_rows),
             )
             packed = _spread(info_rows, scale, cell, context.width)
@@ -507,11 +614,11 @@ def _packed(source, target, context, sections, cells, gap_factor, name, topology
 
 
 def generate_source_guides(source: dict, target: dict, graph=None) -> list[GroupedState]:
-    """Return at most eight independent source-derived candidate proposals.
+    """Return at most ten independent source-derived candidate proposals.
 
     Optional ``graph`` is accepted for factory compatibility and is not changed.
-    Band topology is limited to text/shape/vector rows with unambiguous y gaps;
-    photographs and intentional overlapping art still receive source-similarity.
+    Rigid region owners allow photo-aware format changes. Separate band topology
+    is limited to text/shape/vector rows with unambiguous occupied y gaps.
     """
     del graph
     if not source.get("elements") or any(
@@ -530,6 +637,8 @@ def generate_source_guides(source: dict, target: dict, graph=None) -> list[Group
     canonical = _source_fit(source, target, context, foreground)
     if canonical is not None:
         states.append(canonical)
+    if not context.decorations:
+        states.extend(_photo_regions(source, target, context))
     if context.decorations or any(
         e["type"] == "image" and e.get("source_art", {}).get("kind") != "svg-nontext"
         for e in foreground
@@ -554,6 +663,9 @@ def generate_source_guides(source: dict, target: dict, graph=None) -> list[Group
         )
         if state is not None:
             states.append(state)
+    distributed = _distributed(source, target, context, rows, cell)
+    if distributed is not None:
+        states.append(distributed)
     if len(rows) >= 4 and width / height >= 0.85:
         gap = min(width, height) * 0.055
         column_width = (cell.width - gap) / 2

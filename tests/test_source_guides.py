@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from engine.eval import build_context, check_contract
-from engine.layout.source_guides import MAX_STATES, generate_source_guides
+from engine.layout.model import build_context as layout_context
+from engine.layout.source_guides import MAX_STATES, _owned_units, generate_source_guides
 from engine.resources import using_resources
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,7 +70,7 @@ def test_canonical_uses_one_real_scale_for_geometry_and_fonts_including_photos()
             assert new["font_size"] / old["font_size"] == pytest.approx(scale)
         else:
             assert new["width"] / old["width"] == pytest.approx(scale)
-    assert all(s.name == "source-guides/source-fit" for s in states)
+    assert any(s.topology == "source-media-columns" for s in states)
     assert source == before
 
 
@@ -178,3 +179,107 @@ def test_bounded_deterministic_and_fresh_without_mutating_source():
         assert states[0].design["elements"][0]["content"] != "changed"
     assert source == before
     assert generate_source_guides(source, {"width": 0, "height": 900}) == []
+
+
+@pytest.mark.parametrize(
+    "target", [{"width": 1600, "height": 900}, {"width": 1080, "height": 1920}]
+)
+def test_original_sale_has_real_format_proposals_with_rigid_photo_and_plate(target):
+    folder = ROOT / "fixtures/open_posters/prepared/doory_bold-sale-announcement"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        _, plates, media = _owned_units(layout_context(source))
+        assert len(plates) == len(media) == 1
+        states = generate_source_guides(source, target)
+        adapted = [s for s in states if s.topology.startswith("source-media-")]
+        assert adapted and len(states) <= MAX_STATES
+        context = build_context(source)
+        for state in adapted:
+            design = state.design
+            by_id = {e["id"]: e for e in design["elements"]}
+            assert check_contract(source, design, target, context) == []
+            assert [e["id"] for e in design["elements"]] == [e["id"] for e in source["elements"]]
+            for component in [plates[0], media[0]]:
+                anchor = component.elements[0]
+                new_anchor = by_id[anchor["id"]]
+                scale = new_anchor["height"] / anchor["height"]
+                for old in component.elements:
+                    new = by_id[old["id"]]
+                    assert new["width"] == pytest.approx(old["width"] * scale)
+                    assert new["height"] == pytest.approx(old["height"] * scale)
+                    assert new["x"] - new_anchor["x"] == pytest.approx(
+                        (old["x"] - anchor["x"]) * scale
+                    )
+                    assert new["y"] - new_anchor["y"] == pytest.approx(
+                        (old["y"] - anchor["y"]) * scale
+                    )
+                    if old["type"] == "text":
+                        assert new["font_size"] == pytest.approx(old["font_size"] * scale)
+            plate = next(e for e in plates[0].elements if e["type"] == "image")
+            assert by_id[plate["id"]]["y"] + by_id[plate["id"]]["height"] == pytest.approx(
+                target["height"]
+            )
+            for old, new in zip(source["elements"], design["elements"], strict=True):
+                assert {k: v for k, v in old.items() if k not in MUTABLE} == {
+                    k: v for k, v in new.items() if k not in MUTABLE
+                }
+    assert source == before
+
+
+@pytest.mark.parametrize(
+    "target", [{"width": 1600, "height": 900}, {"width": 1080, "height": 1080}]
+)
+def test_photo_dependent_dark_headers_and_fade_keep_original_bright_support(target):
+    folder = ROOT / "fixtures/open_posters/prepared/doory_rooftop-event-story"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        ordinary, plates, media = _owned_units(layout_context(source))
+        assert ordinary and not plates and len(media) == 1
+        headers = [e for e in source["elements"] if e["type"] == "text" and e["y"] < 200]
+        assert len(headers) == 3
+        assert all(e["id"] in {m["id"] for m in media[0].elements} for e in headers)
+        photo = next(
+            e for e in media[0].elements if e.get("source_art", {}).get("kind") == "masked-photo"
+        )
+        states = [
+            s
+            for s in generate_source_guides(source, target)
+            if s.topology == "source-media-columns"
+        ]
+        assert states
+        for state in states:
+            elements = {e["id"]: e for e in state.design["elements"]}
+            frame = elements[photo["id"]]
+            for old in headers:
+                new = elements[old["id"]]
+                assert (
+                    frame["x"] <= new["x"]
+                    and new["x"] + new["width"] <= frame["x"] + frame["width"] + 0.01
+                )
+            for unit in ordinary:
+                for old in unit.text:
+                    new = elements[old["id"]]
+                    assert new["x"] + new["width"] < frame["x"]
+
+
+def test_story_distributes_source_whitespace_without_detaching_event_internals():
+    folder = ROOT / "fixtures/open_posters/prepared/doory_grand-opening-flyer"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    target = {"width": 1080, "height": 1920}
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        state = next(
+            s
+            for s in generate_source_guides(source, target)
+            if s.name == "source-guides/bands-distributed"
+        )
+    text = [e for e in state.design["elements"] if e["type"] == "text"]
+    assert (
+        max(e["y"] + e["height"] for e in text) - min(e["y"] for e in text) > target["height"] * 0.8
+    )
+    scales = [
+        new["font_size"] / old["font_size"]
+        for old, new in zip(source["elements"], state.design["elements"], strict=True)
+        if old["type"] == "text"
+    ]
+    assert max(scales) == pytest.approx(min(scales))

@@ -269,6 +269,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
     from engine.eval import check_contract, score
     from engine.eval.proportions import analyze_proportions
     from engine.eval.style import analyze_style
+    from engine.layout.reading_order import analyze_reading_order
     from engine.layout.relationships import analyze_relationships
     from engine.layout.rules import analyze_rules
 
@@ -305,6 +306,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
     )
     invariants = evaluate_invariants(source, design, definitions, target_name)
     rules = analyze_rules(source, design)
+    reading_order = analyze_reading_order(source, design) if membership else None
     checks = {
         "contract": {"passed": not violations, "violations": [str(v) for v in violations]},
         "identity": {
@@ -324,6 +326,11 @@ def _measure(source, design, target, state, context, graph, definitions, target_
         },
         "ownership": {"passed": membership and not ownership, "warnings": ownership},
         "dividers": {"passed": not rules["distorted_rules"], **rules},
+        "reading_order": {
+            "passed": reading_order is not None
+            and reading_order["high_confidence_inversions"] == 0,
+            "diagnostics": reading_order,
+        },
     }
     return {
         "checks": checks,

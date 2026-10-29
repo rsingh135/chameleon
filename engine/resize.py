@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 from copy import deepcopy
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -14,10 +15,23 @@ from engine.layout.focal import analyze_focal, infer_focal_profile
 from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
 from engine.layout.grouped import generate_grouped_states
+from engine.layout.reading_order import analyze_reading_order, infer_reading_order
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.layout.rules import analyze_rules
 from engine.layout.source_guides import generate_source_guides
 from engine.resources import get_resources, using_resources
+
+
+@dataclass(frozen=True)
+class _CandidateAssessment:
+    design: dict
+    evaluation: dict
+    style: dict
+    relationships: dict
+    proportions: dict
+    focal: dict
+    rules: dict
+    reading_order: dict
 
 
 def _quality(source: dict, candidate: dict, context) -> float:
@@ -156,6 +170,7 @@ def _select_candidate(
     violations = set()
     graph = build_relationship_graph(source, resources.assets_dir)
     focal_profile = infer_focal_profile(source, graph)
+    reading_profile = infer_reading_order(source)
     for candidate in candidates:
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
@@ -167,13 +182,19 @@ def _select_candidate(
         proportions = analyze_proportions(source, candidate, graph)
         focal = analyze_focal(source, candidate, graph, focal_profile)
         rules = analyze_rules(source, candidate)
-        valid.append((candidate, result, style, relationships, proportions, focal, rules))
+        reading_order = analyze_reading_order(source, candidate, reading_profile)
+        valid.append(
+            _CandidateAssessment(
+                candidate, result, style, relationships, proportions, focal, rules, reading_order
+            )
+        )
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
 
     def safety(item):
-        candidate, result, style, relationships, proportions, focal, rules = item
+        candidate, result = item.design, item.evaluation
+        relationships, proportions, focal = item.relationships, item.proportions, item.focal
         metrics = result["metrics"]
         # Reading order and explicit ownership are not compensated by a larger
         # minimum font. Softer association hypotheses remain below readability.
@@ -192,7 +213,8 @@ def _select_candidate(
         return (
             -metrics.get("raw_collisions", 0.0),
             -essential,
-            -len(rules["distorted_rules"]),
+            -item.reading_order["high_confidence_inversions"],
+            -len(item.rules["distorted_rules"]),
             _readability(candidate, layout_context, metrics),
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
             focal["metrics"].get("center_retained", True),
@@ -206,10 +228,10 @@ def _select_candidate(
 
     def fidelity(item):
         return (
-            item[2]["score"]
-            + item[3]["score"]
-            + item[4]["score"]
-            + item[4]["metrics"].get("composition_span_retention", 1.0)
+            item.style["score"]
+            + item.relationships["score"]
+            + item.proportions["score"]
+            + item.proportions["metrics"].get("composition_span_retention", 1.0)
         ) / 4
 
     # Small changes to inferred gaps must not dominate typography or visual
@@ -224,7 +246,7 @@ def _select_candidate(
     )
 
     def typography_preference(item):
-        texts = [element for element in item[0]["elements"] if element["type"] == "text"]
+        texts = [element for element in item.design["elements"] if element["type"] == "text"]
         drift = sum(
             abs(
                 math.log(
@@ -233,9 +255,9 @@ def _select_candidate(
             )
             for element in texts
         )
-        return -drift / max(1, len(texts)), item[1]["total"], fidelity(item)
+        return -drift / max(1, len(texts)), item.evaluation["total"], fidelity(item)
 
-    return max(finalists, key=typography_preference)[0]
+    return max(finalists, key=typography_preference).design
 
 
 @lru_cache(maxsize=64)

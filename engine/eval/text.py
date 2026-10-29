@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from engine.native_typography import layout_native_text, uses_native_typography
 from engine.resources import DEFAULT_FONTS_DIR as DEFAULT_FONTS_DIR
 from engine.resources import get_resources, load_font_manager
 from renderer.converter.convert import _normalize_weight, _weight_style_to_font_style
@@ -57,6 +58,7 @@ class TextMeasurer:
     def __init__(self, fonts_dir: str | Path | None = None):
         directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
         self.fonts_dir = str(directory)
+        self.native_document = uses_native_typography(directory)
         self._font_manager = load_font_manager(directory)
         self._width_cache: dict[tuple, tuple[float, ...]] = {}
 
@@ -83,6 +85,15 @@ class TextMeasurer:
         content = str(el.get("content", ""))
         size = float(font_size if font_size is not None else el.get("font_size", 24))
         box_w = float(width if width is not None else el.get("width", 1.0))
+        if self.native_document:
+            layout = layout_native_text(el, self._font_manager, size, box_w, self._widths)
+            return TextLayout(
+                lines=tuple(layout.wrapped.split("\n")),
+                line_widths=layout.line_widths,
+                font_size=size,
+                line_height=float(el.get("line_height") or DEFAULT_LINE_HEIGHT),
+                _word_widths=layout.word_widths,
+            )
         weight, style = self._style(el)
         family = el.get("font_family", "")
         widths = self._widths(family, weight, style, size, content)

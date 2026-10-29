@@ -731,6 +731,31 @@
       "license_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/OFL.txt",
       "license_path": "fonts/cantarell-full/OFL.txt",
       "selection_note": "Full upstream face preserves encoded U+FB00/U+FB01 present in author copy; Latin-subset Fontsource files omitted these codepoints. No copy normalization or glyph substitution."
+    },
+    {
+      "family": "Crimson Text",
+      "weight": "400",
+      "style": "italic",
+      "fontsource_id": "crimson-text",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/files/crimson-text-latin-400-italic.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/crimson-text/crimson-text-latin-400-italic.woff2",
+      "source_sha256": "ded83489adaeec098ee0d639252e72be7de219f759b939ba4b2e606e5e68b272",
+      "path": "fonts/crimson-text/crimson-text-latin-400-italic.ttf",
+      "sha256": "ecc3408be9c0debbe6c0a986570d7e92a2028ce2d6e9a2d0d77f3ca0b25e3b49",
+      "postscript_name": "CrimsonText-Italic",
+      "name_table_families": [
+        "Crimson Text"
+      ],
+      "name_table_subfamilies": [
+        "Italic"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/LICENSE",
+      "license_path": "fonts/crimson-text/OFL.txt"
     }
   ],
   "errors": [],

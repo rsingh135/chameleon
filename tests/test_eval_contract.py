@@ -62,6 +62,19 @@ def test_frozen_fields(sample):
     assert _codes(source, cand, ctx) == ["frozen_field_changed"]
 
 
+@pytest.mark.parametrize("field", ["native_text_effects", "source_art"])
+def test_imported_style_metadata_cannot_disappear_or_change(sample, field):
+    original, _ = sample
+    source = copy.deepcopy(original)
+    _text(source)[field] = {"version": 1, "source": "authored identity"}
+    context = build_context(source)
+    changed = copy.deepcopy(source)
+    _text(changed)[field]["source"] = "altered"
+    assert _codes(source, changed, context) == ["frozen_field_changed"]
+    del _text(changed)[field]
+    assert _codes(source, changed, context) == ["frozen_field_changed"]
+
+
 def test_off_canvas(sample):
     source, ctx = sample
     cand = copy.deepcopy(source)

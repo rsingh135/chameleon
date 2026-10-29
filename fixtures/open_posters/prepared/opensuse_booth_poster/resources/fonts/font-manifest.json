@@ -1,0 +1,25 @@
+{
+  "fonts": [
+    {
+      "font_family": "OpenSans-Regular",
+      "postscript_name": "OpenSans-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "c0c9780e88c88f43.ttf"
+    },
+    {
+      "font_family": "OpenSans-Bold",
+      "postscript_name": "OpenSans-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "9f3811befae030ac.ttf"
+    },
+    {
+      "font_family": "SUSEThin-Bold",
+      "postscript_name": "SUSEThin-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "725a13cedff7929f.ttf"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ import json
 from collections import OrderedDict
 from contextlib import contextmanager
 from contextvars import ContextVar
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path, PureWindowsPath
@@ -203,10 +203,13 @@ def get_renderer(fonts_dir: str | Path | None = None) -> CrelloV5Renderer:
             return renderer
         manager = load_font_manager(directory)
         if _manifest_path(directory).is_file():
-            # The vendored constructor scans flat filename-derived aliases. Copy its
-            # template so nested/empty manifests work without mutating the default.
-            renderer = copy(convert._get_renderer(str(DEFAULT_FONTS_DIR)))
-            renderer.font_manager = manager
+            from engine.native_renderer import NativeDocumentRenderer
+
+            # Nested/empty manifests use exact aliases and fractional sizes;
+            # the vendor's bundled/default instance remains untouched.
+            renderer = NativeDocumentRenderer.from_template(
+                convert._get_renderer(str(DEFAULT_FONTS_DIR)), manager
+            )
             convert._renderer_cache[key] = renderer
         else:
             renderer = convert._get_renderer(key)
@@ -248,6 +251,51 @@ def render_input(design: dict, fonts_dir: str | Path | None = None) -> dict:
                 runs.append({**run, "end": end - 1})
         element["style_runs"] = runs
     return rendered
+
+
+def native_render_example(example: dict, design: dict, fonts_dir: str | Path | None = None) -> dict:
+    """Attach immutable document text paint metadata in converter z-order.
+
+    The converter sorts source elements stably by z_index and retains one output
+    record per source element. Validate that correspondence before attaching data;
+    mismatched paint must fail instead of being assigned to another text node.
+    """
+    directory = get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
+    if directory == DEFAULT_FONTS_DIR or not _manifest_path(directory).is_file():
+        return example
+    from engine.native_typography import rewrap_example
+
+    example = rewrap_example(example, design, load_font_manager(directory))
+    document = design.get("source", design)
+    elements = sorted(document["elements"], key=lambda element: element.get("z_index", 0))
+    if not any("native_text_effects" in element for element in elements):
+        return example
+    if example.get("length") != len(elements):
+        raise ValueError("Native effect metadata does not match converted element count.")
+    descriptors = []
+    for index, element in enumerate(elements):
+        descriptor = element.get("native_text_effects")
+        if descriptor is not None:
+            if element.get("type") != "text" or not isinstance(descriptor, dict):
+                raise ValueError(
+                    "Native text effects require a text element and descriptor object."
+                )
+            if example["text"][index].replace("\n", " ") != element["content"].replace("\n", " "):
+                raise ValueError("Native effect metadata does not match converter text order.")
+            if any(
+                abs(float(example[field][index]) - float(element.get(source_field, default))) > 1e-6
+                for field, source_field, default in (
+                    ("left", "x", 0),
+                    ("top", "y", 0),
+                    ("width", "width", 1),
+                    ("height", "height", 1),
+                )
+            ):
+                raise ValueError("Native effect metadata does not match converter frame order.")
+            descriptor = deepcopy(descriptor)
+            descriptor["source_text"] = element["content"]
+        descriptors.append(descriptor)
+    return {**example, "native_text_effects": descriptors}
 
 
 def clear_resource_caches() -> None:

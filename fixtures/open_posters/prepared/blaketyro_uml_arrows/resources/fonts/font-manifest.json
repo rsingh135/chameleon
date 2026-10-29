@@ -1,0 +1,32 @@
+{
+  "fonts": [
+    {
+      "font_family": "DejaVuSans-Bold",
+      "postscript_name": "DejaVuSans-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "e6476c1b80502924.ttf"
+    },
+    {
+      "font_family": "Inconsolata-Bold",
+      "postscript_name": "Inconsolata-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "268c1564be5385ec.ttf"
+    },
+    {
+      "font_family": "Inconsolata-Regular",
+      "postscript_name": "Inconsolata-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "a96d81f5285e24f9.ttf"
+    },
+    {
+      "font_family": "DejaVuSansMono",
+      "postscript_name": "DejaVuSansMono",
+      "weight": "regular",
+      "style": "normal",
+      "file": "b4a6c3e4faab8773.ttf"
+    }
+  ]
+}

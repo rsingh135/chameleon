@@ -1,0 +1,46 @@
+{
+  "canvas": {
+    "width": 88,
+    "height": 94
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": -5.983613999999989,
+      "y": -148.51337,
+      "width": 530.0,
+      "height": 272.53455,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "fill_color": "rgba(23,63,79,1)",
+      "corner_radius": 2.0964196,
+      "id": "svg-n00012",
+      "z_index": 0
+    },
+    {
+      "type": "text",
+      "x": 57.0,
+      "y": 1.0,
+      "width": 415.12109375,
+      "height": 80.0,
+      "content": "You took the Leap to 15.3!",
+      "font_family": "OpenSansCondensed-Bold",
+      "font_size": 40.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "line_height": 1.0,
+      "letter_spacing": 0.0,
+      "text_align": "center",
+      "color": "rgba(255,255,255,1)",
+      "max_lines": 1,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "svg_font_family": "'Open Sans Condensed'",
+      "svg_font_weight": "bold",
+      "svg_font_style": "normal",
+      "id": "svg-run00000",
+      "z_index": 1
+    }
+  ]
+}

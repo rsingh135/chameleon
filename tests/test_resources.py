@@ -402,7 +402,8 @@ def test_both_native_render_entry_points_use_only_a_render_copy(tmp_path, monkey
 
     def record_converter(rendered, *_args):
         converted_ranges.append(rendered["elements"][0]["style_runs"])
-        return {}, []
+        content = rendered["elements"][0]["content"]
+        return {"length": 1, "text": [content], "text_line": [[0] * len(content)]}, []
 
     class Renderer:
         font_manager = object()

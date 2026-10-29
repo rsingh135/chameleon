@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+from engine.native_typography import layout_native_text, uses_native_typography
 from engine.resources import DEFAULT_FONTS_DIR, get_resources, load_font_manager
 
 FONTS_DIR = DEFAULT_FONTS_DIR
@@ -29,6 +30,7 @@ class TextMeasurer:
             get_resources().fonts_dir if fonts_dir is None else Path(fonts_dir).resolve()
         )
         self._widths = lru_cache(maxsize=8192)(self._measure_widths)
+        self.native_document = uses_native_typography(self.fonts_dir)
         self.backend = "estimated"
         self._manager = None
         self._char_widths = None
@@ -55,6 +57,15 @@ class TextMeasurer:
         )
 
     def measure(self, element: dict, size: float, width: float) -> TextMeasurement:
+        if self.native_document and self._manager is not None:
+            layout = layout_native_text(element, self._manager, size, width, self._widths)
+            lines = len(layout.line_widths)
+            return TextMeasurement(
+                max(layout.line_widths, default=0.0),
+                lines * size * element.get("line_height", 1.2),
+                lines,
+                layout.wrapped,
+            )
         content = str(element.get("content", ""))
         bold = element.get("font_weight", "regular") == "bold"
         italic = element.get("font_style", "normal") == "italic"

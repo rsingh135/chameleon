@@ -26,11 +26,13 @@ from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
 from engine.layout.focal import analyze_focal
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
+from engine.layout.rules import analyze_rules
 from engine.resize import resize_with_state
 from engine.resources import (
     ResourceContext,
     get_renderer,
     get_resources,
+    native_render_example,
     render_input,
     using_resources,
 )
@@ -170,6 +172,10 @@ def validate_request(payload) -> None:
                 for key in ("color", "font_weight", "font_style"):
                     if key in run and not isinstance(run[key], str):
                         raise ValueError(f"{name}.style_runs.{key} must be a string.")
+            if "native_text_effects" in element:
+                from engine.native_text_effects import validate_descriptor
+
+                validate_descriptor(element["native_text_effects"], content)
         elif kind == "image":
             asset = _string(element, "asset_id", name, maximum=255)
             if (
@@ -199,6 +205,7 @@ def _render_png(design: dict, attribution: dict | None = None) -> tuple[str, lis
     example, warnings = convert_chameleon_to_crello(
         render_input(design), renderer.font_manager, str(resources.assets_dir)
     )
+    example = native_render_example(example, design)
     canvas = design["canvas"]
     png = renderer.render(example, max_size=max(canvas["width"], canvas["height"]), format="png")
     if isinstance(attribution, dict):
@@ -241,6 +248,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
         proportions = analyze_proportions(source, design, graph)
         focal = analyze_focal(source, design, graph)
+        rules = analyze_rules(source, design)
         source_png, source_warnings = _render_png(source, payload.get("attribution"))
         output_png, output_warnings = _render_png(design, payload.get("attribution"))
     return {
@@ -255,6 +263,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
             "relationships": relationships,
             "proportions": proportions,
             "focal": focal,
+            "rules": rules,
             "layout_state": plan["state"],
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),

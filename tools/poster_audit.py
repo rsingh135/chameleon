@@ -4,7 +4,7 @@ python -m tools.poster_audit --manifest fixtures/open_posters/catalogue.json \
     --out output/poster-audit
 
 Reserve examples are import-only: this module never resizes them. A technically
-clean render still requires human comparison with the native source; proxy
+clean render still requires visual comparison with the native source; proxy
 metrics never assign a visual approval.
 """
 
@@ -76,6 +76,20 @@ def _prepared_digest(prepared):
     return _digest(files)
 
 
+def _implementation_digest():
+    root = Path(__file__).resolve().parents[1]
+    files = [
+        *sorted((root / "engine").rglob("*.py")),
+        *sorted((root / "renderer/converter").rglob("*.py")),
+    ]
+    return _digest(
+        {
+            path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in files
+        }
+    )
+
+
 def _resize(source, target):
     from engine.resize import resize_with_state
 
@@ -83,7 +97,7 @@ def _resize(source, target):
 
 
 def _render(design):
-    from engine.resources import get_renderer, get_resources, render_input
+    from engine.resources import get_renderer, get_resources, native_render_example, render_input
     from renderer.converter.convert import convert_chameleon_to_crello
 
     resources = get_resources()
@@ -91,6 +105,7 @@ def _render(design):
     example, warnings = convert_chameleon_to_crello(
         render_input(design), renderer.font_manager, str(resources.assets_dir)
     )
+    example = native_render_example(example, design)
     from io import BytesIO
 
     image = renderer.render(example, max_size=max(design["canvas"].values()), format="png")
@@ -255,6 +270,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
     from engine.eval.proportions import analyze_proportions
     from engine.eval.style import analyze_style
     from engine.layout.relationships import analyze_relationships
+    from engine.layout.rules import analyze_rules
 
     violations = check_contract(source, design, target, context)
     result = score(source, design, context, target_canvas=target)
@@ -274,6 +290,8 @@ def _measure(source, design, target, state, context, graph, definitions, target_
             "font_weight",
             "font_style",
             "style_runs",
+            "native_text_effects",
+            "source_art",
             "asset_id",
         )
     )
@@ -286,6 +304,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
         [w for w in relationships["warnings"] if w["code"] in _OWNERSHIP] if relationships else []
     )
     invariants = evaluate_invariants(source, design, definitions, target_name)
+    rules = analyze_rules(source, design)
     checks = {
         "contract": {"passed": not violations, "violations": [str(v) for v in violations]},
         "identity": {
@@ -304,6 +323,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
             "raw": result["metrics"].get("raw_collisions"),
         },
         "ownership": {"passed": membership and not ownership, "warnings": ownership},
+        "dividers": {"passed": not rules["distorted_rules"], **rules},
     }
     return {
         "checks": checks,
@@ -374,6 +394,7 @@ def _case(entry, root, out, gallery_only):
         "id": entry["id"],
         "title": entry.get("title", entry["id"]),
         "split": entry["split"],
+        "source_note": entry.get("source_note"),
         "native_label": "Author's original app thumbnail"
         if entry.get("native_reference")
         else "Native SVG raster",
@@ -406,6 +427,8 @@ def _case(entry, root, out, gallery_only):
         source_digest = _digest(source)
         row["source_digest"] = source_digest
         row["prepared_digest"] = _prepared_digest(prepared)
+        row["implementation_digest"] = _implementation_digest()
+        row["invariant_digest"] = _digest(entry.get("invariants", []))
         _json(folder / "source.json", source)
         row["source_file"] = "source.json"
         if entry["split"] == "reserve":
@@ -420,6 +443,8 @@ def _case(entry, root, out, gallery_only):
                 saved
                 and saved.get("source_digest") == source_digest
                 and saved.get("prepared_digest") == row["prepared_digest"]
+                and saved.get("implementation_digest") == row["implementation_digest"]
+                and saved.get("invariant_digest") == row["invariant_digest"]
             ):
                 for key in (
                     "targets",
@@ -433,6 +458,9 @@ def _case(entry, root, out, gallery_only):
                         row[key] = saved[key]
                 row["failures"].extend(saved.get("failures", []))
                 for target in row["targets"]:
+                    target["visual_review"] = _review(
+                        entry, target["name"], target["evidence_digest"]
+                    )
                     filename = folder / target.get("png_file", "missing-render.png")
                     if not filename.is_file() or hashlib.sha256(
                         filename.read_bytes()
@@ -447,7 +475,8 @@ def _case(entry, root, out, gallery_only):
                 row["failures"].append(
                     {
                         "phase": "saved_evidence",
-                        "error": "No source-matching prior audit artifacts; no engine was run.",
+                        "error": "No matching source, implementation and invariant evidence; "
+                        "no engine was run.",
                     }
                 )
             return row
@@ -610,7 +639,7 @@ def _link(value, label):
 
 def _gallery(report, out):
     sections, all_cells = [], []
-    for row in report["examples"]:
+    for row in sorted(report["examples"], key=lambda row: row["split"] == "reserve"):
         cells = _cells(row, out)
         all_cells.extend(cells)
         _contact_sheet(cells, out / row["id"] / "contact_sheet.png")
@@ -621,7 +650,8 @@ def _gallery(report, out):
             )
             alternative = html.escape(label, quote=True)
             content = (
-                f'<img loading="lazy" src="{relative}" alt="{alternative}">'
+                f'<a href="{relative}"><img loading="lazy" src="{relative}" '
+                f'alt="{alternative}"></a>'
                 if filename
                 else '<div class="missing">No render available</div>'
             )
@@ -636,6 +666,7 @@ def _gallery(report, out):
         credit = html.escape(
             str(attribution.get("attribution_text") or attribution.get("author", ""))
         )
+        source_note = f"<p>{html.escape(row['source_note'])}</p>" if row.get("source_note") else ""
         failures = row["failures"] + [
             failure for target in row["targets"] for failure in target["failures"]
         ]
@@ -643,12 +674,15 @@ def _gallery(report, out):
             f"<li>{html.escape(failure['phase'] + ': ' + failure['error'])}</li>"
             for failure in failures
         )
+        label = "Personal test · import only" if row["split"] == "reserve" else "Render review"
+        if row.get("status") == "import_failed":
+            label = "Import needs attention"
         sections.append(
             f'<section id="{row["id"]}"><h2>{html.escape(row["title"])}</h2>'
-            f'<p class="status">{html.escape(row.get("status", "failed"))} · '
-            f"{html.escape(row['split'])} set</p>"
+            f'<p class="status">{label}</p>'
             f"<p>{credit} · {source} · "
             f'{license_link} · <a href="{row["id"]}/report.json">Full checks</a></p>'
+            f"{source_note}"
             f'<p><a href="/?poster={row["id"]}">Open in studio</a> · '
             f'<a href="/api/posters/{row["id"]}/original">Editable original</a> · '
             f'<a href="/api/posters/{row["id"]}/bundle">Portable JSON bundle</a></p>'
@@ -657,29 +691,48 @@ def _gallery(report, out):
         )
     _contact_sheet(all_cells, out / "contact_sheet.png")
     summary = html.escape(json.dumps(report["summary"], indent=2))
+    reviewed = sum(row["split"] == "reviewed" for row in report["examples"])
+    reserves = sum(row["split"] == "reserve" for row in report["examples"])
+    rendered = sum(
+        bool(target.get("png_file")) for row in report["examples"] for target in row["targets"]
+    )
     page = f"""<!doctype html><html lang="en"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>External poster audit</title><style>
-body{{margin:0;background:#f5f5f2;color:#222;font:15px/1.5 system-ui,sans-serif}}
-main{{max-width:1720px;margin:auto;padding:40px 24px}}
-h1{{font-size:32px;letter-spacing:-.7px;margin:0 0 12px}}h2{{font-size:22px;margin-bottom:5px}}
-a{{color:#36539a}}section{{margin:40px 0;border-top:1px solid #d5d5d1;padding-top:18px}}
-.status{{font-weight:600}}
+<title>Chameleon · Poster tests</title><style>
+body{{margin:0;background:#f6f6f6;color:#242424;font:14px/1.5 system-ui,sans-serif}}
+header{{display:flex;align-items:center;gap:20px;padding:18px 28px;background:white;
+border-bottom:1px solid #dedede;flex-wrap:wrap}}
+header .brand{{margin-right:auto;color:#242424;font-size:18px;font-weight:650;text-decoration:none}}
+.mark{{display:inline-grid;place-items:center;background:#eb1000;color:white;width:30px;
+height:32px;border-radius:7px;margin-right:10px;font-size:15px}}
+.button{{padding:9px 15px;background:#242424;color:white;border-radius:7px;text-decoration:none}}
+main{{max-width:1720px;margin:auto;padding:32px 28px}}
+h1{{font-size:30px;letter-spacing:-.7px;margin:0 0 10px}}h2{{font-size:21px;margin-bottom:4px}}
+a{{color:#3d5e94;text-underline-offset:3px}}
+a:focus-visible{{outline:3px solid #1473e6;outline-offset:4px}}
+section{{margin:36px 0;border-top:1px solid #d8d8d8;padding-top:18px;scroll-margin-top:20px}}
+.status{{font-weight:600;color:#686868;margin:4px 0 12px}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}}
 figure{{margin:0}}figure img,.missing{{width:100%;height:400px;object-fit:contain;
-background:white;border:1px solid #ddd;box-sizing:border-box}}
+background:white;border:1px solid #ddd;border-radius:5px;box-sizing:border-box}}
 figcaption{{padding:8px 0}}small{{color:#666}}.errors{{color:#9b342c}}
 .missing{{display:grid;place-content:center;color:#9b342c}}
-pre{{white-space:pre-wrap;background:#eaeae6;padding:16px;font-size:12px}}
-.notice{{max-width:900px}}
-</style><main><h1>External poster audit</h1><p class="notice">
-Native original, imported source, and selected adaptations. Structural checks and metrics are
-diagnostics; visual review remains pending unless a matching review record explicitly
-approves the rendered evidence. Reserve posters are prepared imports only and have never been
-resized by this harness.</p><p><a href="report.json">Summary JSON</a> ·
-<a href="contact_sheet.png">Contact sheet</a></p><pre>{summary}</pre>
-<p><a href="reserve-10.zip">Download ten personal-test examples</a> ·
-<a href="/">Back to studio</a></p>
+pre{{white-space:pre-wrap;background:#ededed;padding:16px;font-size:12px}}
+.notice{{max-width:850px;color:#606060;margin:0 0 20px}}
+.counts{{font-size:15px;font-weight:600}}details{{margin:12px 0;color:#606060}}
+summary{{cursor:pointer}}
+@media(max-width:600px){{header,main{{padding:20px}}figure img{{height:340px}}}}
+</style><header><a class="brand" href="/"><span class="mark">Ch</span>Chameleon</a>
+<a href="/">Open studio</a><a class="button" href="reserve-10.zip">Personal-test pack ↓</a>
+</header><main><h1>Poster comparisons</h1><p class="notice">
+Original artwork, editable imports, and selected adaptations. Open any image at full size.
+Render checks and visual reviews are reported separately. Personal tests are import-only;
+this audit has never resized them.</p>
+<p class="counts">{reviewed} reviewed designs &nbsp; · &nbsp; {rendered} adaptations
+&nbsp; · &nbsp; {reserves} personal-test inputs</p>
+<details><summary>Verification details and downloads</summary><p>
+<a href="report.json">Full checks</a> · <a href="contact_sheet.png">Contact sheet</a></p>
+<pre>{summary}</pre></details>
 {"".join(sections)}</main></html>"""
     (out / "index.html").write_text(page, encoding="utf-8")
 

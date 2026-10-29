@@ -1,0 +1,119 @@
+{
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "fill_color": "rgba(14,14,14,1)",
+      "id": "page-background:c2860070-1bac-4c15-a338-074800e4950a",
+      "z_index": 0
+    },
+    {
+      "x": 150.0,
+      "y": 330.0,
+      "width": 780.0,
+      "height": 328.15200000000004,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Have nothing in your house that you do not know to be USEFUL, or believe to be beautiful.",
+      "font_family": "CrimsonText-Regular",
+      "font_size": 66.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(247,245,241,1)",
+      "text_align": "center",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Crimson Text\", serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0,
+        "runs": [
+          {
+            "start": 79,
+            "end": 88,
+            "font_family": "CrimsonText-Italic"
+          }
+        ]
+      },
+      "id": "f1e19694-03ca-4533-a84a-f81eb20f40a9",
+      "z_index": 1
+    },
+    {
+      "x": 0.0,
+      "y": 740.0,
+      "width": 1080.0,
+      "height": 32.544,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "WILLIAM MORRIS",
+      "font_family": "CrimsonText-Regular",
+      "font_size": 24.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(167,163,156,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Crimson Text\", serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 300
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.3
+      },
+      "id": "26181b10-f6d7-4f8a-9839-07ca5c7d49c1",
+      "z_index": 2
+    },
+    {
+      "x": 0.0,
+      "y": 980.0,
+      "width": 1080.0,
+      "height": 24.408,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "#YOURBRANDHERE",
+      "font_family": "CrimsonText-Regular",
+      "font_size": 18.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(167,163,156,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Crimson Text\", serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 400
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.4
+      },
+      "id": "5b4fa08c-e9e4-49e1-8829-167505eb52d8",
+      "z_index": 3
+    }
+  ]
+}

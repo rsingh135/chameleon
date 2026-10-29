@@ -1,0 +1,975 @@
+{
+  "id": "opensuse_banner_leap",
+  "status": "ready",
+  "failures": [],
+  "node_mapping": [
+    {
+      "node_id": "rect1019",
+      "source_key": "n00012",
+      "element_id": "svg-n00012",
+      "mode": "native_shape",
+      "reference_bounds": [
+        -5.983613999999989,
+        -148.51337,
+        524.016386,
+        124.02118000000002
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "run00000",
+      "element_id": "svg-run00000",
+      "mode": "editable_text",
+      "reference_bounds": [
+        58,
+        14,
+        469,
+        55
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "raw_text": "You took the Leap to 15.3!",
+      "source_text_owner": "n00023",
+      "postscript_name": "OpenSansCondensed-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    }
+  ],
+  "editable_text_count": 1,
+  "vector_art_count": 0,
+  "parity_review": "pending",
+  "attribution": {
+    "title": "openSUSE You Took the Leap15.3 promotional banner",
+    "author": "openSUSE Artwork contributors (individual designer not identified in source)",
+    "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/banners/vector/banner-you-took-the-leap.svg",
+    "license_id": "CC-BY-SA-3.0",
+    "license_url": "https://github.com/openSUSE/artwork/blob/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/LICENSE.md",
+    "license_path": "licenses/opensuse-CC-BY-SA-3.0.txt",
+    "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
+    "split": "reserve"
+  },
+  "comparison_paper": "Both native/imported renders composited on declared white paper; no authored background element is added.",
+  "original_sha256": "cce3bcb27ff7488ac79242908eb6849bcdb2026b6ae62dd2f08d1fa750bc8ab4",
+  "licenses": [
+    {
+      "path": "licenses/81c302f4c6c7-opensuse-CC-BY-SA-3.0.txt",
+      "sha256": "81c302f4c6c76af09ca8883a9159c218eb044205c7a211efd77d6961115415a0",
+      "license_id": "CC-BY-SA-3.0",
+      "source_path": "licenses/opensuse-CC-BY-SA-3.0.txt"
+    },
+    {
+      "path": "licenses/cfc7749b96f6-Apache-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "license_id": "Apache-2.0",
+      "source_path": "fonts/open-sans-condensed/Apache-2.0.txt"
+    }
+  ],
+  "reference_sha256": "cce3bcb27ff7488ac79242908eb6849bcdb2026b6ae62dd2f08d1fa750bc8ab4",
+  "baseline_kind": "author_original",
+  "adaptations": [],
+  "adaptation_note": null,
+  "canvas": {
+    "width": 88,
+    "height": 94
+  },
+  "viewport_convention": "absolute SVG dimensions",
+  "font_resolutions": [
+    {
+      "declared_families": [
+        "Open Sans Condensed"
+      ],
+      "selected_family": "Open Sans Condensed",
+      "resolved_family": "Open Sans Condensed",
+      "postscript_name": "OpenSansCondensed-Bold",
+      "weight": 700,
+      "style": "normal",
+      "resolution": "exact_named_family_weight_style",
+      "font_sha256": "b0e15600198ff879810151231434b2d61623fa9e99ee46e2f5b6aed63f9d4043",
+      "historical_source_bytes_verified": false
+    }
+  ],
+  "source_tree": [
+    {
+      "source_key": "n00000",
+      "parent": null,
+      "tag": "svg",
+      "id": "svg6",
+      "attributes": {
+        "style": "fill:#ffffff",
+        "width": "87.623772",
+        "height": "94.180695",
+        "version": "1.1",
+        "id": "svg6",
+        "{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname": "banner-you-took-the-leap.svg",
+        "{http://www.inkscape.org/namespaces/inkscape}version": "1.0.1 (3bc2e813f5, 2020-09-07)",
+        "data-chameleon-import-key": "n00000"
+      }
+    },
+    {
+      "source_key": "n00001",
+      "parent": "n00000",
+      "tag": "namedview",
+      "id": "namedview88",
+      "attributes": {
+        "pagecolor": "#ffffff",
+        "bordercolor": "#666666",
+        "borderopacity": "1",
+        "objecttolerance": "10",
+        "gridtolerance": "10",
+        "guidetolerance": "10",
+        "{http://www.inkscape.org/namespaces/inkscape}pageopacity": "0",
+        "{http://www.inkscape.org/namespaces/inkscape}pageshadow": "2",
+        "{http://www.inkscape.org/namespaces/inkscape}window-width": "1920",
+        "{http://www.inkscape.org/namespaces/inkscape}window-height": "1016",
+        "id": "namedview88",
+        "showgrid": "false",
+        "showguides": "true",
+        "{http://www.inkscape.org/namespaces/inkscape}guide-bbox": "true",
+        "{http://www.inkscape.org/namespaces/inkscape}zoom": "1.4142136",
+        "{http://www.inkscape.org/namespaces/inkscape}cx": "119.78317",
+        "{http://www.inkscape.org/namespaces/inkscape}cy": "2.6974128",
+        "{http://www.inkscape.org/namespaces/inkscape}window-x": "0",
+        "{http://www.inkscape.org/namespaces/inkscape}window-y": "27",
+        "{http://www.inkscape.org/namespaces/inkscape}window-maximized": "1",
+        "{http://www.inkscape.org/namespaces/inkscape}current-layer": "svg6",
+        "{http://www.inkscape.org/namespaces/inkscape}document-rotation": "0",
+        "data-chameleon-import-key": "n00001"
+      }
+    },
+    {
+      "source_key": "n00002",
+      "parent": "n00001",
+      "tag": "guide",
+      "id": "guide269",
+      "attributes": {
+        "position": "258.70964,274.05682",
+        "orientation": "1,0",
+        "id": "guide269",
+        "{http://www.inkscape.org/namespaces/inkscape}locked": "false",
+        "data-chameleon-import-key": "n00002"
+      }
+    },
+    {
+      "source_key": "n00003",
+      "parent": "n00001",
+      "tag": "guide",
+      "id": "guide271",
+      "attributes": {
+        "position": "-38.367955,106.33405",
+        "orientation": "0,1",
+        "id": "guide271",
+        "{http://www.inkscape.org/namespaces/inkscape}locked": "false",
+        "data-chameleon-import-key": "n00003"
+      }
+    },
+    {
+      "source_key": "n00004",
+      "parent": "n00001",
+      "tag": "guide",
+      "id": "guide528",
+      "attributes": {
+        "position": "368.02657,242.50681",
+        "orientation": "0,1",
+        "id": "guide528",
+        "{http://www.inkscape.org/namespaces/inkscape}locked": "false",
+        "data-chameleon-import-key": "n00004"
+      }
+    },
+    {
+      "source_key": "n00005",
+      "parent": "n00000",
+      "tag": "metadata",
+      "id": "metadata12",
+      "attributes": {
+        "id": "metadata12",
+        "data-chameleon-import-key": "n00005"
+      }
+    },
+    {
+      "source_key": "n00006",
+      "parent": "n00005",
+      "tag": "RDF",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "n00006"
+      }
+    },
+    {
+      "source_key": "n00007",
+      "parent": "n00006",
+      "tag": "Work",
+      "id": null,
+      "attributes": {
+        "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about": "",
+        "data-chameleon-import-key": "n00007"
+      }
+    },
+    {
+      "source_key": "n00008",
+      "parent": "n00007",
+      "tag": "format",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "n00008"
+      }
+    },
+    {
+      "source_key": "n00009",
+      "parent": "n00007",
+      "tag": "type",
+      "id": null,
+      "attributes": {
+        "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource": "http://purl.org/dc/dcmitype/StillImage",
+        "data-chameleon-import-key": "n00009"
+      }
+    },
+    {
+      "source_key": "n00010",
+      "parent": "n00007",
+      "tag": "title",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "n00010"
+      }
+    },
+    {
+      "source_key": "n00011",
+      "parent": "n00000",
+      "tag": "defs",
+      "id": "defs10",
+      "attributes": {
+        "id": "defs10",
+        "data-chameleon-import-key": "n00011"
+      }
+    },
+    {
+      "source_key": "n00012",
+      "parent": "n00000",
+      "tag": "rect",
+      "id": "rect1019",
+      "attributes": {
+        "style": "opacity:1;fill:#173f4f;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.05617023;stroke-linecap:round;stroke-linejoin:round",
+        "id": "rect1019",
+        "width": "530",
+        "height": "272.53455",
+        "x": "-5.983614",
+        "y": "-148.51337",
+        "ry": "2.0964196",
+        "data-chameleon-import-key": "n00012"
+      }
+    },
+    {
+      "source_key": "n00013",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 227.75442,-69.973209 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-7",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00013"
+      }
+    },
+    {
+      "source_key": "n00014",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-6-0",
+      "attributes": {
+        "style": "fill:#173f4f;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 232.9618,-69.973209 h 5.20737 l 23.43319,20.908078 h -5.20738 z",
+        "id": "path920-6-0",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00014"
+      }
+    },
+    {
+      "source_key": "n00015",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "rect1003",
+      "attributes": {
+        "style": "opacity:1;fill:#ffcc00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.7940104;stroke-linecap:round;stroke-linejoin:round",
+        "d": "m 251.18761,-51.388249 c -2.88488,0 -5.20737,2.072221 -5.20737,4.646239 v 2.32312 c 0,2.574016 2.32249,4.646239 5.20737,4.646239 h 15.62212 c 2.88488,0 5.20738,-2.072223 5.20738,-4.646239 v -2.32312 c 0,-2.574018 -2.3225,-4.646239 -5.20738,-4.646239 z m 0,2.323118 h 15.62212 c 1.44244,0 2.60368,1.036112 2.60368,2.323121 v 2.32312 c 0,1.287007 -1.16124,2.323119 -2.60368,2.323119 h -15.62212 c -1.44245,0 -2.60369,-1.036112 -2.60369,-2.323119 v -2.32312 c 0,-1.287009 1.16124,-2.323121 2.60369,-2.323121 z",
+        "id": "rect1003",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00015"
+      }
+    },
+    {
+      "source_key": "n00016",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 238.16917,-69.973209 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-2-9",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00016"
+      }
+    },
+    {
+      "source_key": "n00017",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-9-3",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 285.03554,-69.973209 -23.43318,20.908078 h 5.20737 l 23.43318,-20.908078 z",
+        "id": "path920-9-3",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00017"
+      }
+    },
+    {
+      "source_key": "n00018",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path4-7-5",
+      "attributes": {
+        "style": "fill:#d4aa00;stroke-width:1.88687038",
+        "id": "path4-7-5",
+        "d": "m 258.99867,-49.065131 a 5.3163231,4.7434495 0 0 0 -3.01975,0.995588 l -25.98004,18.059826 a 5.3163231,4.7434495 0 0 0 -2.01707,4.257356 5.3163231,4.7434495 0 0 0 -0.91684,0.51172 l -6.89394,4.776035 a 5.3163231,4.7434495 0 0 0 0.0273,7.508683 l 36.10051,24.684313 a 5.3163231,4.7434495 0 0 0 6.49988,-0.02089 l 35.81179,-24.858364 a 5.3163231,4.7434495 0 0 0 -0.0235,-7.501722 l -7.327,-5.030154 a 5.3163231,4.7434495 0 0 0 -0.89344,-0.494313 5.3163231,4.7434495 0 0 0 -2.05218,-4.239952 L 262.4788,-48.090429 a 5.3163231,4.7434495 0 0 0 -3.48013,-0.974702 z",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00018"
+      }
+    },
+    {
+      "source_key": "n00019",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-6-1-6",
+      "attributes": {
+        "style": "fill:#173f4f;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 285.03554,-69.973209 h -5.20738 l -23.43318,20.908078 h 5.20738 z",
+        "id": "path920-6-1-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00019"
+      }
+    },
+    {
+      "source_key": "n00020",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 282.45218,-72.3155 h -5.20737 l -23.43318,20.908078 h 5.20737 z",
+        "id": "path920-2-2-0",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00020"
+      }
+    },
+    {
+      "source_key": "n00021",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path4-7",
+      "attributes": {
+        "style": "fill:#ffcc00;stroke-width:1.88687038",
+        "id": "path4-7",
+        "d": "m 258.60852,-52.626271 a 5.3163231,4.7434495 0 0 0 -3.01976,0.995588 l -25.98003,18.059824 a 5.3163231,4.7434495 0 0 0 -2.01706,4.257357 5.3163231,4.7434495 0 0 0 -0.91686,0.51172 l -6.89393,4.776035 a 5.3163231,4.7434495 0 0 0 0.0273,7.508684 l 36.10051,24.6843116 a 5.3163231,4.7434495 0 0 0 6.49988,-0.02089 l 35.81176,-24.8583626 a 5.3163231,4.7434495 0 0 0 -0.0235,-7.501721 l -7.327,-5.030154 a 5.3163231,4.7434495 0 0 0 -0.89344,-0.494314 5.3163231,4.7434495 0 0 0 -2.05218,-4.239952 l -25.83556,-17.673424 a 5.3163231,4.7434495 0 0 0 -3.48013,-0.974702 z",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00021"
+      }
+    },
+    {
+      "source_key": "n00022",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path4",
+      "attributes": {
+        "d": "m 258.85437,-47.889875 -25.97943,18.061581 25.8347,17.674939 25.97943,-18.061576 z m 28.77445,22.405114 -28.91918,20.0837266 -28.77445,-19.6537846 -6.89266,4.773477 36.10043,24.6855466 35.81186,-24.8572066 z",
+        "id": "path4",
+        "style": "fill:#173f4f;fill-opacity:1;stroke-width:1.88687038",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00022"
+      }
+    },
+    {
+      "source_key": "n00023",
+      "parent": "n00000",
+      "tag": "text",
+      "id": "text1013",
+      "attributes": {
+        "{http://www.w3.org/XML/1998/namespace}space": "preserve",
+        "style": "font-style:normal;font-weight:normal;font-size:5.1544px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.12886",
+        "x": "264.63965",
+        "y": "45.14669",
+        "id": "text1013",
+        "data-chameleon-import-key": "n00023"
+      }
+    },
+    {
+      "source_key": "n00024",
+      "parent": "n00023",
+      "tag": "tspan",
+      "id": "tspan1017",
+      "attributes": {
+        "x": "264.63965",
+        "y": "45.14669",
+        "id": "tspan1017",
+        "style": "font-style:normal;font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:40px;line-height:50;font-family:'Open Sans Condensed';-inkscape-font-specification:'Open Sans Condensed, Bold Condensed';fill:#ffffff;stroke-width:0.12886",
+        "data-chameleon-import-key": "n00024"
+      }
+    },
+    {
+      "source_key": "n00025",
+      "parent": "n00000",
+      "tag": "g",
+      "id": "layer1",
+      "attributes": {
+        "style": "fill:#000000",
+        "id": "layer1",
+        "transform": "matrix(7,0,0,6.9999759,254.00599,-7766.3625)",
+        "data-chameleon-import-key": "n00025"
+      }
+    },
+    {
+      "source_key": "n00026",
+      "parent": "n00025",
+      "tag": "g",
+      "id": "g838",
+      "attributes": {
+        "id": "g838",
+        "transform": "matrix(0.26458333,0,0,0.26458333,-10.590624,-38.473045)",
+        "style": "fill:#000000",
+        "data-chameleon-import-key": "n00026"
+      }
+    },
+    {
+      "source_key": "n00027",
+      "parent": "n00026",
+      "tag": "circle",
+      "id": "path872",
+      "attributes": {
+        "style": "opacity:0.3;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.90573967;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1",
+        "id": "path872",
+        "cx": "507.46362",
+        "cy": "3582.8301",
+        "r": "0",
+        "data-chameleon-import-key": "n00027"
+      }
+    },
+    {
+      "source_key": "n00028",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-9-3-6",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 308.20226,-90.639053 -23.43318,20.908078 h 5.20737 l 23.43318,-20.908078 z",
+        "id": "path920-9-3-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00028"
+      }
+    },
+    {
+      "source_key": "n00029",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-9-3-6-7",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 331.22364,-111.18378 -23.43318,20.908078 h 5.20737 l 23.43318,-20.908078 z",
+        "id": "path920-9-3-6-7",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00029"
+      }
+    },
+    {
+      "source_key": "n00030",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-9-3-6-7-5",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 354.19836,-131.68979 -23.43318,20.90807 h 5.20737 l 23.43318,-20.90807 z",
+        "id": "path920-9-3-6-7-5",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00030"
+      }
+    },
+    {
+      "source_key": "n00031",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-9-3-6-7-5-3",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 372.85898,-148.3268 -23.43318,20.90807 h 5.20737 l 23.43318,-20.90807 z",
+        "id": "path920-9-3-6-7-5-3",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00031"
+      }
+    },
+    {
+      "source_key": "n00032",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 303.22228,-90.846131 h -5.20737 l -23.43318,20.908078 h 5.20737 z",
+        "id": "path920-2-2-0-5",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00032"
+      }
+    },
+    {
+      "source_key": "n00033",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5-6",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 326.60077,-111.70342 h -5.20737 l -23.43318,20.90807 h 5.20737 z",
+        "id": "path920-2-2-0-5-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00033"
+      }
+    },
+    {
+      "source_key": "n00034",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5-6-2",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 349.97302,-132.5538 h -5.20737 l -23.43318,20.90807 h 5.20737 z",
+        "id": "path920-2-2-0-5-6-2",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00034"
+      }
+    },
+    {
+      "source_key": "n00035",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5-6-2-9",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 367.65197,-148.32612 h -5.20737 l -23.43318,20.90807 h 5.20737 z",
+        "id": "path920-2-2-0-5-6-2-9",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00035"
+      }
+    },
+    {
+      "source_key": "n00036",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 214.79068,-90.834412 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-2-9-1",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00036"
+      }
+    },
+    {
+      "source_key": "n00037",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 204.32123,-90.881287 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-7-2",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00037"
+      }
+    },
+    {
+      "source_key": "n00038",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2-7",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 180.88804,-111.78936 h 5.20738 l 23.43318,20.908073 h -5.20737 z",
+        "id": "path920-7-2-7",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00038"
+      }
+    },
+    {
+      "source_key": "n00039",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2-7-0",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 157.49783,-132.65837 h 5.20738 l 23.43318,20.90807 h -5.20737 z",
+        "id": "path920-7-2-7-0",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00039"
+      }
+    },
+    {
+      "source_key": "n00040",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2-7-0-9",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 139.95141,-148.32612 h 5.20738 l 23.43318,20.90807 h -5.20737 z",
+        "id": "path920-7-2-7-0-9",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00040"
+      }
+    },
+    {
+      "source_key": "n00041",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1-3",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 191.39655,-111.70733 h 5.20738 l 23.43318,20.908074 h -5.20737 z",
+        "id": "path920-2-9-1-3",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00041"
+      }
+    },
+    {
+      "source_key": "n00042",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1-3-6",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 168.01804,-132.56461 h 5.20738 l 23.43318,20.90807 h -5.20737 z",
+        "id": "path920-2-9-1-3-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00042"
+      }
+    },
+    {
+      "source_key": "n00043",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1-3-6-0",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 150.33292,-148.32612 h 5.20738 l 23.43318,20.90807 h -5.20737 z",
+        "id": "path920-2-9-1-3-6-0",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00043"
+      }
+    },
+    {
+      "source_key": "n00044",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-6",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 219.61722,-77.226469 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-7-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00044"
+      }
+    },
+    {
+      "source_key": "n00045",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2-2",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 195.67972,-98.523344 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-7-2-2",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00045"
+      }
+    },
+    {
+      "source_key": "n00046",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-7-2-7-6",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 174.63683,-117.35545 h 5.20738 l 23.43318,20.908075 h -5.20737 z",
+        "id": "path920-7-2-7-6",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00046"
+      }
+    },
+    {
+      "source_key": "n00047",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-18",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 232.20907,-75.313747 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-2-9-18",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00047"
+      }
+    },
+    {
+      "source_key": "n00048",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1-7",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 204.67773,-99.853514 h 5.20738 l 23.43318,20.908078 h -5.20737 z",
+        "id": "path920-2-9-1-7",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00048"
+      }
+    },
+    {
+      "source_key": "n00049",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-9-1-3-9",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 187.64679,-115.0372 h 5.20738 l 23.43318,20.908068 h -5.20737 z",
+        "id": "path920-2-9-1-3-9",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00049"
+      }
+    },
+    {
+      "source_key": "n00050",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5-2",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 305.27987,-92.688747 h -5.20737 l -23.43318,20.908078 h 5.20737 z",
+        "id": "path920-2-2-0-5-2",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00050"
+      }
+    },
+    {
+      "source_key": "n00051",
+      "parent": "n00000",
+      "tag": "path",
+      "id": "path920-2-2-0-5-6-0",
+      "attributes": {
+        "style": "fill:#73ba25;fill-opacity:1;stroke:none;stroke-width:2.45940566px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1",
+        "d": "m 344.21879,-127.41805 h -5.20737 l -23.43318,20.90807 h 5.20737 z",
+        "id": "path920-2-2-0-5-6-0",
+        "{http://www.inkscape.org/namespaces/inkscape}connector-curvature": "0",
+        "data-chameleon-import-key": "n00051"
+      }
+    },
+    {
+      "source_key": "run00000",
+      "parent": "n00024",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00000",
+        "style": "fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Open Sans Condensed';font-size:40.0;font-weight:bold;font-style:normal;text-anchor:middle;letter-spacing:0px;color:black"
+      }
+    }
+  ],
+  "native_imported_normalized_mae": 0.009519791153082768,
+  "native_shape_count": 1,
+  "ignored_nodes": [
+    {
+      "source_key": "n00013",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00014",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00015",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00016",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00017",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00018",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00019",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00020",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00021",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00022",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00027",
+      "reason": "zero-area SVG shape"
+    },
+    {
+      "source_key": "n00028",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00029",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00030",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00031",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00032",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00033",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00034",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00035",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00036",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00037",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00038",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00039",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00040",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00041",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00042",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00043",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00044",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00045",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00046",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00047",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00048",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00049",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00050",
+      "reason": "no painted pixels"
+    },
+    {
+      "source_key": "n00051",
+      "reason": "no painted pixels"
+    }
+  ],
+  "source_warnings": [
+    {
+      "code": "root_viewport_clipped_text",
+      "source_key": "run00000",
+      "message": "Original author viewport 88x94 clips text with full native ink bounds (58, 14, 469, 55). Original cropping and the complete editable text frame are retained; this is a source stress case.",
+      "full_ink_bounds": [
+        58,
+        14,
+        469,
+        55
+      ],
+      "source_complete_text": "You took the Leap to 15.3!"
+    }
+  ],
+  "authored_groups": [
+    {
+      "source_key": "n00026",
+      "id": "g838",
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00026",
+        "n00027"
+      ]
+    },
+    {
+      "source_key": "n00025",
+      "id": "layer1",
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00025",
+        "n00026",
+        "n00027"
+      ]
+    }
+  ]
+}

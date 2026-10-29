@@ -1,0 +1,18 @@
+{
+  "fonts": [
+    {
+      "font_family": "OpenSans-Regular",
+      "postscript_name": "OpenSans-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "c0c9780e88c88f43.ttf"
+    },
+    {
+      "font_family": "Carlito-Regular",
+      "postscript_name": "Carlito-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "e78d34afd5cfdd2b.ttf"
+    }
+  ]
+}

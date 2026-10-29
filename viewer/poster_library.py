@@ -100,6 +100,7 @@ def library_metadata() -> dict:
                 ),
                 "license_id": entry.get("license_id", "See source license"),
                 "original_sha256": entry.get("sha256"),
+                "source_note": entry.get("source_note"),
                 "source_url": _web_link(entry.get("source_url")),
                 "license_url": _web_link(entry.get("license_url")),
                 "ready": ready,

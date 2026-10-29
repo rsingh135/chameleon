@@ -1,0 +1,322 @@
+{
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080,
+      "fill_color": "rgba(255,255,255,1)",
+      "id": "page-background:bc45648e-ae67-47ca-ae90-336ed5228629",
+      "z_index": 0
+    },
+    {
+      "x": 96.0,
+      "y": 72.0,
+      "width": 36.0,
+      "height": 36.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "rectangle",
+      "fill_color": "rgba(11,13,18,1)",
+      "corner_radius": 10.0,
+      "id": "d1b9e1f0-4b80-45ab-82c5-09a201500468",
+      "z_index": 1
+    },
+    {
+      "x": 146.0,
+      "y": 74.0,
+      "width": 400.0,
+      "height": 35.256,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Fieldnote",
+      "font_family": "Inter-Bold",
+      "font_size": 26.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(11,13,18,1)",
+      "text_align": "left",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "9c835c74-5873-4b55-92d5-faf657e2fb51",
+      "z_index": 2
+    },
+    {
+      "x": 1424.0,
+      "y": 78.0,
+      "width": 400.0,
+      "height": 29.832,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Investor presentation  ·  2027",
+      "font_family": "Inter-Regular",
+      "font_size": 22.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(94,100,112,1)",
+      "text_align": "right",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "674cd7f8-6566-40fe-a2e5-eb4aad74f23a",
+      "z_index": 3
+    },
+    {
+      "x": 92.0,
+      "y": 330.0,
+      "width": 900.0,
+      "height": 276.62399999999997,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Series A Pitch Deck",
+      "font_family": "Inter-Bold",
+      "font_size": 120.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(11,13,18,1)",
+      "text_align": "left",
+      "line_height": 1.1525999999999998,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "3215527c-7259-46a7-b2f5-dc9f0306e923",
+      "z_index": 4
+    },
+    {
+      "x": 96.0,
+      "y": 610.0,
+      "width": 760.0,
+      "height": 101.248,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "One search for everything your team already wrote down: notes, docs and chats.",
+      "font_family": "Inter-Regular",
+      "font_size": 32.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(94,100,112,1)",
+      "text_align": "left",
+      "line_height": 1.5819999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "fddecd01-7f4c-4c51-8206-cdf35998e00c",
+      "z_index": 5
+    },
+    {
+      "x": 96.0,
+      "y": 760.0,
+      "width": 200.0,
+      "height": 60.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "rectangle",
+      "fill_color": "rgba(11,13,18,1)",
+      "corner_radius": 30.0,
+      "id": "c8a84885-8c40-42fa-9216-bf47af2ad7f4",
+      "z_index": 6
+    },
+    {
+      "x": 96.0,
+      "y": 776.0,
+      "width": 200.0,
+      "height": 29.832,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Raising $8M",
+      "font_family": "Inter-Bold",
+      "font_size": 22.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "9371c309-9933-47a3-a126-b09c06bccedd",
+      "z_index": 7
+    },
+    {
+      "type": "image",
+      "x": 311,
+      "y": 759,
+      "width": 202,
+      "height": 62,
+      "asset_id": "doory-88865e0b6556ba2bda31.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "ada68e4b-d6f3-41b7-b334-90abf92f5538",
+        "original_sha256": "4a96301ed92686404b606fc56d02baa804df798f8b1a0c4cf72cf42948d51908",
+        "native_type": "rect",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "ada68e4b-d6f3-41b7-b334-90abf92f5538",
+      "z_index": 8
+    },
+    {
+      "x": 312.0,
+      "y": 776.0,
+      "width": 200.0,
+      "height": 29.832,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "March 2027",
+      "font_family": "Inter-Bold",
+      "font_size": 22.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(11,13,18,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "786f09cf-e3e6-4761-8344-81ff4fc14c21",
+      "z_index": 9
+    },
+    {
+      "x": 96.0,
+      "y": 960.0,
+      "width": 800.0,
+      "height": 29.832,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Jordan Ellis, founder and CEO",
+      "font_family": "Inter-Regular",
+      "font_size": 22.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(94,100,112,1)",
+      "text_align": "left",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Inter\", sans-serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "02c8697a-dca3-4354-ba55-364b62a0b226",
+      "z_index": 10
+    },
+    {
+      "x": 1060.0,
+      "y": 150.0,
+      "width": 764.0,
+      "height": 834.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "rectangle",
+      "fill_color": "rgba(242,243,245,1)",
+      "corner_radius": 36.0,
+      "id": "37ffeef6-cfb0-4dab-aa45-45f70c0ebb3d",
+      "z_index": 11
+    },
+    {
+      "type": "image",
+      "x": 1060,
+      "y": 150,
+      "width": 764,
+      "height": 834,
+      "asset_id": "doory-9eac0f1f745e6ee4516c.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "masked-photo",
+        "source_format": "doory-json",
+        "node_id": "985b5f82-f68a-4fa7-9a75-18f40ec3a0f7",
+        "original_sha256": "4a96301ed92686404b606fc56d02baa804df798f8b1a0c4cf72cf42948d51908",
+        "native_type": "image",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "985b5f82-f68a-4fa7-9a75-18f40ec3a0f7",
+      "z_index": 12
+    }
+  ]
+}

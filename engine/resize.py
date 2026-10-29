@@ -15,6 +15,8 @@ from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
 from engine.layout.grouped import generate_grouped_states
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
+from engine.layout.rules import analyze_rules
+from engine.layout.source_guides import generate_source_guides
 from engine.resources import get_resources, using_resources
 
 
@@ -135,7 +137,13 @@ def _select_candidate(
             return source
         if not candidates:
             raise ValueError("No layout candidates were generated") from None
-        return max(candidates, key=lambda c: _quality(source, c, layout_context))
+        return max(
+            candidates,
+            key=lambda c: (
+                -len(analyze_rules(source, c)["distorted_rules"]),
+                _quality(source, c, layout_context),
+            ),
+        )
 
     resources = get_resources()
     context = build_eval_context(source, resources.assets_dir, resources.fonts_dir)
@@ -158,13 +166,14 @@ def _select_candidate(
         relationships = analyze_relationships(graph, candidate, axes)
         proportions = analyze_proportions(source, candidate, graph)
         focal = analyze_focal(source, candidate, graph, focal_profile)
-        valid.append((candidate, result, style, relationships, proportions, focal))
+        rules = analyze_rules(source, candidate)
+        valid.append((candidate, result, style, relationships, proportions, focal, rules))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
 
     def safety(item):
-        candidate, result, style, relationships, proportions, focal = item
+        candidate, result, style, relationships, proportions, focal, rules = item
         metrics = result["metrics"]
         # Reading order and explicit ownership are not compensated by a larger
         # minimum font. Softer association hypotheses remain below readability.
@@ -183,6 +192,7 @@ def _select_candidate(
         return (
             -metrics.get("raw_collisions", 0.0),
             -essential,
+            -len(rules["distorted_rules"]),
             _readability(candidate, layout_context, metrics),
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
             focal["metrics"].get("center_retained", True),
@@ -245,9 +255,10 @@ def _resize_in_context(source_json: str, width: int, height: int) -> dict:
         *generate_composition_states(source, target_canvas, graph),
         *generate_grouped_states(source, target_canvas, graph),
         *generate_focal_states(source, target_canvas, graph),
+        *generate_source_guides(source, target_canvas, graph),
     )
     candidates.extend(state.design for state in states)
-    by_design = {state.design_json: state for state in states}
+    by_design = {json.dumps(state.design, sort_keys=True): state for state in states}
     axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}
     selected = _select_candidate(source, target_canvas, candidates, axes)
     state = by_design.get(json.dumps(selected, sort_keys=True))

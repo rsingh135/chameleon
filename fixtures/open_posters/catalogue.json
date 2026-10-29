@@ -494,7 +494,66 @@
         "license_id": "LicenseRef-Doory-AAL",
         "license_path": "licenses/doory-LICENSE"
       },
-      "page_index": 0
+      "page_index": 0,
+      "invariants": [
+        {
+          "name": "Business identity precedes the main announcement",
+          "kind": "relative_order",
+          "first": [
+            "e99a561a-0a18-42ce-b572-072928dacf2c"
+          ],
+          "second": [
+            "883ee58e-e33f-41d2-8542-342c2524ea71"
+          ],
+          "axis": "y"
+        },
+        {
+          "name": "Authored fine divider retains its aspect ratio",
+          "kind": "group_similarity",
+          "element_ids": [
+            "f2abef86-c959-457f-a522-52847900fc9f"
+          ],
+          "max_log_error": 0.01
+        },
+        {
+          "name": "Authored fine divider retains its aspect ratio",
+          "kind": "group_similarity",
+          "element_ids": [
+            "5c19f97e-af72-492d-8601-70dbcddd0ece"
+          ],
+          "max_log_error": 0.01
+        },
+        {
+          "name": "Authored fine divider retains its aspect ratio",
+          "kind": "group_similarity",
+          "element_ids": [
+            "c6860375-958c-4eda-a6e1-8e3320b920fc"
+          ],
+          "max_log_error": 0.01
+        },
+        {
+          "name": "Authored fine divider retains its aspect ratio",
+          "kind": "group_similarity",
+          "element_ids": [
+            "91507efa-a27f-4483-b6f1-7f87774b17e5"
+          ],
+          "max_log_error": 0.01
+        },
+        {
+          "name": "Event details and separators remain one composition",
+          "kind": "group_similarity",
+          "element_ids": [
+            "c6860375-958c-4eda-a6e1-8e3320b920fc",
+            "91507efa-a27f-4483-b6f1-7f87774b17e5",
+            "8f1b9ed9-c1bd-4ba9-a7c9-5f30959de779",
+            "c4522355-b4ca-4500-98b9-6edc3f0bf091",
+            "f988a8d1-a7d7-4f56-88a9-7d87e979f9a8",
+            "2ebf2d4d-9ae4-49ad-b899-8c3393e802bf",
+            "63f6b2c9-8df0-4404-a889-9bdf3d560bd6"
+          ],
+          "max_log_error": 0.05
+        }
+      ]
     },
     {
       "id": "doory_modern-pitch-deck",
@@ -926,6 +985,32 @@
           "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/LICENSE",
           "license_path": "fonts/crimson-text/OFL.txt",
           "resolution": "exact_named_family_weight_style",
+          "historical_source_bytes_verified": false
+        },
+        {
+          "family": "Crimson Text",
+          "weight": "400",
+          "style": "italic",
+          "fontsource_id": "crimson-text",
+          "npm_version": "5.3.0",
+          "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/files/crimson-text-latin-400-italic.woff2",
+          "source_format": "woff2",
+          "source_path": "fonts/crimson-text/crimson-text-latin-400-italic.woff2",
+          "source_sha256": "ded83489adaeec098ee0d639252e72be7de219f759b939ba4b2e606e5e68b272",
+          "path": "fonts/crimson-text/crimson-text-latin-400-italic.ttf",
+          "sha256": "ecc3408be9c0debbe6c0a986570d7e92a2028ce2d6e9a2d0d77f3ca0b25e3b49",
+          "postscript_name": "CrimsonText-Italic",
+          "name_table_families": [
+            "Crimson Text"
+          ],
+          "name_table_subfamilies": [
+            "Italic"
+          ],
+          "resolution": "exact_named_family_weight_style",
+          "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+          "license_id": "OFL-1.1",
+          "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/LICENSE",
+          "license_path": "fonts/crimson-text/OFL.txt",
           "historical_source_bytes_verified": false
         }
       ],
@@ -1557,7 +1642,8 @@
       "prepared_path": "prepared/opensuse_banner_leap",
       "curation_status": "source_license_and_font_screened; importer acceptance pending",
       "engine_evaluated": false,
-      "source_modified": false
+      "source_modified": false,
+      "source_note": "The original SVG clips its headline at the source viewport. Kept as an authored-crop stress case in the personal-test set."
     }
   ],
   "source_count": 18

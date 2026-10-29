@@ -59,6 +59,8 @@ def pack_reserve(manifest_path: Path, destination: Path) -> dict:
         credits.append(
             f"- {entry['title']}: {credit}\n  {entry['source_url']}\n  {entry['license_id']}"
         )
+        if entry.get("source_note"):
+            credits.append(f"  Source limitation: {entry['source_note']}")
     # Keep the full signed licenses, authors, asset provenance and notices together.
     for path in sorted((root / "licenses").rglob("*")):
         if path.is_file():

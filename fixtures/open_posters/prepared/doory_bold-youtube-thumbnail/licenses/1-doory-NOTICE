@@ -1,0 +1,70 @@
+Doory
+Copyright (c) 2026 Siam, creator and maintainer of Doory, and the Doory contributors (see AUTHORS.md)
+https://github.com/shaongitbd/doory
+
+Doory is released under the Attribution Assurance License (see LICENSE). Anyone who redistributes it must keep
+this credit with it and display it prominently each time the program starts (for a web app: on its pages):
+"Doory by Siam, creator and maintainer of Doory, https://github.com/shaongitbd/doory".
+
+Doory is built on, and downloads, the work of other people. Their licences are listed in THIRD_PARTY.md; every
+npm and Python package with its licence is in licenses/DEPENDENCIES.md; the licence texts and copyright notices of
+everything that is served to browsers (code, fonts, WebAssembly) are in licenses/bundled-licenses.txt. The notices
+below are the ones those licences ask to be kept with the product.
+
+Code served to browsers
+  Fabric.js (MIT)                Copyright (c) 2008-2015 Printio (Juriy Zaytsev, Maxim Chernyak);
+                                 Copyright (c) 2016-present Andrea Bogazzi, Shachar Nen and Fabric.js contributors
+  React, React DOM (MIT)         Copyright (c) Meta Platforms, Inc. and affiliates
+  React Router (MIT)             Copyright (c) React Training LLC 2015-2019; Copyright (c) Remix Software Inc. 2020-2021
+  TanStack Query (MIT)           Copyright (c) 2021-present Tanner Linsley
+  Zustand (MIT)                  Copyright (c) 2019 Paul Henschel
+  Yjs (MIT)                      Copyright (c) 2023 Kevin Jahns; y-protocols and lib0 (MIT): Copyright (c) 2019 Kevin Jahns
+  jsPDF (MIT)                    Copyright (c) 2010-2025 James Hall
+  Lucide (ISC)                   Copyright (c) 2026 Lucide Icons and Contributors; the icons derived from Feather are
+                                 Copyright (c) 2013-present Cole Bemis (MIT)
+  ONNX Runtime Web (MIT)         Copyright (c) Microsoft Corporation. Its WebAssembly binary also contains the
+                                 third-party components listed in
+                                 https://github.com/microsoft/onnxruntime/blob/main/ThirdPartyNotices.txt
+  mp4-muxer, webm-muxer (MIT)    Copyright (c) 2023 Vanilagy (mp4-muxer); Copyright (c) 2022 Vanilagy (webm-muxer)
+  gifenc (MIT)                   Copyright (c) 2017 Matt DesLauriers
+  fflate (MIT)                   Copyright (c) 2026 Arjun Barrett
+  node-qrcode (MIT)              Copyright (c) 2012 Ryan Day
+  The remaining packages of the bundle (MIT, ISC, BSD-3-Clause, Apache-2.0) are reproduced in
+  licenses/bundled-licenses.txt.
+
+Sign-in button logos (frontend/src/assets/sso-icons/, sources in sources.json there)
+  dashboard-icons (Apache-2.0)   Copyright the homarr-labs dashboard-icons contributors
+  Keycloak, Authelia, Dex, Rauthy logos (Apache-2.0), Copyright their authors
+  Gitea logo (MIT)               Copyright (c) 2016 The Gitea Authors
+  GitLab logo (MIT)              Copyright (c) 2011-present GitLab Inc.
+  Simple Icons (CC0-1.0) need no notice. The logos are trademarks of their owners.
+
+Fonts served to every visitor (SIL Open Font License 1.1, https://openfontlicense.org)
+  Inter                          Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)
+  Plus Jakarta Sans              Copyright 2020 The Plus Jakarta Sans Project Authors
+                                 (https://github.com/tokotype/PlusJakartaSans)
+  The fonts of the editor's catalogue are downloaded by `manage.py sync_fonts` and keep their own licence
+  (OFL-1.1, Apache-2.0 or UFL-1.0); the families and licences are listed in THIRD_PARTY.md.
+
+Artwork and models downloaded by the operator (never part of this repository)
+  Lucide                         Copyright (c) 2026 Lucide Icons and Contributors (ISC); Feather icons
+                                 Copyright (c) 2013-present Cole Bemis (MIT)
+  Tabler Icons                   Copyright (c) 2020-2026 Paweł Kuna (MIT)
+  Phosphor Icons                 Copyright (c) 2023 Phosphor Icons (MIT)
+  Bootstrap Icons                Copyright (c) 2019-2024 The Bootstrap Authors (MIT)
+  Heroicons                      Copyright (c) Tailwind Labs, Inc. (MIT)
+  Material Symbols               Copyright Google LLC (Apache License 2.0)
+  Noto Emoji                     Copyright 2013 Google, Inc. (Apache License 2.0)
+  Fluent Emoji                   Copyright (c) Microsoft Corporation (MIT)
+  Open Doodles, Open Peeps       By Pablo Stanley, CC0 1.0 (no attribution required; credited as a courtesy)
+  U²-Net background-removal      By Xuebin Qin, Zichen Zhang, Chenyang Huang, Masood Dehghan, Osmar R. Zaiane and
+  model (Apache License 2.0)     Martin Jagersand, "U²-Net: Going Deeper with Nested U-Structure for Salient Object
+                                 Detection", Pattern Recognition 106 (2020). Used unmodified.
+  The Apache License 2.0 is at https://www.apache.org/licenses/LICENSE-2.0. The same notices are stored with each
+  pack and returned by GET /api/v1/elements/packs/.
+
+Original content of this repository
+  The shapes, graphics, starter templates, audio library, logo and test fonts were made for Doory. The shapes,
+  graphics, audio and test fonts are dedicated to the public domain under CC0 1.0
+  (https://creativecommons.org/publicdomain/zero/1.0/); the rest is under the Attribution
+  Assurance License, like the code.

@@ -1,0 +1,32 @@
+{
+  "fonts": [
+    {
+      "font_family": "Cantarell-Bold",
+      "postscript_name": "Cantarell-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "1b15d4acd20df636.ttf"
+    },
+    {
+      "font_family": "Cantarell-Regular",
+      "postscript_name": "Cantarell-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "840a255779258a2b.ttf"
+    },
+    {
+      "font_family": "Cantarell-Italic",
+      "postscript_name": "Cantarell-Italic",
+      "weight": "regular",
+      "style": "normal",
+      "file": "113797007a0baa9e.ttf"
+    },
+    {
+      "font_family": "DejaVuSansMono",
+      "postscript_name": "DejaVuSansMono",
+      "weight": "regular",
+      "style": "normal",
+      "file": "b4a6c3e4faab8773.ttf"
+    }
+  ]
+}

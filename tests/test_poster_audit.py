@@ -144,7 +144,7 @@ def test_reviewed_formats_and_reserve_imports_are_distinct(corpus, runtime, tmp_
     assert (out / "index.html").is_file() and (out / "contact_sheet.png").is_file()
     page = (out / "index.html").read_text(encoding="utf-8")
     assert "&lt;Native poster&gt;" in page and "<Native poster>" not in page
-    assert "reserve_untested" in page and "http://127.0.0.1" not in page
+    assert "Personal test · import only" in page and "http://127.0.0.1" not in page
     assert manifest.read_bytes() == before
 
 
@@ -359,6 +359,32 @@ def test_visual_approval_requires_matching_evidence_and_named_reviewer():
     assert audit._review(entry, "story", "new")["status"] == "pending"
     entry["visual_reviews"]["story"]["evidence_digest"] = "new"
     assert audit._review(entry, "story", "new")["status"] == "approved"
+
+
+def test_gallery_refresh_binds_explicit_review_and_refuses_changed_implementation(
+    corpus, runtime, tmp_path, monkeypatch
+):
+    manifest, entries = corpus
+    monkeypatch.setattr(audit, "_implementation_digest", lambda: "implementation-one")
+    out = tmp_path / "gallery"
+    first = audit.run_audit(manifest, out)
+    evidence = first["examples"][0]["targets"][0]["evidence_digest"]
+    entries[0]["visual_reviews"] = {
+        "landscape": {
+            "status": "approved",
+            "reviewer": "Named render reviewer",
+            "evidence_digest": evidence,
+        }
+    }
+    _write(manifest, {"schema_version": 1, "examples": entries})
+    runtime[0].clear()
+    refreshed = audit.run_audit(manifest, out, gallery_only=True)
+    assert refreshed["examples"][0]["targets"][0]["visual_review"]["status"] == "approved"
+    assert runtime[0] == []
+    monkeypatch.setattr(audit, "_implementation_digest", lambda: "implementation-two")
+    stale = audit.run_audit(manifest, out, gallery_only=True)
+    assert stale["examples"][0]["status"] == "untested"
+    assert stale["examples"][0]["targets"] == []
 
 
 def test_filters_and_output_cannot_overwrite_corpus(corpus, tmp_path):

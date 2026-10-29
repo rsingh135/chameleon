@@ -8,7 +8,16 @@ import engine.resize as module
 
 
 @pytest.fixture(autouse=True)
-def clear_resize_cache():
+def clear_resize_cache(monkeypatch):
+    # Selection fixtures supply their candidate sets explicitly. New production
+    # state families must not quietly add unrelated proposals to those sets.
+    for factory in (
+        "generate_composition_states",
+        "generate_grouped_states",
+        "generate_focal_states",
+        "generate_source_guides",
+    ):
+        monkeypatch.setattr(module, factory, lambda *_args: ())
     module._resize_cached.cache_clear()
     yield
     module._resize_cached.cache_clear()
@@ -274,6 +283,41 @@ def test_resize_plan_returns_independent_design_and_state_copies(design):
     assert "invented" not in second["state"]["cluster_axes"]
     assert "invented" not in second["state"]["sizing_exceptions"]
     assert second["design"]["elements"][0]["x"] != 9000
+
+
+def test_compact_state_json_retains_selected_name_and_axes(monkeypatch, design):
+    import json
+
+    from engine.layout.composition import CompositionState
+
+    target = {"width": 300, "height": 100}
+    candidate = {**deepcopy(design), "canvas": target}
+    compact = json.dumps(candidate, sort_keys=True, separators=(",", ":"))
+    assert ": " not in compact
+    state = CompositionState(
+        "compact-state",
+        "source-guides/compact",
+        "fixture",
+        300,
+        100,
+        (("opaque-cluster", "horizontal"),),
+        compact,
+    )
+    monkeypatch.setattr(module, "generate_candidates", lambda *_: [])
+    monkeypatch.setattr(module, "generate_source_guides", lambda *_: (state,))
+
+    def select_supplied_state(_source, _target, candidates, axes):
+        # Isolate serialization lookup; relationship-axis semantics are covered
+        # by the source-evidenced declared-flow test below.
+        assert axes[json.dumps(candidate, sort_keys=True)] == {"opaque-cluster": "horizontal"}
+        return candidates[0]
+
+    monkeypatch.setattr(module, "_select_candidate", select_supplied_state)
+    plan = module.resize_with_state(design, target)
+    assert plan["design"] == candidate
+    assert plan["state"]["name"] == "compact-state"
+    assert plan["state"]["topology"] == "source-guides/compact"
+    assert plan["state"]["cluster_axes"] == {"opaque-cluster": "horizontal"}
 
 
 def test_selected_declared_axes_survive_the_public_resize_plan(monkeypatch):

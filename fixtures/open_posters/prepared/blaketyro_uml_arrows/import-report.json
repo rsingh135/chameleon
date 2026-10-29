@@ -1,0 +1,5552 @@
+{
+  "id": "blaketyro_uml_arrows",
+  "status": "ready",
+  "failures": [],
+  "node_mapping": [
+    {
+      "node_id": null,
+      "source_key": "run00000",
+      "element_id": "svg-run00000",
+      "mode": "editable_text",
+      "reference_bounds": [
+        184,
+        572,
+        1301,
+        929
+      ],
+      "world_transform": [
+        1.0196,
+        0.0,
+        0.0,
+        1.0196,
+        -765.733,
+        479.83
+      ],
+      "raw_text": "UML",
+      "source_text_owner": "n00003",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00003",
+      "element_id": "svg-run00003",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1289,
+        572,
+        1657,
+        922
+      ],
+      "world_transform": [
+        1.0196,
+        0.0,
+        0.0,
+        1.0196,
+        -765.733,
+        479.83
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00003",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": " A",
+      "segmentation": "authored_character_positions"
+    },
+    {
+      "node_id": null,
+      "source_key": "run00001",
+      "element_id": "svg-run00001",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1699,
+        653,
+        3169,
+        929
+      ],
+      "world_transform": [
+        1.0196,
+        0.0,
+        0.0,
+        1.0196,
+        -765.733,
+        479.83
+      ],
+      "raw_text": "rrows",
+      "source_text_owner": "n00003",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00004",
+      "element_id": "svg-run00004",
+      "mode": "editable_text",
+      "reference_bounds": [
+        358,
+        423,
+        635,
+        514
+      ],
+      "world_transform": [
+        0.326203,
+        0.0,
+        0.0,
+        0.326203,
+        54.605999999999995,
+        370.844
+      ],
+      "raw_text": "10 T",
+      "source_text_owner": "n00006",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00006",
+      "element_id": "svg-run00006",
+      "mode": "editable_text",
+      "reference_bounds": [
+        577,
+        446,
+        652,
+        539
+      ],
+      "world_transform": [
+        0.326203,
+        0.0,
+        0.0,
+        0.326203,
+        54.605999999999995,
+        370.844
+      ],
+      "raw_text": "y",
+      "source_text_owner": "n00006",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00005",
+      "element_id": "svg-run00005",
+      "mode": "editable_text",
+      "reference_bounds": [
+        664,
+        421,
+        3143,
+        539
+      ],
+      "world_transform": [
+        0.326203,
+        0.0,
+        0.0,
+        0.326203,
+        54.605999999999995,
+        370.844
+      ],
+      "raw_text": "pes of Uniﬁed Modeling Language or",
+      "source_text_owner": "n00006",
+      "postscript_name": "DejaVuSans-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00007",
+      "element_id": "svg-run00007",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        1081,
+        227,
+        1182
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        177.8727
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00009",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00008",
+      "element_id": "svg-run00008",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        1082,
+        1137,
+        1182
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        177.8727
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00011",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00009",
+      "element_id": "svg-run00009",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        1406,
+        227,
+        1507
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        502.873
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00013",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00010",
+      "element_id": "svg-run00010",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        1407,
+        1137,
+        1507
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        502.873
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00015",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00011",
+      "element_id": "svg-run00011",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        1731,
+        227,
+        1832
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        827.873
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00017",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00012",
+      "element_id": "svg-run00012",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        1732,
+        1137,
+        1832
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        827.873
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00019",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00013",
+      "element_id": "svg-run00013",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        2056,
+        227,
+        2157
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        1152.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00021",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00014",
+      "element_id": "svg-run00014",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        2057,
+        1137,
+        2157
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        1152.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00023",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00015",
+      "element_id": "svg-run00015",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        2381,
+        227,
+        2482
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        1477.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00025",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00016",
+      "element_id": "svg-run00016",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        2382,
+        1137,
+        2482
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        1477.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00027",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00017",
+      "element_id": "svg-run00017",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        2706,
+        227,
+        2807
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        1802.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00029",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00018",
+      "element_id": "svg-run00018",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        2707,
+        1137,
+        2807
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        1802.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00031",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00019",
+      "element_id": "svg-run00019",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        3031,
+        227,
+        3132
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        2127.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00033",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00020",
+      "element_id": "svg-run00020",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        3032,
+        1137,
+        3132
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        2127.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00035",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00021",
+      "element_id": "svg-run00021",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        3356,
+        227,
+        3457
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        2452.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00037",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00022",
+      "element_id": "svg-run00022",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        3357,
+        1137,
+        3457
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        2452.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00039",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00023",
+      "element_id": "svg-run00023",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        3681,
+        227,
+        3782
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        2777.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00041",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00024",
+      "element_id": "svg-run00024",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        3682,
+        1137,
+        3782
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        2777.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00043",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00025",
+      "element_id": "svg-run00025",
+      "mode": "editable_text",
+      "reference_bounds": [
+        150,
+        4006,
+        227,
+        4107
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        -284.804,
+        3102.87
+      ],
+      "raw_text": "A",
+      "source_text_owner": "n00045",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00026",
+      "element_id": "svg-run00026",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1066,
+        4007,
+        1137,
+        4107
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        627.461,
+        3102.87
+      ],
+      "raw_text": "B",
+      "source_text_owner": "n00047",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "n00049",
+      "element_id": "svg-n00049",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        1120,
+        1007,
+        1130
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -104.05019999999999,
+        422.381
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00049"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00051",
+      "element_id": "svg-n00051",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        1445,
+        1007,
+        1455
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -104.05019999999999,
+        747.381
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00051"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00053",
+      "element_id": "svg-n00053",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        1394,
+        1007,
+        1456
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        1284.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00053"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00055",
+      "element_id": "svg-n00055",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        1444,
+        1007,
+        1506
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        913.5999999999999,
+        1615.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00055"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00057",
+      "element_id": "svg-n00057",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        1719,
+        1007,
+        1781
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        1609.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00057"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00059",
+      "element_id": "svg-n00059",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        1769,
+        1007,
+        1831
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        913.5999999999999,
+        1940.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00059"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00061",
+      "element_id": "svg-n00061",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        1719,
+        393,
+        1781
+      ],
+      "world_transform": [
+        -0.118775,
+        0.0685745,
+        0.0501729,
+        0.0869021,
+        386.404,
+        1609.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00061"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00063",
+      "element_id": "svg-n00063",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        1769,
+        393,
+        1831
+      ],
+      "world_transform": [
+        -0.118775,
+        -0.0685745,
+        0.0501729,
+        -0.0869021,
+        386.404,
+        1940.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00063"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00065",
+      "element_id": "svg-n00065",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2044,
+        1007,
+        2106
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        1934.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00065"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00067",
+      "element_id": "svg-n00067",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2044,
+        920,
+        2156
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        1934.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00067"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00069",
+      "element_id": "svg-n00069",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2094,
+        1007,
+        2156
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        913.5999999999999,
+        2265.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00069"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00071",
+      "element_id": "svg-n00071",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2369,
+        1007,
+        2431
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        2259.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00071"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00073",
+      "element_id": "svg-n00073",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2419,
+        1007,
+        2481
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        913.5999999999999,
+        2590.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00073"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00075",
+      "element_id": "svg-n00075",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2694,
+        1007,
+        2756
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        2584.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00075"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00077",
+      "element_id": "svg-n00077",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2744,
+        1007,
+        2806
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        913.5999999999999,
+        2915.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00077"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00079",
+      "element_id": "svg-n00079",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        3019,
+        393,
+        3081
+      ],
+      "world_transform": [
+        -0.118775,
+        0.0685745,
+        0.0501729,
+        0.0869021,
+        386.404,
+        2909.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00079"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00081",
+      "element_id": "svg-n00081",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        3069,
+        393,
+        3131
+      ],
+      "world_transform": [
+        -0.118775,
+        -0.0685745,
+        0.0501729,
+        -0.0869021,
+        386.404,
+        3240.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00081"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00083",
+      "element_id": "svg-n00083",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        380,
+        3019,
+        480,
+        3081
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        386.80100000000004,
+        2909.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00083"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00085",
+      "element_id": "svg-n00085",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        380,
+        3069,
+        480,
+        3131
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        386.80100000000004,
+        3240.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00085"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00087",
+      "element_id": "svg-n00087",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        296,
+        3342,
+        478,
+        3458
+      ],
+      "world_transform": [
+        2.21923,
+        0.0,
+        0.0,
+        4.13392,
+        -828.436,
+        -10215.3
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00087"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00089",
+      "element_id": "svg-n00089",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        3344,
+        393,
+        3406
+      ],
+      "world_transform": [
+        -0.118775,
+        0.0685745,
+        0.0501729,
+        0.0869021,
+        386.404,
+        3234.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00089"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00091",
+      "element_id": "svg-n00091",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        3394,
+        393,
+        3456
+      ],
+      "world_transform": [
+        -0.118775,
+        -0.0685745,
+        0.0501729,
+        -0.0869021,
+        386.404,
+        3565.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00091"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00093",
+      "element_id": "svg-n00093",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        380,
+        3344,
+        480,
+        3406
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        386.80100000000004,
+        3234.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00093"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00095",
+      "element_id": "svg-n00095",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        380,
+        3394,
+        480,
+        3456
+      ],
+      "world_transform": [
+        0.118775,
+        -0.0685745,
+        -0.0501729,
+        -0.0869021,
+        386.80100000000004,
+        3565.79
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00095"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00097",
+      "element_id": "svg-n00097",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        1770,
+        1007,
+        1780
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -104.05019999999999,
+        1072.3809999999999
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00097"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00099",
+      "element_id": "svg-n00099",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        2095,
+        921,
+        2105
+      ],
+      "world_transform": [
+        1.04445,
+        -2.98264e-17,
+        -2.18227e-17,
+        0.702421,
+        -139.573,
+        1397.38
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00099"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00101",
+      "element_id": "svg-n00101",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        907,
+        2369,
+        920,
+        2481
+      ],
+      "world_transform": [
+        0.118775,
+        0.0685745,
+        -0.0501729,
+        0.0869021,
+        913.5999999999999,
+        2259.21
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00101"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00103",
+      "element_id": "svg-n00103",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        2420,
+        921,
+        2430
+      ],
+      "world_transform": [
+        1.04445,
+        -2.98264e-17,
+        -2.18227e-17,
+        0.702421,
+        -139.573,
+        1722.38
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00103"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00105",
+      "element_id": "svg-n00105",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        2745,
+        1007,
+        2755
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -104.05019999999999,
+        2047.38
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00105"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00107",
+      "element_id": "svg-n00107",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        468,
+        3068,
+        1006,
+        3082
+      ],
+      "world_transform": [
+        0.55069,
+        2.23222e-16,
+        2.1702e-16,
+        0.702421,
+        366.706,
+        2372.58
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00107"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00109",
+      "element_id": "svg-n00109",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        467,
+        3394,
+        1006,
+        3406
+      ],
+      "world_transform": [
+        0.722494,
+        -0.000180373,
+        -0.000131971,
+        0.702421,
+        169.26299999999998,
+        2697.99
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00109"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00111",
+      "element_id": "svg-n00111",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        3720,
+        1005,
+        3730
+      ],
+      "world_transform": [
+        0.95733,
+        0.0,
+        0.0,
+        0.702421,
+        -102.90809999999999,
+        3022.98
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00111"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "n00113",
+      "element_id": "svg-n00113",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        293,
+        4045,
+        1007,
+        4055
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -104.05019999999999,
+        3348.18
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00113"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "run00027",
+      "element_id": "svg-run00027",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        1024,
+        1966,
+        1113
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.345,
+        707.929
+      ],
+      "raw_text": "Association",
+      "source_text_owner": "n00115",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00028",
+      "element_id": "svg-run00028",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        1138,
+        2624,
+        1206
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.345,
+        707.929
+      ],
+      "raw_text": "A and B are associated in some way",
+      "source_text_owner": "n00116",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00029",
+      "element_id": "svg-run00029",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1273,
+        1356,
+        2734,
+        1445
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1040.116
+      ],
+      "raw_text": "Directional Association",
+      "source_text_owner": "n00118",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00030",
+      "element_id": "svg-run00030",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        1470,
+        2704,
+        1525
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1040.116
+      ],
+      "raw_text": "A has access to B but not vice versa",
+      "source_text_owner": "n00119",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00031",
+      "element_id": "svg-run00031",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1272,
+        1681,
+        2092,
+        1770
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1365.12
+      ],
+      "raw_text": "Bidirectional",
+      "source_text_owner": "n00121",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00032",
+      "element_id": "svg-run00032",
+      "mode": "editable_text",
+      "reference_bounds": [
+        2171,
+        1673,
+        2934,
+        1771
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1365.12
+      ],
+      "raw_text": "Association",
+      "source_text_owner": "n00122",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00033",
+      "element_id": "svg-run00033",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        1795,
+        2585,
+        1850
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1365.12
+      ],
+      "raw_text": "A and B have access to each other",
+      "source_text_owner": "n00123",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00034",
+      "element_id": "svg-run00034",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1277,
+        2000,
+        1967,
+        2089
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1683.84
+      ],
+      "raw_text": "Inheritance",
+      "source_text_owner": "n00125",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00035",
+      "element_id": "svg-run00035",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        2113,
+        2425,
+        2181
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        1683.84
+      ],
+      "raw_text": "A inherits from B, A \"is-a\" B",
+      "source_text_owner": "n00126",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00036",
+      "element_id": "svg-run00036",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1273,
+        2325,
+        1966,
+        2414
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2008.88
+      ],
+      "raw_text": "Realization",
+      "source_text_owner": "n00128",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00037",
+      "element_id": "svg-run00037",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        2438,
+        2385,
+        2506
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2008.88
+      ],
+      "raw_text": "A implements the interface B",
+      "source_text_owner": "n00129",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00038",
+      "element_id": "svg-run00038",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1273,
+        2650,
+        1903,
+        2759
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2333.25
+      ],
+      "raw_text": "Dependency",
+      "source_text_owner": "n00131",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00039",
+      "element_id": "svg-run00039",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        2763,
+        2787,
+        2831
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2333.25
+      ],
+      "raw_text": "A depends on B, B is a dependency of A",
+      "source_text_owner": "n00132",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00040",
+      "element_id": "svg-run00040",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        2981,
+        1966,
+        3092
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.345,
+        2665.12
+      ],
+      "raw_text": "Aggregation",
+      "source_text_owner": "n00134",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00041",
+      "element_id": "svg-run00041",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        3095,
+        2747,
+        3150
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.345,
+        2665.12
+      ],
+      "raw_text": "A \"has-a\" B which can exist without A",
+      "source_text_owner": "n00135",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00042",
+      "element_id": "svg-run00042",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1272,
+        3306,
+        1966,
+        3415
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2990.12
+      ],
+      "raw_text": "Composition",
+      "source_text_owner": "n00137",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00043",
+      "element_id": "svg-run00043",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        3420,
+        2867,
+        3475
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        2990.12
+      ],
+      "raw_text": "A \"has-a\" B which cannot exist without A",
+      "source_text_owner": "n00138",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00044",
+      "element_id": "svg-run00044",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1272,
+        3625,
+        1966,
+        3714
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        3308.6
+      ],
+      "raw_text": "Containment",
+      "source_text_owner": "n00140",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00045",
+      "element_id": "svg-run00045",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1269,
+        3738,
+        2185,
+        3793
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        535.265,
+        3308.6
+      ],
+      "raw_text": "A is contained within B",
+      "source_text_owner": "n00141",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00046",
+      "element_id": "svg-run00046",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1270,
+        3910,
+        2029,
+        4020
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        533.345,
+        3593.6
+      ],
+      "raw_text": "Multiplicity",
+      "source_text_owner": "n00143",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00047",
+      "element_id": "svg-run00047",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1270,
+        4023,
+        2251,
+        4091
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        533.345,
+        3593.6
+      ],
+      "raw_text": "each A has 1 or more B's,",
+      "source_text_owner": "n00144",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00048",
+      "element_id": "svg-run00048",
+      "mode": "editable_text",
+      "reference_bounds": [
+        1270,
+        4103,
+        2382,
+        4171
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        533.345,
+        3593.6
+      ],
+      "raw_text": "and each B has exactly 3 A's",
+      "source_text_owner": "n00145",
+      "postscript_name": "Inconsolata-Regular",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "n00147",
+      "element_id": "svg-n00147",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        943,
+        3675,
+        957,
+        3775
+      ],
+      "world_transform": [
+        0.960044,
+        0.0,
+        0.0,
+        0.702421,
+        -81.0908,
+        3088.99
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00147"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "run00049",
+      "element_id": "svg-run00049",
+      "mode": "editable_text",
+      "reference_bounds": [
+        300,
+        3955,
+        341,
+        4020
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        -436.543,
+        3615.45
+      ],
+      "raw_text": "3",
+      "source_text_owner": "n00149",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "run00050",
+      "element_id": "svg-run00050",
+      "mode": "editable_text",
+      "reference_bounds": [
+        801,
+        3957,
+        991,
+        4021
+      ],
+      "world_transform": [
+        0.404938,
+        0.0,
+        0.0,
+        0.404938,
+        61.45500000000001,
+        3615.84
+      ],
+      "raw_text": "1..*",
+      "source_text_owner": "n00151",
+      "postscript_name": "Inconsolata-Bold",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    },
+    {
+      "node_id": null,
+      "source_key": "n00153",
+      "element_id": "svg-n00153",
+      "mode": "rigid_vector_art",
+      "reference_bounds": [
+        894,
+        3669,
+        1006,
+        3781
+      ],
+      "world_transform": [
+        0.468221,
+        0.0,
+        0.0,
+        0.468221,
+        559.719,
+        2116.17
+      ],
+      "curve_editable_in_engine": false,
+      "retained_original": "original.svg",
+      "descendant_source_keys": [
+        "n00153"
+      ]
+    },
+    {
+      "node_id": null,
+      "source_key": "run00051",
+      "element_id": "svg-run00051",
+      "mode": "editable_text",
+      "reference_bounds": [
+        2274,
+        4272,
+        3015,
+        4312
+      ],
+      "world_transform": [
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        369.56600000000003,
+        137.27609999999999
+      ],
+      "raw_text": "github.com/blaketyro/printables",
+      "source_text_owner": "n00155",
+      "postscript_name": "DejaVuSansMono",
+      "font_resolution": "exact_named_family_weight_style",
+      "source_complete_text": null,
+      "segmentation": null
+    }
+  ],
+  "editable_text_count": 51,
+  "vector_art_count": 35,
+  "parity_review": "pending",
+  "attribution": {
+    "title": "UML Arrows",
+    "author": "blaketyro",
+    "source_url": "https://raw.githubusercontent.com/blaketyro/printables/7a3efb1ec83f7b5611372c9d42f0a6352411ae8f/Project/UML_Arrows/UML_Arrows_Poster.svg",
+    "license_id": "MIT",
+    "license_url": "https://github.com/blaketyro/printables/blob/7a3efb1ec83f7b5611372c9d42f0a6352411ae8f/LICENSE.md",
+    "license_path": "licenses/blaketyro-MIT.txt",
+    "source_commit": "7a3efb1ec83f7b5611372c9d42f0a6352411ae8f",
+    "split": "reserve"
+  },
+  "comparison_paper": "Both native/imported renders composited on declared white paper; no authored background element is added.",
+  "original_sha256": "014b77eb54536d92c49d12672cecacfd62aa9039e960aae4ff3f66d384fb0dcd",
+  "licenses": [
+    {
+      "path": "licenses/40bb7a80de00-blaketyro-MIT.txt",
+      "sha256": "40bb7a80de00fc36212ebc8fa7fbd43365b0c5deda13115810fd033941dcf89b",
+      "license_id": "MIT",
+      "source_path": "licenses/blaketyro-MIT.txt"
+    },
+    {
+      "path": "licenses/7a083b136e64-LICENSE.txt",
+      "sha256": "7a083b136e64d064794c3419751e5c7dd10d2f64c108fe5ba161eae5e5958a93",
+      "license_id": "LicenseRef-Bitstream-Vera-and-DejaVu",
+      "source_path": "fonts/dejavu-sans/LICENSE.txt"
+    },
+    {
+      "path": "licenses/11527366bb61-OFL.txt",
+      "sha256": "11527366bb615a5246481b961bcc1f4e51cf5d44294a0bea01f59b61f400e299",
+      "license_id": "OFL-1.1",
+      "source_path": "fonts/inconsolata/OFL.txt"
+    }
+  ],
+  "reference_sha256": "82aa35232410bcabf6289629d825020a2ce50d515dddc1fc9860351ad3eda2a9",
+  "baseline_kind": "disclosed_open_font_adaptation",
+  "adaptations": [
+    {
+      "original": "'Helvetica-Bold', 'Helvetica'",
+      "replacement": "'DejaVu Sans'",
+      "occurrences": 2
+    },
+    {
+      "original": "'Consolas', monospace",
+      "replacement": "'DejaVu Sans Mono', monospace",
+      "occurrences": 1
+    }
+  ],
+  "adaptation_note": "Author original remains byte-identical. Closed Helvetica/Consolas faces replaced with named open DejaVu faces before baseline. Asymptotic source declares Cantarell Regular/Oblique as weight500; adapted baseline explicitly selects available400face. This is not unchanged author typography. No resized output used to choose these changes.",
+  "canvas": {
+    "width": 3100,
+    "height": 4650
+  },
+  "viewport_convention": "viewBox dimensions for unspecified/percentage root viewport",
+  "font_resolutions": [
+    {
+      "declared_families": [
+        "DejaVu Sans"
+      ],
+      "selected_family": "DejaVu Sans",
+      "resolved_family": "DejaVu Sans",
+      "postscript_name": "DejaVuSans-Bold",
+      "weight": 700,
+      "style": "normal",
+      "resolution": "exact_named_family_weight_style",
+      "font_sha256": "e6476c1b80502924294eed40894c5b18e06c181444ca953e5334262df9c27724",
+      "historical_source_bytes_verified": false
+    },
+    {
+      "declared_families": [
+        "Inconsolata-Bold",
+        "Inconsolata"
+      ],
+      "selected_family": "Inconsolata",
+      "resolved_family": "Inconsolata",
+      "postscript_name": "Inconsolata-Bold",
+      "weight": 700,
+      "style": "normal",
+      "resolution": "exact_named_family_weight_style",
+      "font_sha256": "268c1564be5385ec2e1d94ad64fef716d2dcccc983fc0155f1918930951522f4",
+      "historical_source_bytes_verified": false
+    },
+    {
+      "declared_families": [
+        "Inconsolata-Regular",
+        "Inconsolata"
+      ],
+      "selected_family": "Inconsolata",
+      "resolved_family": "Inconsolata",
+      "postscript_name": "Inconsolata-Regular",
+      "weight": 400,
+      "style": "normal",
+      "resolution": "exact_named_family_weight_style",
+      "font_sha256": "a96d81f5285e24f97095de178985a3c05932745a31bfd9ebb5b815a9b7500d3b",
+      "historical_source_bytes_verified": false
+    },
+    {
+      "declared_families": [
+        "DejaVu Sans Mono",
+        "monospace"
+      ],
+      "selected_family": "DejaVu Sans Mono",
+      "resolved_family": "DejaVu Sans Mono",
+      "postscript_name": "DejaVuSansMono",
+      "weight": 400,
+      "style": "normal",
+      "resolution": "exact_named_family_weight_style",
+      "font_sha256": "b4a6c3e4faab8773f4ff761d56451646409f29abedd68f05d38c2df667d3c582",
+      "historical_source_bytes_verified": false
+    }
+  ],
+  "source_tree": [
+    {
+      "source_key": "n00000",
+      "parent": null,
+      "tag": "svg",
+      "id": null,
+      "attributes": {
+        "width": "100%",
+        "height": "100%",
+        "viewBox": "0 0 3100 4650",
+        "version": "1.1",
+        "{http://www.w3.org/XML/1998/namespace}space": "preserve",
+        "style": "fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;",
+        "data-chameleon-import-key": "n00000"
+      }
+    },
+    {
+      "source_key": "n00001",
+      "parent": "n00000",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-150,125)",
+        "data-chameleon-import-key": "n00001"
+      }
+    },
+    {
+      "source_key": "n00002",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1.0196,0,0,1.0196,-615.733,354.83)",
+        "data-chameleon-import-key": "n00002"
+      }
+    },
+    {
+      "source_key": "n00003",
+      "parent": "n00002",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "888.666px",
+        "y": "433.479px",
+        "style": "font-family:'DejaVu Sans';font-weight:700;font-size:470.772px;",
+        "data-chameleon-import-key": "n00003"
+      }
+    },
+    {
+      "source_key": "n00004",
+      "parent": "n00003",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "n00004"
+      }
+    },
+    {
+      "source_key": "n00005",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.326203,0,0,0.326203,204.606,245.844)",
+        "data-chameleon-import-key": "n00005"
+      }
+    },
+    {
+      "source_key": "n00006",
+      "parent": "n00005",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "888.666px",
+        "y": "433.479px",
+        "style": "font-family:'DejaVu Sans';font-weight:700;font-size:367.869px;",
+        "data-chameleon-import-key": "n00006"
+      }
+    },
+    {
+      "source_key": "n00007",
+      "parent": "n00006",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "x": "1597.64px ",
+        "y": "433.479px ",
+        "data-chameleon-import-key": "n00007"
+      }
+    },
+    {
+      "source_key": "n00008",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,52.8727)",
+        "data-chameleon-import-key": "n00008"
+      }
+    },
+    {
+      "source_key": "n00009",
+      "parent": "n00008",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00009"
+      }
+    },
+    {
+      "source_key": "n00010",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,52.8727)",
+        "data-chameleon-import-key": "n00010"
+      }
+    },
+    {
+      "source_key": "n00011",
+      "parent": "n00010",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00011"
+      }
+    },
+    {
+      "source_key": "n00012",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,377.873)",
+        "data-chameleon-import-key": "n00012"
+      }
+    },
+    {
+      "source_key": "n00013",
+      "parent": "n00012",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00013"
+      }
+    },
+    {
+      "source_key": "n00014",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,377.873)",
+        "data-chameleon-import-key": "n00014"
+      }
+    },
+    {
+      "source_key": "n00015",
+      "parent": "n00014",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00015"
+      }
+    },
+    {
+      "source_key": "n00016",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,702.873)",
+        "data-chameleon-import-key": "n00016"
+      }
+    },
+    {
+      "source_key": "n00017",
+      "parent": "n00016",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00017"
+      }
+    },
+    {
+      "source_key": "n00018",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,702.873)",
+        "data-chameleon-import-key": "n00018"
+      }
+    },
+    {
+      "source_key": "n00019",
+      "parent": "n00018",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00019"
+      }
+    },
+    {
+      "source_key": "n00020",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,1027.87)",
+        "data-chameleon-import-key": "n00020"
+      }
+    },
+    {
+      "source_key": "n00021",
+      "parent": "n00020",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00021"
+      }
+    },
+    {
+      "source_key": "n00022",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,1027.87)",
+        "data-chameleon-import-key": "n00022"
+      }
+    },
+    {
+      "source_key": "n00023",
+      "parent": "n00022",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00023"
+      }
+    },
+    {
+      "source_key": "n00024",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,1352.87)",
+        "data-chameleon-import-key": "n00024"
+      }
+    },
+    {
+      "source_key": "n00025",
+      "parent": "n00024",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00025"
+      }
+    },
+    {
+      "source_key": "n00026",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,1352.87)",
+        "data-chameleon-import-key": "n00026"
+      }
+    },
+    {
+      "source_key": "n00027",
+      "parent": "n00026",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00027"
+      }
+    },
+    {
+      "source_key": "n00028",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,1677.87)",
+        "data-chameleon-import-key": "n00028"
+      }
+    },
+    {
+      "source_key": "n00029",
+      "parent": "n00028",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00029"
+      }
+    },
+    {
+      "source_key": "n00030",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,1677.87)",
+        "data-chameleon-import-key": "n00030"
+      }
+    },
+    {
+      "source_key": "n00031",
+      "parent": "n00030",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00031"
+      }
+    },
+    {
+      "source_key": "n00032",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,2002.87)",
+        "data-chameleon-import-key": "n00032"
+      }
+    },
+    {
+      "source_key": "n00033",
+      "parent": "n00032",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00033"
+      }
+    },
+    {
+      "source_key": "n00034",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,2002.87)",
+        "data-chameleon-import-key": "n00034"
+      }
+    },
+    {
+      "source_key": "n00035",
+      "parent": "n00034",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00035"
+      }
+    },
+    {
+      "source_key": "n00036",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,2327.87)",
+        "data-chameleon-import-key": "n00036"
+      }
+    },
+    {
+      "source_key": "n00037",
+      "parent": "n00036",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00037"
+      }
+    },
+    {
+      "source_key": "n00038",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,2327.87)",
+        "data-chameleon-import-key": "n00038"
+      }
+    },
+    {
+      "source_key": "n00039",
+      "parent": "n00038",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00039"
+      }
+    },
+    {
+      "source_key": "n00040",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,2652.87)",
+        "data-chameleon-import-key": "n00040"
+      }
+    },
+    {
+      "source_key": "n00041",
+      "parent": "n00040",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00041"
+      }
+    },
+    {
+      "source_key": "n00042",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,2652.87)",
+        "data-chameleon-import-key": "n00042"
+      }
+    },
+    {
+      "source_key": "n00043",
+      "parent": "n00042",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00043"
+      }
+    },
+    {
+      "source_key": "n00044",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,-134.804,2977.87)",
+        "data-chameleon-import-key": "n00044"
+      }
+    },
+    {
+      "source_key": "n00045",
+      "parent": "n00044",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00045"
+      }
+    },
+    {
+      "source_key": "n00046",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,777.461,2977.87)",
+        "data-chameleon-import-key": "n00046"
+      }
+    },
+    {
+      "source_key": "n00047",
+      "parent": "n00046",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "433.476px",
+        "y": "1004px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:160px;",
+        "data-chameleon-import-key": "n00047"
+      }
+    },
+    {
+      "source_key": "n00048",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,45.9498,297.381)",
+        "data-chameleon-import-key": "n00048"
+      }
+    },
+    {
+      "source_key": "n00049",
+      "parent": "n00048",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;",
+        "data-chameleon-import-key": "n00049"
+      }
+    },
+    {
+      "source_key": "n00050",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,45.9498,622.381)",
+        "data-chameleon-import-key": "n00050"
+      }
+    },
+    {
+      "source_key": "n00051",
+      "parent": "n00050",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;",
+        "data-chameleon-import-key": "n00051"
+      }
+    },
+    {
+      "source_key": "n00052",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,1159.21)",
+        "data-chameleon-import-key": "n00052"
+      }
+    },
+    {
+      "source_key": "n00053",
+      "parent": "n00052",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00053"
+      }
+    },
+    {
+      "source_key": "n00054",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,1063.6,1490.79)",
+        "data-chameleon-import-key": "n00054"
+      }
+    },
+    {
+      "source_key": "n00055",
+      "parent": "n00054",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00055"
+      }
+    },
+    {
+      "source_key": "n00056",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,1484.21)",
+        "data-chameleon-import-key": "n00056"
+      }
+    },
+    {
+      "source_key": "n00057",
+      "parent": "n00056",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00057"
+      }
+    },
+    {
+      "source_key": "n00058",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,1063.6,1815.79)",
+        "data-chameleon-import-key": "n00058"
+      }
+    },
+    {
+      "source_key": "n00059",
+      "parent": "n00058",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00059"
+      }
+    },
+    {
+      "source_key": "n00060",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,0.0685745,0.0501729,0.0869021,536.404,1484.21)",
+        "data-chameleon-import-key": "n00060"
+      }
+    },
+    {
+      "source_key": "n00061",
+      "parent": "n00060",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00061"
+      }
+    },
+    {
+      "source_key": "n00062",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,-0.0685745,0.0501729,-0.0869021,536.404,1815.79)",
+        "data-chameleon-import-key": "n00062"
+      }
+    },
+    {
+      "source_key": "n00063",
+      "parent": "n00062",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00063"
+      }
+    },
+    {
+      "source_key": "n00064",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,1809.21)",
+        "data-chameleon-import-key": "n00064"
+      }
+    },
+    {
+      "source_key": "n00065",
+      "parent": "n00064",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00065"
+      }
+    },
+    {
+      "source_key": "n00066",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,1809.21)",
+        "data-chameleon-import-key": "n00066"
+      }
+    },
+    {
+      "source_key": "n00067",
+      "parent": "n00066",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L785.433,1863.32",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00067"
+      }
+    },
+    {
+      "source_key": "n00068",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,1063.6,2140.79)",
+        "data-chameleon-import-key": "n00068"
+      }
+    },
+    {
+      "source_key": "n00069",
+      "parent": "n00068",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00069"
+      }
+    },
+    {
+      "source_key": "n00070",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,2134.21)",
+        "data-chameleon-import-key": "n00070"
+      }
+    },
+    {
+      "source_key": "n00071",
+      "parent": "n00070",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00071"
+      }
+    },
+    {
+      "source_key": "n00072",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,1063.6,2465.79)",
+        "data-chameleon-import-key": "n00072"
+      }
+    },
+    {
+      "source_key": "n00073",
+      "parent": "n00072",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00073"
+      }
+    },
+    {
+      "source_key": "n00074",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,2459.21)",
+        "data-chameleon-import-key": "n00074"
+      }
+    },
+    {
+      "source_key": "n00075",
+      "parent": "n00074",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00075"
+      }
+    },
+    {
+      "source_key": "n00076",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,1063.6,2790.79)",
+        "data-chameleon-import-key": "n00076"
+      }
+    },
+    {
+      "source_key": "n00077",
+      "parent": "n00076",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00077"
+      }
+    },
+    {
+      "source_key": "n00078",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,0.0685745,0.0501729,0.0869021,536.404,2784.21)",
+        "data-chameleon-import-key": "n00078"
+      }
+    },
+    {
+      "source_key": "n00079",
+      "parent": "n00078",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00079"
+      }
+    },
+    {
+      "source_key": "n00080",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,-0.0685745,0.0501729,-0.0869021,536.404,3115.79)",
+        "data-chameleon-import-key": "n00080"
+      }
+    },
+    {
+      "source_key": "n00081",
+      "parent": "n00080",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00081"
+      }
+    },
+    {
+      "source_key": "n00082",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,536.801,2784.21)",
+        "data-chameleon-import-key": "n00082"
+      }
+    },
+    {
+      "source_key": "n00083",
+      "parent": "n00082",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00083"
+      }
+    },
+    {
+      "source_key": "n00084",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,536.801,3115.79)",
+        "data-chameleon-import-key": "n00084"
+      }
+    },
+    {
+      "source_key": "n00085",
+      "parent": "n00084",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00085"
+      }
+    },
+    {
+      "source_key": "n00086",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(2.21923,0,0,4.13392,-678.436,-10340.3)",
+        "data-chameleon-import-key": "n00086"
+      }
+    },
+    {
+      "source_key": "n00087",
+      "parent": "n00086",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M547.505,3281.46L586.529,3293.56L547.505,3305.65L508.481,3293.56L547.505,3281.46Z",
+        "style": "stroke:black;stroke-width:3.62px;",
+        "data-chameleon-import-key": "n00087"
+      }
+    },
+    {
+      "source_key": "n00088",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,0.0685745,0.0501729,0.0869021,536.404,3109.21)",
+        "data-chameleon-import-key": "n00088"
+      }
+    },
+    {
+      "source_key": "n00089",
+      "parent": "n00088",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00089"
+      }
+    },
+    {
+      "source_key": "n00090",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(-0.118775,-0.0685745,0.0501729,-0.0869021,536.404,3440.79)",
+        "data-chameleon-import-key": "n00090"
+      }
+    },
+    {
+      "source_key": "n00091",
+      "parent": "n00090",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00091"
+      }
+    },
+    {
+      "source_key": "n00092",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,536.801,3109.21)",
+        "data-chameleon-import-key": "n00092"
+      }
+    },
+    {
+      "source_key": "n00093",
+      "parent": "n00092",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00093"
+      }
+    },
+    {
+      "source_key": "n00094",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,-0.0685745,-0.0501729,-0.0869021,536.801,3440.79)",
+        "data-chameleon-import-key": "n00094"
+      }
+    },
+    {
+      "source_key": "n00095",
+      "parent": "n00094",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00095"
+      }
+    },
+    {
+      "source_key": "n00096",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,45.9498,947.381)",
+        "data-chameleon-import-key": "n00096"
+      }
+    },
+    {
+      "source_key": "n00097",
+      "parent": "n00096",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;",
+        "data-chameleon-import-key": "n00097"
+      }
+    },
+    {
+      "source_key": "n00098",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1.04445,-2.98264e-17,-2.18227e-17,0.702421,10.427,1272.38)",
+        "data-chameleon-import-key": "n00098"
+      }
+    },
+    {
+      "source_key": "n00099",
+      "parent": "n00098",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1008.16,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:13.48px;",
+        "data-chameleon-import-key": "n00099"
+      }
+    },
+    {
+      "source_key": "n00100",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.118775,0.0685745,-0.0501729,0.0869021,1063.6,2134.21)",
+        "data-chameleon-import-key": "n00100"
+      }
+    },
+    {
+      "source_key": "n00101",
+      "parent": "n00100",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L785.433,1863.32",
+        "style": "fill:none;stroke:black;stroke-width:99.86px;",
+        "data-chameleon-import-key": "n00101"
+      }
+    },
+    {
+      "source_key": "n00102",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1.04445,-2.98264e-17,-2.18227e-17,0.702421,10.427,1597.38)",
+        "data-chameleon-import-key": "n00102"
+      }
+    },
+    {
+      "source_key": "n00103",
+      "parent": "n00102",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1008.16,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:13.48px;stroke-dasharray:40.45,53.93,0,0;",
+        "data-chameleon-import-key": "n00103"
+      }
+    },
+    {
+      "source_key": "n00104",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,45.9498,1922.38)",
+        "data-chameleon-import-key": "n00104"
+      }
+    },
+    {
+      "source_key": "n00105",
+      "parent": "n00104",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,1000.28L1150,1000.28",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;stroke-dasharray:42.8,57.06,0,0;",
+        "data-chameleon-import-key": "n00105"
+      }
+    },
+    {
+      "source_key": "n00106",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.55069,2.23222e-16,2.1702e-16,0.702421,516.706,2247.58)",
+        "data-chameleon-import-key": "n00106"
+      }
+    },
+    {
+      "source_key": "n00107",
+      "parent": "n00106",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M193.391,999.998L1150,999.998",
+        "style": "fill:none;stroke:black;stroke-width:19.01px;",
+        "data-chameleon-import-key": "n00107"
+      }
+    },
+    {
+      "source_key": "n00108",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.722494,-0.000180373,-0.000131971,0.702421,319.263,2572.99)",
+        "data-chameleon-import-key": "n00108"
+      }
+    },
+    {
+      "source_key": "n00109",
+      "parent": "n00108",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,999.526L1150,999.713",
+        "style": "fill:none;stroke:black;stroke-width:16.85px;",
+        "data-chameleon-import-key": "n00109"
+      }
+    },
+    {
+      "source_key": "n00110",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.95733,0,0,0.702421,47.0919,2897.98)",
+        "data-chameleon-import-key": "n00110"
+      }
+    },
+    {
+      "source_key": "n00111",
+      "parent": "n00110",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,999.428L1150,999.428",
+        "style": "fill:none;stroke:black;stroke-width:14.29px;",
+        "data-chameleon-import-key": "n00111"
+      }
+    },
+    {
+      "source_key": "n00112",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,45.9498,3223.18)",
+        "data-chameleon-import-key": "n00112"
+      }
+    },
+    {
+      "source_key": "n00113",
+      "parent": "n00112",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M420.866,999.144L1150,999.144",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;",
+        "data-chameleon-import-key": "n00113"
+      }
+    },
+    {
+      "source_key": "n00114",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.345,582.929)",
+        "data-chameleon-import-key": "n00114"
+      }
+    },
+    {
+      "source_key": "n00115",
+      "parent": "n00114",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00115"
+      }
+    },
+    {
+      "source_key": "n00116",
+      "parent": "n00114",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00116"
+      }
+    },
+    {
+      "source_key": "n00117",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,915.116)",
+        "data-chameleon-import-key": "n00117"
+      }
+    },
+    {
+      "source_key": "n00118",
+      "parent": "n00117",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00118"
+      }
+    },
+    {
+      "source_key": "n00119",
+      "parent": "n00117",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00119"
+      }
+    },
+    {
+      "source_key": "n00120",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,1240.12)",
+        "data-chameleon-import-key": "n00120"
+      }
+    },
+    {
+      "source_key": "n00121",
+      "parent": "n00120",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00121"
+      }
+    },
+    {
+      "source_key": "n00122",
+      "parent": "n00120",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "4037px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:345.732px;",
+        "data-chameleon-import-key": "n00122"
+      }
+    },
+    {
+      "source_key": "n00123",
+      "parent": "n00120",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00123"
+      }
+    },
+    {
+      "source_key": "n00124",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,1558.84)",
+        "data-chameleon-import-key": "n00124"
+      }
+    },
+    {
+      "source_key": "n00125",
+      "parent": "n00124",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00125"
+      }
+    },
+    {
+      "source_key": "n00126",
+      "parent": "n00124",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00126"
+      }
+    },
+    {
+      "source_key": "n00127",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,1883.88)",
+        "data-chameleon-import-key": "n00127"
+      }
+    },
+    {
+      "source_key": "n00128",
+      "parent": "n00127",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00128"
+      }
+    },
+    {
+      "source_key": "n00129",
+      "parent": "n00127",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00129"
+      }
+    },
+    {
+      "source_key": "n00130",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,2208.25)",
+        "data-chameleon-import-key": "n00130"
+      }
+    },
+    {
+      "source_key": "n00131",
+      "parent": "n00130",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00131"
+      }
+    },
+    {
+      "source_key": "n00132",
+      "parent": "n00130",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00132"
+      }
+    },
+    {
+      "source_key": "n00133",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.345,2540.12)",
+        "data-chameleon-import-key": "n00133"
+      }
+    },
+    {
+      "source_key": "n00134",
+      "parent": "n00133",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00134"
+      }
+    },
+    {
+      "source_key": "n00135",
+      "parent": "n00133",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00135"
+      }
+    },
+    {
+      "source_key": "n00136",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,2865.12)",
+        "data-chameleon-import-key": "n00136"
+      }
+    },
+    {
+      "source_key": "n00137",
+      "parent": "n00136",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00137"
+      }
+    },
+    {
+      "source_key": "n00138",
+      "parent": "n00136",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00138"
+      }
+    },
+    {
+      "source_key": "n00139",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,685.265,3183.6)",
+        "data-chameleon-import-key": "n00139"
+      }
+    },
+    {
+      "source_key": "n00140",
+      "parent": "n00139",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00140"
+      }
+    },
+    {
+      "source_key": "n00141",
+      "parent": "n00139",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00141"
+      }
+    },
+    {
+      "source_key": "n00142",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,683.345,3468.6)",
+        "data-chameleon-import-key": "n00142"
+      }
+    },
+    {
+      "source_key": "n00143",
+      "parent": "n00142",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:316.098px;",
+        "data-chameleon-import-key": "n00143"
+      }
+    },
+    {
+      "source_key": "n00144",
+      "parent": "n00142",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1193.62px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00144"
+      }
+    },
+    {
+      "source_key": "n00145",
+      "parent": "n00142",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "1391.19px",
+        "style": "font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561px;",
+        "data-chameleon-import-key": "n00145"
+      }
+    },
+    {
+      "source_key": "n00146",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.960044,0,0,0.702421,68.9092,2963.99)",
+        "data-chameleon-import-key": "n00146"
+      }
+    },
+    {
+      "source_key": "n00147",
+      "parent": "n00146",
+      "tag": "path",
+      "id": null,
+      "attributes": {
+        "d": "M1074,834.274L1074,976.638",
+        "style": "fill:none;stroke:black;stroke-width:14.27px;stroke-linecap:butt;",
+        "data-chameleon-import-key": "n00147"
+      }
+    },
+    {
+      "source_key": "n00148",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,-286.543,3490.45)",
+        "data-chameleon-import-key": "n00148"
+      }
+    },
+    {
+      "source_key": "n00149",
+      "parent": "n00148",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:246.951px;",
+        "data-chameleon-import-key": "n00149"
+      }
+    },
+    {
+      "source_key": "n00150",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.404938,0,0,0.404938,211.455,3490.84)",
+        "data-chameleon-import-key": "n00150"
+      }
+    },
+    {
+      "source_key": "n00151",
+      "parent": "n00150",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1809.5px",
+        "y": "996.064px",
+        "style": "font-family:'Inconsolata-Bold', 'Inconsolata';font-weight:700;font-size:246.951px;",
+        "data-chameleon-import-key": "n00151"
+      }
+    },
+    {
+      "source_key": "n00152",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(0.468221,0,0,0.468221,709.719,1991.17)",
+        "data-chameleon-import-key": "n00152"
+      }
+    },
+    {
+      "source_key": "n00153",
+      "parent": "n00152",
+      "tag": "circle",
+      "id": null,
+      "attributes": {
+        "cx": "833.539",
+        "cy": "3436.04",
+        "r": "106.787",
+        "style": "fill:none;stroke:black;stroke-width:25.63px;",
+        "data-chameleon-import-key": "n00153"
+      }
+    },
+    {
+      "source_key": "n00154",
+      "parent": "n00001",
+      "tag": "g",
+      "id": null,
+      "attributes": {
+        "transform": "matrix(1,0,0,1,519.566,12.2761)",
+        "data-chameleon-import-key": "n00154"
+      }
+    },
+    {
+      "source_key": "n00155",
+      "parent": "n00154",
+      "tag": "text",
+      "id": null,
+      "attributes": {
+        "x": "1902.02px",
+        "y": "4165.56px",
+        "style": "font-family:'DejaVu Sans Mono', monospace;font-size:40px;",
+        "data-chameleon-import-key": "n00155"
+      }
+    },
+    {
+      "source_key": "run00000",
+      "parent": "n00003",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00000",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans';font-size:470.772;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00001",
+      "parent": "n00003",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00001",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans';font-size:470.772;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00002",
+      "parent": "n00004",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00002",
+        "x": "1900.09px",
+        "y": "433.479px"
+      }
+    },
+    {
+      "source_key": "run00003",
+      "parent": "n00004",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00003",
+        "x": "2013.65px",
+        "y": "433.479px"
+      }
+    },
+    {
+      "source_key": "run00004",
+      "parent": "n00006",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00004",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans';font-size:367.869;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00005",
+      "parent": "n00006",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00005",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans';font-size:367.869;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00006",
+      "parent": "n00007",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00006",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans';font-size:367.869;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00007",
+      "parent": "n00009",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00007",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00008",
+      "parent": "n00011",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00008",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00009",
+      "parent": "n00013",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00009",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00010",
+      "parent": "n00015",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00010",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00011",
+      "parent": "n00017",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00011",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00012",
+      "parent": "n00019",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00012",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00013",
+      "parent": "n00021",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00013",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00014",
+      "parent": "n00023",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00014",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00015",
+      "parent": "n00025",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00015",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00016",
+      "parent": "n00027",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00016",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00017",
+      "parent": "n00029",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00017",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00018",
+      "parent": "n00031",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00018",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00019",
+      "parent": "n00033",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00019",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00020",
+      "parent": "n00035",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00020",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00021",
+      "parent": "n00037",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00021",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00022",
+      "parent": "n00039",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00022",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00023",
+      "parent": "n00041",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00023",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00024",
+      "parent": "n00043",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00024",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00025",
+      "parent": "n00045",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00025",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00026",
+      "parent": "n00047",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00026",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:160.0;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00027",
+      "parent": "n00115",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00027",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00028",
+      "parent": "n00116",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00028",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00029",
+      "parent": "n00118",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00029",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00030",
+      "parent": "n00119",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00030",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00031",
+      "parent": "n00121",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00031",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00032",
+      "parent": "n00122",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00032",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:345.732;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00033",
+      "parent": "n00123",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00033",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00034",
+      "parent": "n00125",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00034",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00035",
+      "parent": "n00126",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00035",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00036",
+      "parent": "n00128",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00036",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00037",
+      "parent": "n00129",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00037",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00038",
+      "parent": "n00131",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00038",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00039",
+      "parent": "n00132",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00039",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00040",
+      "parent": "n00134",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00040",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00041",
+      "parent": "n00135",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00041",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00042",
+      "parent": "n00137",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00042",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00043",
+      "parent": "n00138",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00043",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00044",
+      "parent": "n00140",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00044",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00045",
+      "parent": "n00141",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00045",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00046",
+      "parent": "n00143",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00046",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:316.098;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00047",
+      "parent": "n00144",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00047",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00048",
+      "parent": "n00145",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00048",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Regular', 'Inconsolata';font-size:197.561;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00049",
+      "parent": "n00149",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00049",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:246.951;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00050",
+      "parent": "n00151",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00050",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'Inconsolata-Bold', 'Inconsolata';font-size:246.951;font-weight:700;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    },
+    {
+      "source_key": "run00051",
+      "parent": "n00155",
+      "tag": "tspan",
+      "id": null,
+      "attributes": {
+        "data-chameleon-import-key": "run00051",
+        "style": "fill:black;fill-opacity:1;stroke:none;stroke-opacity:1;font-family:'DejaVu Sans Mono', monospace;font-size:40.0;font-weight:400;font-style:normal;text-anchor:start;letter-spacing:0;color:black"
+      }
+    }
+  ],
+  "native_imported_normalized_mae": 0.006038556242476179,
+  "native_shape_count": 0,
+  "ignored_nodes": [],
+  "source_warnings": [
+    {
+      "code": "root_viewport_clipped_text",
+      "source_key": "run00001",
+      "message": "Original author viewport 3100x4650 clips text with full native ink bounds (1699, 653, 3169, 929). Original cropping and the complete editable text frame are retained; this is a source stress case.",
+      "full_ink_bounds": [
+        1699,
+        653,
+        3169,
+        929
+      ],
+      "source_complete_text": "rrows"
+    },
+    {
+      "code": "root_viewport_clipped_text",
+      "source_key": "run00005",
+      "message": "Original author viewport 3100x4650 clips text with full native ink bounds (664, 421, 3143, 539). Original cropping and the complete editable text frame are retained; this is a source stress case.",
+      "full_ink_bounds": [
+        664,
+        421,
+        3143,
+        539
+      ],
+      "source_complete_text": "pes of Uniﬁed Modeling Language or"
+    }
+  ],
+  "authored_groups": [
+    {
+      "source_key": "n00002",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00002",
+        "n00003",
+        "run00000",
+        "n00004",
+        "run00002",
+        "run00003",
+        "run00001"
+      ]
+    },
+    {
+      "source_key": "n00005",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00005",
+        "n00006",
+        "run00004",
+        "n00007",
+        "run00006",
+        "run00005"
+      ]
+    },
+    {
+      "source_key": "n00008",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00008",
+        "n00009",
+        "run00007"
+      ]
+    },
+    {
+      "source_key": "n00010",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00010",
+        "n00011",
+        "run00008"
+      ]
+    },
+    {
+      "source_key": "n00012",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00012",
+        "n00013",
+        "run00009"
+      ]
+    },
+    {
+      "source_key": "n00014",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00014",
+        "n00015",
+        "run00010"
+      ]
+    },
+    {
+      "source_key": "n00016",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00016",
+        "n00017",
+        "run00011"
+      ]
+    },
+    {
+      "source_key": "n00018",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00018",
+        "n00019",
+        "run00012"
+      ]
+    },
+    {
+      "source_key": "n00020",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00020",
+        "n00021",
+        "run00013"
+      ]
+    },
+    {
+      "source_key": "n00022",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00022",
+        "n00023",
+        "run00014"
+      ]
+    },
+    {
+      "source_key": "n00024",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00024",
+        "n00025",
+        "run00015"
+      ]
+    },
+    {
+      "source_key": "n00026",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00026",
+        "n00027",
+        "run00016"
+      ]
+    },
+    {
+      "source_key": "n00028",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00028",
+        "n00029",
+        "run00017"
+      ]
+    },
+    {
+      "source_key": "n00030",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00030",
+        "n00031",
+        "run00018"
+      ]
+    },
+    {
+      "source_key": "n00032",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00032",
+        "n00033",
+        "run00019"
+      ]
+    },
+    {
+      "source_key": "n00034",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00034",
+        "n00035",
+        "run00020"
+      ]
+    },
+    {
+      "source_key": "n00036",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00036",
+        "n00037",
+        "run00021"
+      ]
+    },
+    {
+      "source_key": "n00038",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00038",
+        "n00039",
+        "run00022"
+      ]
+    },
+    {
+      "source_key": "n00040",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00040",
+        "n00041",
+        "run00023"
+      ]
+    },
+    {
+      "source_key": "n00042",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00042",
+        "n00043",
+        "run00024"
+      ]
+    },
+    {
+      "source_key": "n00044",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00044",
+        "n00045",
+        "run00025"
+      ]
+    },
+    {
+      "source_key": "n00046",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00046",
+        "n00047",
+        "run00026"
+      ]
+    },
+    {
+      "source_key": "n00048",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00048",
+        "n00049"
+      ]
+    },
+    {
+      "source_key": "n00050",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00050",
+        "n00051"
+      ]
+    },
+    {
+      "source_key": "n00052",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00052",
+        "n00053"
+      ]
+    },
+    {
+      "source_key": "n00054",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00054",
+        "n00055"
+      ]
+    },
+    {
+      "source_key": "n00056",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00056",
+        "n00057"
+      ]
+    },
+    {
+      "source_key": "n00058",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00058",
+        "n00059"
+      ]
+    },
+    {
+      "source_key": "n00060",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00060",
+        "n00061"
+      ]
+    },
+    {
+      "source_key": "n00062",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00062",
+        "n00063"
+      ]
+    },
+    {
+      "source_key": "n00064",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00064",
+        "n00065"
+      ]
+    },
+    {
+      "source_key": "n00066",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00066",
+        "n00067"
+      ]
+    },
+    {
+      "source_key": "n00068",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00068",
+        "n00069"
+      ]
+    },
+    {
+      "source_key": "n00070",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00070",
+        "n00071"
+      ]
+    },
+    {
+      "source_key": "n00072",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00072",
+        "n00073"
+      ]
+    },
+    {
+      "source_key": "n00074",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00074",
+        "n00075"
+      ]
+    },
+    {
+      "source_key": "n00076",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00076",
+        "n00077"
+      ]
+    },
+    {
+      "source_key": "n00078",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00078",
+        "n00079"
+      ]
+    },
+    {
+      "source_key": "n00080",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00080",
+        "n00081"
+      ]
+    },
+    {
+      "source_key": "n00082",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00082",
+        "n00083"
+      ]
+    },
+    {
+      "source_key": "n00084",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00084",
+        "n00085"
+      ]
+    },
+    {
+      "source_key": "n00086",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00086",
+        "n00087"
+      ]
+    },
+    {
+      "source_key": "n00088",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00088",
+        "n00089"
+      ]
+    },
+    {
+      "source_key": "n00090",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00090",
+        "n00091"
+      ]
+    },
+    {
+      "source_key": "n00092",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00092",
+        "n00093"
+      ]
+    },
+    {
+      "source_key": "n00094",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00094",
+        "n00095"
+      ]
+    },
+    {
+      "source_key": "n00096",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00096",
+        "n00097"
+      ]
+    },
+    {
+      "source_key": "n00098",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00098",
+        "n00099"
+      ]
+    },
+    {
+      "source_key": "n00100",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00100",
+        "n00101"
+      ]
+    },
+    {
+      "source_key": "n00102",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00102",
+        "n00103"
+      ]
+    },
+    {
+      "source_key": "n00104",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00104",
+        "n00105"
+      ]
+    },
+    {
+      "source_key": "n00106",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00106",
+        "n00107"
+      ]
+    },
+    {
+      "source_key": "n00108",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00108",
+        "n00109"
+      ]
+    },
+    {
+      "source_key": "n00110",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00110",
+        "n00111"
+      ]
+    },
+    {
+      "source_key": "n00112",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00112",
+        "n00113"
+      ]
+    },
+    {
+      "source_key": "n00114",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00114",
+        "n00115",
+        "run00027",
+        "n00116",
+        "run00028"
+      ]
+    },
+    {
+      "source_key": "n00117",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00117",
+        "n00118",
+        "run00029",
+        "n00119",
+        "run00030"
+      ]
+    },
+    {
+      "source_key": "n00120",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00120",
+        "n00121",
+        "run00031",
+        "n00122",
+        "run00032",
+        "n00123",
+        "run00033"
+      ]
+    },
+    {
+      "source_key": "n00124",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00124",
+        "n00125",
+        "run00034",
+        "n00126",
+        "run00035"
+      ]
+    },
+    {
+      "source_key": "n00127",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00127",
+        "n00128",
+        "run00036",
+        "n00129",
+        "run00037"
+      ]
+    },
+    {
+      "source_key": "n00130",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00130",
+        "n00131",
+        "run00038",
+        "n00132",
+        "run00039"
+      ]
+    },
+    {
+      "source_key": "n00133",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00133",
+        "n00134",
+        "run00040",
+        "n00135",
+        "run00041"
+      ]
+    },
+    {
+      "source_key": "n00136",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00136",
+        "n00137",
+        "run00042",
+        "n00138",
+        "run00043"
+      ]
+    },
+    {
+      "source_key": "n00139",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00139",
+        "n00140",
+        "run00044",
+        "n00141",
+        "run00045"
+      ]
+    },
+    {
+      "source_key": "n00142",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00142",
+        "n00143",
+        "run00046",
+        "n00144",
+        "run00047",
+        "n00145",
+        "run00048"
+      ]
+    },
+    {
+      "source_key": "n00146",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00146",
+        "n00147"
+      ]
+    },
+    {
+      "source_key": "n00148",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00148",
+        "n00149",
+        "run00049"
+      ]
+    },
+    {
+      "source_key": "n00150",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00150",
+        "n00151",
+        "run00050"
+      ]
+    },
+    {
+      "source_key": "n00152",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00152",
+        "n00153"
+      ]
+    },
+    {
+      "source_key": "n00154",
+      "id": null,
+      "layer": false,
+      "whole_document": false,
+      "descendant_keys": [
+        "n00154",
+        "n00155",
+        "run00051"
+      ]
+    },
+    {
+      "source_key": "n00001",
+      "id": null,
+      "layer": false,
+      "whole_document": true,
+      "descendant_keys": [
+        "n00001",
+        "n00002",
+        "n00003",
+        "run00000",
+        "n00004",
+        "run00002",
+        "run00003",
+        "run00001",
+        "n00005",
+        "n00006",
+        "run00004",
+        "n00007",
+        "run00006",
+        "run00005",
+        "n00008",
+        "n00009",
+        "run00007",
+        "n00010",
+        "n00011",
+        "run00008",
+        "n00012",
+        "n00013",
+        "run00009",
+        "n00014",
+        "n00015",
+        "run00010",
+        "n00016",
+        "n00017",
+        "run00011",
+        "n00018",
+        "n00019",
+        "run00012",
+        "n00020",
+        "n00021",
+        "run00013",
+        "n00022",
+        "n00023",
+        "run00014",
+        "n00024",
+        "n00025",
+        "run00015",
+        "n00026",
+        "n00027",
+        "run00016",
+        "n00028",
+        "n00029",
+        "run00017",
+        "n00030",
+        "n00031",
+        "run00018",
+        "n00032",
+        "n00033",
+        "run00019",
+        "n00034",
+        "n00035",
+        "run00020",
+        "n00036",
+        "n00037",
+        "run00021",
+        "n00038",
+        "n00039",
+        "run00022",
+        "n00040",
+        "n00041",
+        "run00023",
+        "n00042",
+        "n00043",
+        "run00024",
+        "n00044",
+        "n00045",
+        "run00025",
+        "n00046",
+        "n00047",
+        "run00026",
+        "n00048",
+        "n00049",
+        "n00050",
+        "n00051",
+        "n00052",
+        "n00053",
+        "n00054",
+        "n00055",
+        "n00056",
+        "n00057",
+        "n00058",
+        "n00059",
+        "n00060",
+        "n00061",
+        "n00062",
+        "n00063",
+        "n00064",
+        "n00065",
+        "n00066",
+        "n00067",
+        "n00068",
+        "n00069",
+        "n00070",
+        "n00071",
+        "n00072",
+        "n00073",
+        "n00074",
+        "n00075",
+        "n00076",
+        "n00077",
+        "n00078",
+        "n00079",
+        "n00080",
+        "n00081",
+        "n00082",
+        "n00083",
+        "n00084",
+        "n00085",
+        "n00086",
+        "n00087",
+        "n00088",
+        "n00089",
+        "n00090",
+        "n00091",
+        "n00092",
+        "n00093",
+        "n00094",
+        "n00095",
+        "n00096",
+        "n00097",
+        "n00098",
+        "n00099",
+        "n00100",
+        "n00101",
+        "n00102",
+        "n00103",
+        "n00104",
+        "n00105",
+        "n00106",
+        "n00107",
+        "n00108",
+        "n00109",
+        "n00110",
+        "n00111",
+        "n00112",
+        "n00113",
+        "n00114",
+        "n00115",
+        "run00027",
+        "n00116",
+        "run00028",
+        "n00117",
+        "n00118",
+        "run00029",
+        "n00119",
+        "run00030",
+        "n00120",
+        "n00121",
+        "run00031",
+        "n00122",
+        "run00032",
+        "n00123",
+        "run00033",
+        "n00124",
+        "n00125",
+        "run00034",
+        "n00126",
+        "run00035",
+        "n00127",
+        "n00128",
+        "run00036",
+        "n00129",
+        "run00037",
+        "n00130",
+        "n00131",
+        "run00038",
+        "n00132",
+        "run00039",
+        "n00133",
+        "n00134",
+        "run00040",
+        "n00135",
+        "run00041",
+        "n00136",
+        "n00137",
+        "run00042",
+        "n00138",
+        "run00043",
+        "n00139",
+        "n00140",
+        "run00044",
+        "n00141",
+        "run00045",
+        "n00142",
+        "n00143",
+        "run00046",
+        "n00144",
+        "run00047",
+        "n00145",
+        "run00048",
+        "n00146",
+        "n00147",
+        "n00148",
+        "n00149",
+        "run00049",
+        "n00150",
+        "n00151",
+        "run00050",
+        "n00152",
+        "n00153",
+        "n00154",
+        "n00155",
+        "run00051"
+      ]
+    }
+  ]
+}

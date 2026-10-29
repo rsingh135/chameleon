@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageStat
 
 from engine.eval.geometry import Box
-from engine.resources import get_renderer, render_input, using_resources
+from engine.resources import get_renderer, native_render_example, render_input, using_resources
 from renderer.converter.convert import convert_chameleon_to_crello
 
 
@@ -29,6 +29,7 @@ def render_image(
         example, _warnings = convert_chameleon_to_crello(
             render_input(design), renderer.font_manager, str(resources.assets_dir)
         )
+        example = native_render_example(example, design)
         png = renderer.render(example, max_size=max_size, format="png")
         return Image.open(io.BytesIO(png)).convert("RGBA")
 

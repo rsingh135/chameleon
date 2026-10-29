@@ -37,6 +37,8 @@ FROZEN_FIELDS = (
     "line_height",
     "letter_spacing",
     "style_runs",
+    "native_text_effects",
+    "source_art",
     "asset_id",
     "fit",
     "shape_type",
@@ -106,7 +108,9 @@ def check_contract(
 
         for f in FROZEN_FIELDS:
             if f in src and el.get(f) != src[f]:
-                out.append(Violation("frozen_field_changed", eid, f"{f}: {src[f]!r} -> {el[f]!r}"))
+                out.append(
+                    Violation("frozen_field_changed", eid, f"{f}: {src[f]!r} -> {el.get(f)!r}")
+                )
 
         if el["width"] <= 0 or el["height"] <= 0:
             out.append(Violation("degenerate_size", eid, f"{el['width']}x{el['height']}"))

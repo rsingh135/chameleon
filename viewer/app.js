@@ -4,6 +4,7 @@
   const colors = {text: '#86baff', image: '#e9bc73', shape: '#7dcca4'};
   const state = {samples: [], posters: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
   const hasResources = task => task && Array.isArray(task.assets) && Array.isArray(task.fonts) && task.document;
+  const elementLabel = el => el.type === 'text' ? el.content.replace(/\s+/g, ' ').trim().slice(0, 64) || el.id : el.name || el.id;
   const webLink = value => {
     try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && url.hostname ? url.href : null; }
     catch { return null; }
@@ -114,6 +115,9 @@
       const bundle = await requestJSON(poster.bundle_url);
       if (version !== state.version) return;
       bundle.poster_id = id; bundle.task_id = id;
+      bundle.attribution ||= {text: poster.attribution_text || poster.author, author: poster.author,
+        source_url: poster.source_url, license_id: poster.license_id, license_url: poster.license_url,
+        original_sha256: poster.original_sha256};
       setTask(bundle, poster.title); loaded = true;
     } catch (error) { if (version === state.version) errorMessage(error); }
     finally { setBusy(false); }
@@ -180,7 +184,7 @@
     state.selected = id;
     const el = state.result.design.elements.find(item => item.id === id);
     if (!el) return;
-    $('propertyTitle').textContent = el.id;
+    $('propertyTitle').textContent = elementLabel(el);
     $('propertyType').textContent = el.type;
     $('properties').textContent = JSON.stringify(el, null, 2);
     $('propertyHint').hidden = true;
@@ -200,7 +204,7 @@
       const button = document.createElement('button');
       button.type = 'button'; button.className = 'element-row'; button.dataset.id = el.id; button.setAttribute('aria-pressed', 'false');
       const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = colors[el.type] || '#555'; dot.setAttribute('aria-hidden', 'true');
-      const name = document.createElement('span'); name.className = 'element-id'; name.textContent = el.id;
+      const name = document.createElement('span'); name.className = 'element-id'; name.textContent = elementLabel(el); name.title = el.id;
       const kind = document.createElement('span'); kind.className = 'element-kind'; kind.textContent = el.type;
       button.append(dot, name, kind); button.addEventListener('click', () => selectElement(el.id)); list.append(button);
     }

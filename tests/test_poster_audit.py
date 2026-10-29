@@ -327,6 +327,17 @@ def test_source_pixel_threshold_is_explicit_and_red_capable(corpus, runtime, tmp
     assert all(cell["technical_pass"] for cell in report["examples"][0]["targets"])
 
 
+def test_author_thumbnail_comparison_reports_its_actual_resolution():
+    reference = Image.new("RGBA", (556, 720), "white")
+    source = Image.new("RGBA", (816, 1056), "white")
+    diagnostic = audit._pixel_comparison(reference, source)
+    assert diagnostic["same_canvas"] is False
+    assert diagnostic["comparison_size"] == [556, 720]
+    assert diagnostic["converted_size"] == [816, 1056]
+    assert diagnostic["rgb_mae"] == 0.0
+    assert audit._pixel_comparison(reference, Image.new("RGBA", (720, 720)))["rgb_mae"] is None
+
+
 def test_native_raster_failure_is_distinct_from_import_and_engine(corpus, runtime, tmp_path):
     manifest, _ = corpus
     (manifest.parent / "prepared/tested/native.png").write_bytes(b"invalid PNG")

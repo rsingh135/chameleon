@@ -124,13 +124,21 @@ def _resource_check(source, resources):
 
 
 def _pixel_comparison(native, converted):
-    if native.size != converted.size:
+    same_canvas = native.size == converted.size
+    native_size, converted_size = list(native.size), list(converted.size)
+    aspect_error = abs(native.width / native.height - converted.width / converted.height)
+    if not same_canvas and aspect_error > 0.005:
         return {
             "same_canvas": False,
-            "native_size": list(native.size),
-            "converted_size": list(converted.size),
+            "native_size": native_size,
+            "converted_size": converted_size,
             "rgb_mae": None,
+            "interpretation": "Reference and imported source have different aspect ratios.",
         }
+    if not same_canvas:
+        # Author thumbnails remain the independent reference. Compare at their
+        # resolution; never describe an upsampled thumbnail as a full-size proof.
+        converted = converted.resize(native.size, Image.Resampling.LANCZOS)
 
     def paper(image):
         image = image.convert("RGBA")
@@ -138,9 +146,12 @@ def _pixel_comparison(native, converted):
 
     difference = ImageChops.difference(paper(native), paper(converted))
     return {
-        "same_canvas": True,
+        "same_canvas": same_canvas,
+        "native_size": native_size,
+        "converted_size": converted_size,
+        "comparison_size": list(native.size),
         "rgb_mae": sum(ImageStat.Stat(difference).mean) / (3 * 255),
-        "interpretation": "Pixel diagnostic only; inspect native versus converted source.",
+        "interpretation": "Pixel diagnostic at native reference resolution; inspect both sources.",
     }
 
 
@@ -315,7 +326,7 @@ def _review(entry, key, evidence_digest):
     if not isinstance(review, dict) or review.get("evidence_digest") != evidence_digest:
         return {
             "status": "pending",
-            "notes": "Human comparison with the native source is required.",
+            "notes": "Visual comparison with the native source is required.",
         }
     if review.get("status") not in {"approved", "rejected", "needs_changes"} or not review.get(
         "reviewer"
@@ -663,7 +674,7 @@ pre{{white-space:pre-wrap;background:#eaeae6;padding:16px;font-size:12px}}
 .notice{{max-width:900px}}
 </style><main><h1>External poster audit</h1><p class="notice">
 Native original, imported source, and selected adaptations. Structural checks and metrics are
-diagnostics; human visual review remains pending unless a matching review record explicitly
+diagnostics; visual review remains pending unless a matching review record explicitly
 approves the rendered evidence. Reserve posters are prepared imports only and have never been
 resized by this harness.</p><p><a href="report.json">Summary JSON</a> ·
 <a href="contact_sheet.png">Contact sheet</a></p><pre>{summary}</pre>

@@ -243,11 +243,14 @@
     for (const button of document.querySelectorAll('.view-switch button')) button.setAttribute('aria-pressed', String(button.dataset.view === view));
   }
   for (const button of document.querySelectorAll('.view-switch button')) button.addEventListener('click', () => setView(button.dataset.view));
-  setView(window.matchMedia('(max-width: 760px)').matches ? 'result' : 'compare');
+  setView('result');
   function setSetupOpen(open) {
     $('workspace').dataset.setupOpen = String(open);
     $('settingsToggle').setAttribute('aria-expanded', String(open));
-    (open ? $('sample') : $('settingsToggle')).focus();
+    const target = open ? ($('sample').disabled ? $('closeSettings') : $('sample')) : $('settingsToggle');
+    requestAnimationFrame(() => {
+      if ($('workspace').dataset.setupOpen === String(open)) target.focus();
+    });
   }
   $('settingsToggle').addEventListener('click', () => setSetupOpen($('workspace').dataset.setupOpen !== 'true'));
   $('closeSettings').addEventListener('click', () => setSetupOpen(false));

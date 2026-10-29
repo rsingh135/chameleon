@@ -88,7 +88,7 @@ textarea::placeholder { color: var(--muted); }
 .primary { width: 100%; justify-content: space-between; margin-top: 24px; border-color: transparent; background: var(--accent); color: var(--on-accent); font-size: 16px; min-height: 44px; }
 .run-symbol { font-size: 18px; font-weight: 400; }
 .primary:disabled { cursor: wait; opacity: .6; }
-.primary:active:not(:disabled), .secondary:active, .export-primary:active, .view-switch button:active { transform: scale(.98); }
+.primary:active:not(:disabled):not(:focus-visible), .secondary:active:not(:focus-visible), .export-primary:active:not(:focus-visible), .view-switch button:active:not(:focus-visible) { transform: scale(.98); }
 .resize-help { margin-top: 12px; }
 .import-panel { margin-top: 20px; font-size: 12px; }
 .import-panel > summary { cursor: pointer; color: var(--muted); padding: 4px 0; }

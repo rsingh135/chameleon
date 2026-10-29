@@ -72,16 +72,16 @@
         <div class="canvas-toolbar">
           <button id="settingsToggle" class="secondary settings-toggle" type="button" aria-controls="controls" aria-expanded="false">Canvas setup</button>
           <div class="view-switch" role="group" aria-label="Preview view">
-            <button type="button" data-view="compare" aria-pressed="true">Compare</button>
+            <button type="button" data-view="compare" aria-pressed="false">Compare</button>
             <button type="button" data-view="source" aria-pressed="false">Original</button>
-            <button type="button" data-view="result" aria-pressed="false">Result</button>
+            <button type="button" data-view="result" aria-pressed="true">Result</button>
           </div>
           <label class="toggle"><input id="showBoxes" type="checkbox"><span>Element boxes</span></label>
         </div>
         <div id="status" class="status" role="status" aria-live="polite">Connecting to the local engine…</div>
         <div id="error" class="error" role="alert" hidden></div>
-        <div id="previews" class="previews" data-view="compare">
-          <section id="originalPanel" class="preview-panel original-panel">
+        <div id="previews" class="previews" data-view="result">
+          <section id="originalPanel" class="preview-panel original-panel" hidden>
             <div class="panel-heading"><h3>Original</h3><span id="sourceSize">—</span></div>
             <div class="preview-stage"><canvas id="sourceCanvas" aria-label="Original design preview" hidden></canvas><div id="sourceEmpty" class="empty-preview"><span class="empty-shape" aria-hidden="true"></span><p>Your original design will appear here.</p></div></div>
           </section>

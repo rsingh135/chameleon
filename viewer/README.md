@@ -20,8 +20,8 @@ elements, and 20 million pixels per canvas with a maximum side of 8192 px.
 
 The studio uses an independent, Spectrum-inspired application frame: charcoal
 panels, a neutral artboard background, a red Chameleon identity, and exports next
-to the current document. Compare, Original and Result views keep the real
-rendered artwork central. Design review notes, elements and properties are
+to the current document. A single Result canvas is shown by default;
+Compare and Original are explicit options. Design review notes, elements and properties are
 collapsible; canvas setup can be opened on narrow screens. A light appearance is
 also available. Changing appearance or preview view does not change exported
 artwork.

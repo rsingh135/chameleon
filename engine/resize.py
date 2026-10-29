@@ -32,6 +32,7 @@ class _CandidateAssessment:
     focal: dict
     rules: dict
     reading_order: dict
+    occlusion: dict
 
 
 def _quality(source: dict, candidate: dict, context) -> float:
@@ -144,6 +145,11 @@ def _select_candidate(
     try:
         from engine.eval import build_context as build_eval_context
         from engine.eval import score
+        from engine.eval.occlusion import (
+            collision_safety,
+            conservative_occlusion,
+            infer_occlusion_profile,
+        )
         from engine.eval.proportions import analyze_proportions
         from engine.eval.style import analyze_style
     except ImportError:
@@ -171,6 +177,10 @@ def _select_candidate(
     graph = build_relationship_graph(source, resources.assets_dir)
     focal_profile = infer_focal_profile(source, graph)
     reading_profile = infer_reading_order(source)
+    try:
+        occlusion_profile = infer_occlusion_profile(source)
+    except (OSError, ValueError, RuntimeError):
+        occlusion_profile = None
     for candidate in candidates:
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
@@ -183,9 +193,18 @@ def _select_candidate(
         focal = analyze_focal(source, candidate, graph, focal_profile)
         rules = analyze_rules(source, candidate)
         reading_order = analyze_reading_order(source, candidate, reading_profile)
+        occlusion = conservative_occlusion(source, candidate, occlusion_profile)
         valid.append(
             _CandidateAssessment(
-                candidate, result, style, relationships, proportions, focal, rules, reading_order
+                candidate,
+                result,
+                style,
+                relationships,
+                proportions,
+                focal,
+                rules,
+                reading_order,
+                occlusion,
             )
         )
     if not valid:
@@ -206,12 +225,17 @@ def _select_candidate(
                 "peer_order",
                 "campaign_ownership",
                 "row_attachment",
+                "overlay_attachment",
             }
             for w in relationships["warnings"]
         )
         detached = sum(w["confidence"] >= 0.8 for w in relationships["warnings"])
+        collisions, photo_visible = collision_safety(
+            item.occlusion, metrics.get("raw_collisions", 0.0)
+        )
         return (
-            -metrics.get("raw_collisions", 0.0),
+            photo_visible,
+            -collisions,
             -essential,
             -item.reading_order["high_confidence_inversions"],
             -len(item.rules["distorted_rules"]),

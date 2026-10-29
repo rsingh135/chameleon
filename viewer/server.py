@@ -21,6 +21,7 @@ from urllib.parse import unquote, urlsplit
 
 from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE
+from engine.eval.occlusion import conservative_occlusion
 from engine.eval.proportions import analyze_proportions
 from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
@@ -251,6 +252,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         focal = analyze_focal(source, design, graph)
         rules = analyze_rules(source, design)
         reading_order = analyze_reading_order(source, design)
+        occlusion = conservative_occlusion(source, design)
         source_png, source_warnings = _render_png(source, payload.get("attribution"))
         output_png, output_warnings = _render_png(design, payload.get("attribution"))
     return {
@@ -267,6 +269,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
             "focal": focal,
             "rules": rules,
             "reading_order": reading_order,
+            "occlusion": occlusion,
             "layout_state": plan["state"],
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),

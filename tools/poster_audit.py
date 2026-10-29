@@ -37,6 +37,7 @@ _OWNERSHIP = {
     "explicit_group",
     "peer_order",
     "campaign_ownership",
+    "overlay_attachment",
     "row_attachment",
 }
 
@@ -267,6 +268,7 @@ def evaluate_invariants(source, design, definitions, target_name, source_pixels=
 
 def _measure(source, design, target, state, context, graph, definitions, target_name):
     from engine.eval import check_contract, score
+    from engine.eval.occlusion import collision_safety, conservative_occlusion
     from engine.eval.proportions import analyze_proportions
     from engine.eval.style import analyze_style
     from engine.layout.reading_order import analyze_reading_order
@@ -307,6 +309,11 @@ def _measure(source, design, target, state, context, graph, definitions, target_
     invariants = evaluate_invariants(source, design, definitions, target_name)
     rules = analyze_rules(source, design)
     reading_order = analyze_reading_order(source, design) if membership else None
+    occlusion = conservative_occlusion(source, design) if membership else None
+    raw_collisions = result["metrics"].get("raw_collisions", math.inf)
+    visible_collisions, photo_visible = (
+        collision_safety(occlusion, raw_collisions) if occlusion else (raw_collisions, False)
+    )
     checks = {
         "contract": {"passed": not violations, "violations": [str(v) for v in violations]},
         "identity": {
@@ -321,8 +328,11 @@ def _measure(source, design, target, state, context, graph, definitions, target_
             "below_threshold": sum(size < threshold for size in fonts),
         },
         "collisions": {
-            "passed": result["metrics"].get("raw_collisions", math.inf) == 0,
+            "passed": visible_collisions == 0 and photo_visible,
             "raw": result["metrics"].get("raw_collisions"),
+            "visible": visible_collisions,
+            "photo_visibility_retained": photo_visible,
+            "diagnostics": occlusion,
         },
         "ownership": {"passed": membership and not ownership, "warnings": ownership},
         "dividers": {"passed": not rules["distorted_rules"], **rules},

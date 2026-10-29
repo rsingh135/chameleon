@@ -16,6 +16,7 @@ from engine.resources import get_resources, using_resources
 from .appearance import unit_visible_box
 from .geometry import Box, bounds, union
 from .model import build_context
+from .overlays import SourceOverlay, infer_source_overlays
 
 _CODES = (
     "reading_order",
@@ -28,6 +29,7 @@ _CODES = (
     "peer_prominence",
     "campaign_ownership",
     "row_attachment",
+    "overlay_attachment",
 )
 
 
@@ -96,6 +98,7 @@ class SourceRelationshipGraph:
     assets_dir: str | None
     ambiguities: tuple[RelationshipAmbiguity, ...] = ()
     fonts_dir: str | None = None
+    overlays: tuple[SourceOverlay, ...] = ()
 
 
 def _primary(box: Box, axis: str) -> tuple[float, float]:
@@ -194,6 +197,8 @@ def build_relationship_graph(
     context = build_context(source)
     resources = get_resources()
     assets = str(Path(assets_dir).resolve() if assets_dir is not None else resources.assets_dir)
+    overlays = infer_source_overlays(source, assets)
+    overlay_ids = {overlay.overlay_id for overlay in overlays}
     units = tuple(
         RelationshipUnit(
             index,
@@ -336,6 +341,7 @@ def build_relationship_graph(
         for unit in units
         if all(member.element_type == "image" for member in unit.members)
         and unit.box.width * unit.box.height > 0
+        and not set(unit.element_ids).issubset(overlay_ids)
     ]
     largest = max((unit.frame_box.width * unit.frame_box.height for unit in images), default=0)
     logos = [
@@ -662,6 +668,7 @@ def build_relationship_graph(
         assets,
         tuple(ambiguities),
         str(resources.fonts_dir),
+        overlays,
     )
 
 
@@ -963,6 +970,45 @@ def analyze_relationships(
                     "cluster_id": edge.cluster_id,
                     "confidence": edge.confidence,
                     "provenance": list(edge.provenance),
+                }
+            )
+    # Support layers may belong to a photo classified as a canvas background,
+    # so check raw element frames rather than requiring two foreground units.
+    for overlay in graph.overlays:
+        layer, photo = by_id[overlay.overlay_id], by_id[overlay.underlay_id]
+        relative = (
+            (layer["x"] - photo["x"]) / max(photo["width"], 1e-9),
+            (layer["y"] - photo["y"]) / max(photo["height"], 1e-9),
+            layer["width"] / max(photo["width"], 1e-9),
+            layer["height"] / max(photo["height"], 1e-9),
+        )
+        drift = max(abs(a - b) for a, b in zip(relative, overlay.relative_frame, strict=True))
+        rotation_drift = abs(layer.get("rotation", 0) - photo.get("rotation", 0))
+        fidelity = math.exp(-drift * 4 - rotation_drift / 30)
+        values["overlay_attachment"].append(fidelity)
+        affected = [overlay.underlay_id, overlay.overlay_id]
+        relations.append(
+            {
+                "code": "overlay_attachment",
+                "cluster_id": f"overlay:{overlay.overlay_id}",
+                "element_ids": affected,
+                "relative_frame_error": round(drift, 6),
+                "score": round(fidelity, 6),
+                "confidence": overlay.confidence,
+            }
+        )
+        if drift > 0.05 or rotation_drift > 0.5:
+            warnings.append(
+                {
+                    "code": "overlay_attachment",
+                    "message": (
+                        "A source support overlay detached from its photo "
+                        "or changed its relative frame."
+                    ),
+                    "element_ids": affected,
+                    "cluster_id": f"overlay:{overlay.overlay_id}",
+                    "confidence": overlay.confidence,
+                    "provenance": list(overlay.provenance),
                 }
             )
     metrics = {

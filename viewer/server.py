@@ -20,6 +20,7 @@ from urllib.parse import unquote, urlsplit
 
 from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE
+from engine.eval.proportions import analyze_proportions
 from engine.eval.render import render_plate
 from engine.eval.style import analyze_style
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
@@ -199,6 +200,7 @@ def perform_resize(payload: dict) -> dict:
         graph = build_relationship_graph(source, ASSETS_DIR)
         style = analyze_style(source, design, ASSETS_DIR, relationship_graph=graph)
         relationships = analyze_relationships(graph, design, plan["state"]["cluster_axes"])
+        proportions = analyze_proportions(source, design, graph)
         source_png, source_warnings = _render_png(source)
         output_png, output_warnings = _render_png(design)
     return {
@@ -211,6 +213,7 @@ def perform_resize(payload: dict) -> dict:
             "total": result["total"],
             "style": style,
             "relationships": relationships,
+            "proportions": proportions,
             "layout_state": plan["state"],
         },
         "warnings": list(dict.fromkeys(source_warnings + output_warnings)),

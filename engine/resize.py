@@ -95,6 +95,7 @@ def _select_candidate(
     try:
         from engine.eval import build_context as build_eval_context
         from engine.eval import score
+        from engine.eval.proportions import analyze_proportions
         from engine.eval.style import analyze_style
     except ImportError:
         if _safe_identity(source, target):
@@ -123,13 +124,14 @@ def _select_candidate(
         )
         axes = (state_axes or {}).get(json.dumps(candidate, sort_keys=True), {})
         relationships = analyze_relationships(graph, candidate, axes)
-        valid.append((candidate, result, style, relationships))
+        proportions = analyze_proportions(source, candidate, graph)
+        valid.append((candidate, result, style, relationships, proportions))
     if not valid:
         detail = ", ".join(sorted(violations)) or "no candidates generated"
         raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
 
     def safety(item):
-        candidate, result, style, relationships = item
+        candidate, result, style, relationships, proportions = item
         metrics = result["metrics"]
         # Reading order and explicit ownership are not compensated by a larger
         # minimum font. Softer association hypotheses remain below readability.
@@ -148,6 +150,7 @@ def _select_candidate(
         return (
             -metrics.get("raw_collisions", 0.0),
             -essential,
+            proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
             metrics.get("text_size", 1.0),
             -detached,
         )
@@ -156,7 +159,7 @@ def _select_candidate(
     feasible = [item for item in valid if safety(item) == safest]
 
     def fidelity(item):
-        return (item[2]["score"] + item[3]["score"]) / 2
+        return (item[2]["score"] + item[3]["score"] + item[4]["score"]) / 3
 
     # Small changes to inferred gaps must not dominate typography or visual
     # hierarchy. Keep a near-best fidelity set before comparing source scale.

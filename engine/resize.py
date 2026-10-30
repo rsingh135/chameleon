@@ -461,6 +461,8 @@ def _resize_cached(
     fonts_dir: str,
     scene_proposal_json: str = "",
     scene_digest: str = "",
+    visual_plan_json: str = "",
+    strict_bounds: bool = False,
 ) -> dict:
     with using_resources(assets_dir, fonts_dir):
         return _resize_in_context(
@@ -468,13 +470,26 @@ def _resize_cached(
             width,
             height,
             scene_proposal=json.loads(scene_proposal_json) if scene_proposal_json else None,
+            visual_plan=json.loads(visual_plan_json) if visual_plan_json else None,
+            strict_bounds=strict_bounds,
         )
 
 
 def _candidate_pool(
-    source, target_canvas, *, capture_origins=False, scene_proposal=None, model_trace=None
+    source,
+    target_canvas,
+    *,
+    capture_origins=False,
+    scene_proposal=None,
+    model_trace=None,
+    visual_plan=None,
+    strict_bounds=False,
 ):
     resolution = _resolution_state(source, target_canvas)
+    if strict_bounds:
+        from engine.stage_one import contain_resolution_decorations
+
+        resolution = contain_resolution_decorations(source, target_canvas, resolution)
     if resolution is not None:
         candidates, legacy_count, states = [], 0, (resolution,)
     else:
@@ -489,6 +504,24 @@ def _candidate_pool(
             *generate_source_guides(source, target_canvas, graph),
         )
     candidates.extend(state.design for state in states)
+    if visual_plan is not None:
+        from engine.layout.visual_plan import realize_plan
+        from engine.visual_plan import build_plan_menu
+
+        original_ids = {_candidate_id(design) for design in candidates}
+        menu = build_plan_menu(source, target_canvas)
+        proposed = realize_plan(source, target_canvas, menu, visual_plan)
+        candidates.extend(state.design for state in proposed)
+        states = (*states, *proposed)
+        new_ids = sorted({_candidate_id(state.design) for state in proposed} - original_ids)
+        if model_trace is not None:
+            model_trace["visual_plan"] = {
+                "menu_digest": menu["menu_digest"],
+                "plan_id": visual_plan["plan_id"],
+                "compiled_candidates": len(proposed),
+                "new_candidates_generated": len(new_ids),
+                "new_candidate_ids": new_ids,
+            }
     by_design = {json.dumps(state.design, sort_keys=True): state for state in states}
     axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}
     origins = {}
@@ -520,6 +553,10 @@ def _candidate_pool(
         )
         if model_trace is not None:
             model_trace.update(trace)
+    if strict_bounds:
+        from engine.stage_one import strictly_in_bounds
+
+        candidates = [design for design in candidates if strictly_in_bounds(design)]
     return candidates, by_design, axes, origins
 
 
@@ -534,17 +571,37 @@ def _state_metadata(design, source, source_json, by_design):
     }
 
 
-def _resize_in_context(source_json: str, width: int, height: int, *, scene_proposal=None) -> dict:
+def _resize_in_context(
+    source_json: str,
+    width: int,
+    height: int,
+    *,
+    scene_proposal=None,
+    visual_plan=None,
+    strict_bounds=False,
+) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
     model_trace = {}
     candidates, by_design, axes, _ = _candidate_pool(
-        source, target_canvas, scene_proposal=scene_proposal, model_trace=model_trace
+        source,
+        target_canvas,
+        scene_proposal=scene_proposal,
+        model_trace=model_trace,
+        visual_plan=visual_plan,
+        strict_bounds=strict_bounds,
     )
     selected = _select_candidate(source, target_canvas, candidates, axes)
     state = _state_metadata(selected, source, source_json, by_design)
     if scene_proposal is not None:
-        state["scene_model"] = model_trace
+        state["scene_model"] = {k: v for k, v in model_trace.items() if k != "visual_plan"}
+    if visual_plan is not None:
+        state["visual_plan"] = model_trace["visual_plan"]
+        state["visual_plan"]["model_candidate_selected"] = (
+            _candidate_id(selected) in state["visual_plan"]["new_candidate_ids"]
+        )
+    if strict_bounds:
+        state["constraint_profile"] = "stage-one-strict-bounds"
     return {
         "design": selected,
         "state": state,
@@ -564,20 +621,31 @@ def collect_candidate_snapshot(
     *,
     assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
+    visual_plan: dict | None = None,
+    strict_bounds: bool = False,
 ) -> dict:
     """Capture actual selector decisions without changing selection or its cache.
 
     Broader contract-valid proposals can be inspected in shadow experiments.
     Only admitted finalists share the baseline's safety tier and fidelity window.
-    No model, experiment package, result-cache access or selection override is used.
+    No model is run here. An optional validated visual plan seeds bounded new
+    candidates through the same pool as ordinary resizing. No result cache is used.
     """
+    if type(strict_bounds) is not bool:
+        raise ValueError("strict_bounds must be a boolean")
     source_json = json.dumps(source, sort_keys=True, allow_nan=False)
     original = json.loads(source_json)
     target = {"width": target_canvas["width"], "height": target_canvas["height"]}
     json.dumps(target, allow_nan=False)
     with using_resources(assets_dir, fonts_dir):
+        model_trace = {}
         candidates, by_design, axes, origins = _candidate_pool(
-            original, target, capture_origins=True
+            original,
+            target,
+            capture_origins=True,
+            visual_plan=visual_plan,
+            strict_bounds=strict_bounds,
+            model_trace=model_trace,
         )
         trace = {}
         selected = _select_candidate(original, target, candidates, axes, snapshot=trace)
@@ -604,6 +672,13 @@ def collect_candidate_snapshot(
             "admitted_finalist_ids": [key for key, row in ordered.items() if row["admitted"]],
             "candidates": list(ordered.values()),
         }
+        if strict_bounds:
+            result["strict_bounds"] = True
+        if visual_plan is not None:
+            result["visual_plan"] = model_trace["visual_plan"]
+            result["visual_plan"]["model_candidate_selected"] = (
+                _candidate_id(selected) in model_trace["visual_plan"]["new_candidate_ids"]
+            )
         json.dumps(result, allow_nan=False)
         return deepcopy(result)
 
@@ -615,13 +690,23 @@ def resize_with_state(
     assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
     scene_proposal: dict | None = None,
+    visual_plan: dict | None = None,
+    strict_bounds: bool = False,
 ) -> dict:
     """Return a fresh design and the exact declared state used during selection."""
     with using_resources(assets_dir, fonts_dir) as resources:
+        if type(strict_bounds) is not bool:
+            raise ValueError("strict_bounds must be a boolean")
         profile = analyze_scene(source)
         if scene_proposal is not None:
             # Rebind current asset bytes even on a result-cache hit.
             scene_proposal = validate_model_response(scene_proposal, profile)
+        if visual_plan is not None:
+            from engine.visual_plan import build_plan_menu, validate_plan_decision
+
+            visual_plan = validate_plan_decision(
+                build_plan_menu(source, target_canvas), visual_plan
+            )
         return deepcopy(
             _resize_cached(
                 json.dumps(source, sort_keys=True),
@@ -633,6 +718,10 @@ def resize_with_state(
                 if scene_proposal is not None
                 else "",
                 profile["scene_digest"],
+                json.dumps(visual_plan, sort_keys=True, allow_nan=False)
+                if visual_plan is not None
+                else "",
+                strict_bounds,
             )
         )
 
@@ -644,6 +733,8 @@ def resize(
     assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
     scene_proposal: dict | None = None,
+    visual_plan: dict | None = None,
+    strict_bounds: bool = False,
 ) -> dict[str, Any]:
     """Adapt composition without changing the supplied assets, fonts or copy.
 
@@ -656,4 +747,6 @@ def resize(
         assets_dir=assets_dir,
         fonts_dir=fonts_dir,
         scene_proposal=scene_proposal,
+        visual_plan=visual_plan,
+        strict_bounds=strict_bounds,
     )["design"]

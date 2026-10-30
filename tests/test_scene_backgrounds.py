@@ -212,3 +212,18 @@ def test_dropping_authored_foreground_crop_position_is_rejected(rooftop):
     candidate = deepcopy(source)
     candidate["elements"][1].pop("image_position")
     assert "unapproved_image_position" in {v.code for v in check_contract(source, candidate)}
+
+
+@pytest.mark.parametrize("target", TARGETS)
+def test_background_reflow_preserves_header_body_and_calendar_font_hierarchy(rooftop, target):
+    from engine.eval.style import analyze_style
+
+    originals = {e["id"]: e for e in rooftop["elements"]}
+    for state in generate_background_states(rooftop, target):
+        scales = [
+            e["font_size"] / originals[e["id"]]["font_size"]
+            for e in state.design["elements"]
+            if e["type"] == "text"
+        ]
+        assert max(scales) / min(scales) == pytest.approx(1, abs=1e-9)
+        assert analyze_style(rooftop, state.design)["warnings"] == []

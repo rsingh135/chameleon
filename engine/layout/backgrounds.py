@@ -68,24 +68,19 @@ def generate_background_states(source, target, scene=None):
     width, height = float(target["width"]), float(target["height"])
     padding = min(width, height) * 0.035
     area_scale = math.sqrt(width * height / (context.width * context.height))
-    header_scale = min(area_scale, (width - 2 * padding) / header_box.width)
     position = cover_position(photo_row, target)
-    header_cell = Box(
-        padding,
-        (padding if position[1] < 0.5 else height * header_box.y / context.height),
-        width - 2 * padding,
-        header_box.height * header_scale,
-    )
-    packed_header = _spread(headers, header_scale, header_cell, context.width)
-    if packed_header is None:
-        return []
     from engine.eval.metrics import MIN_FONT_FRACTION, MIN_FONT_PX
 
+    all_text = [e for unit in caption_units + header_units for e in unit.text]
+    smallest_source_font = min(e["font_size"] for e in all_text)
+    smallest_caption_font = min(e["font_size"] for unit in caption_units for e in unit.text)
+    floor = max(MIN_FONT_PX, MIN_FONT_FRACTION * min(width, height))
     states = []
     for fraction in (0.28, 0.32, 0.36):
         scale = min(
             area_scale * 1.15,
             (width - 2 * padding) / caption_box.width,
+            (width - 2 * padding) / header_box.width,
             height * fraction / caption_box.height,
         )
         cell = Box(
@@ -99,9 +94,20 @@ def generate_background_states(source, target, scene=None):
             [row.elements for row in captions],
             cell,
             preferred_scale=scale,
-            min_font_size=max(MIN_FONT_PX, MIN_FONT_FRACTION * min(width, height)),
+            min_font_size=floor * smallest_caption_font / smallest_source_font,
         )
         if packed is None:
+            continue
+        # Header metadata and the lower caption share the source's type scale.
+        # An independently enlarged header can reverse body/date prominence.
+        header_cell = Box(
+            padding,
+            (padding if position[1] < 0.5 else height * header_box.y / context.height),
+            width - 2 * padding,
+            header_box.height * packed.font_scale,
+        )
+        packed_header = _spread(headers, packed.font_scale, header_cell, context.width)
+        if packed_header is None:
             continue
         changed = {e["id"]: e for e in [*packed_header[0], *packed.elements]}
         photo = deepcopy(by_id[photo_row["element_id"]])

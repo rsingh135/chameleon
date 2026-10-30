@@ -178,18 +178,20 @@ def _wide_band(
     legal = roles.get("legal", [])
     legal_h = inner.height * 0.16 if legal else 0.0
 
-    needed = (
-        sum(h for _, h in column)
-        + inline_row_h
-        + legal_h
-        + gap * 0.5 * (len(column) + bool(inline_row_h) + bool(legal_h) - 1)
-    )
-    factor = min(1.0, inner.height / max(needed, 1e-6))
-    y = inner.y + (inner.height - needed * factor) / 2
+    # The headline is the message; it keeps its height. Body, badge row and
+    # legal share whatever remains and shrink together when it is tight.
+    gaps = gap * 0.5 * (len(column) + bool(inline_row_h) + bool(legal_h) - 1)
+    head_h = sum(h for u, h in column if u.role == "headline")
+    head_h = min(head_h, inner.height * 0.6)
+    others = sum(h for u, h in column if u.role != "headline") + inline_row_h + legal_h
+    room = max(0.0, inner.height - head_h - gaps)
+    factor = min(1.0, room / max(others, 1e-6))
+    needed = head_h + others * factor + gaps
+    y = inner.y + (inner.height - needed) / 2
     for unit, h in column:
-        h *= factor
+        h = min(h, inner.height * 0.6) if unit.role == "headline" else h * factor
         elements.extend(_place_fit(unit, Box(x, y, copy_w, h), min_font))
-        y += h + gap * 0.5 * factor
+        y += h + gap * 0.5
     if inline_row_h:
         h = inline_row_h * factor
         n = len(badges)
@@ -199,7 +201,7 @@ def _wide_band(
             w = min(bw, h * _aspect(badge))
             elements.extend(_place_fit(badge, Box(bx, y, w, h), min_font * 0.75))
             bx += w + gap * 0.5
-        y += h + gap * 0.5 * factor
+        y += h + gap * 0.5
     for unit in legal:
         h = legal_h * factor
         elements.extend(_place_fit(unit, Box(x, y, copy_w, h), max(4.0, min_font * 0.6)))

@@ -26,6 +26,8 @@ from engine.resources import get_resources, using_resources
 from engine.scene import analyze_scene, background_coverage
 
 logger = logging.getLogger(__name__)
+# How many near-best finalists get a rendered plate for contrast/busyness.
+PIXEL_RANK_LIMIT = 6
 
 
 def _validated_fallback(source: dict, target: dict, context) -> dict:
@@ -383,6 +385,23 @@ def _select_candidate(
         / (source["canvas"]["width"] * source["canvas"]["height"])
     )
 
+    pixel_tiers: dict[int, float] = {}
+    if len(finalists) > 1:
+        # Among otherwise equivalent finalists, prefer the one whose text sits
+        # on calm, contrasting pixels. Rendering is bounded to a few plates.
+        try:
+            from engine.eval.render import render_plate
+
+            for item in finalists[:PIXEL_RANK_LIMIT]:
+                plate = render_plate(item.design, resources.assets_dir, max_size=512)
+                pixel = score(source, item.design, context, plate, target_canvas=target)
+                contrast = pixel["metrics"].get("text_contrast", 1.0)
+                busyness = pixel["metrics"].get("text_busyness", 1.0)
+                pixel_tiers[id(item)] = round((0.6 * contrast + 0.4 * busyness) * 5) / 5
+        except Exception:  # noqa: BLE001 - pixels are a bonus, never a blocker
+            logger.exception("Pixel ranking failed; continuing without it")
+            pixel_tiers.clear()
+
     def typography_preference(item):
         texts = [element for element in item.design["elements"] if element["type"] == "text"]
         drift = sum(
@@ -395,7 +414,12 @@ def _select_candidate(
         )
         # Equivalent similarity transforms differ at machine precision. Match
         # the diagnostic precision before comparing meaningful composition.
-        return -round(drift / max(1, len(texts)), 6), item.evaluation["total"], fidelity(item)
+        return (
+            pixel_tiers.get(id(item), 0.0),
+            -round(drift / max(1, len(texts)), 6),
+            item.evaluation["total"],
+            fidelity(item),
+        )
 
     selected = max(finalists, key=typography_preference)
     if snapshot is not None:

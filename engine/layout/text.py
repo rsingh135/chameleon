@@ -4,6 +4,7 @@ The fallback keeps contract tests usable without the rendering dependencies.
 Production installs use the same Skia font manager and wrapping as the renderer.
 """
 
+import logging
 import math
 import unicodedata
 from dataclasses import dataclass
@@ -12,6 +13,27 @@ from pathlib import Path
 
 from engine.native_typography import layout_native_text, native_char_widths, uses_native_typography
 from engine.resources import DEFAULT_FONTS_DIR, get_resources, load_font_manager
+
+
+class _OncePerMessage(logging.Filter):
+    """cr-renderer warns on every glyph lookup for a font it does not have;
+    one task can emit thousands of identical lines. Say each once."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._seen: set[str] = set()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        if message in self._seen:
+            return False
+        self._seen.add(message)
+        return True
+
+
+_font_logger = logging.getLogger("cr_renderer.fonts")
+if not any(isinstance(f, _OncePerMessage) for f in _font_logger.filters):
+    _font_logger.addFilter(_OncePerMessage())
 
 FONTS_DIR = DEFAULT_FONTS_DIR
 

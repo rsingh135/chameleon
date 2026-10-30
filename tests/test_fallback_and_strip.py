@@ -122,3 +122,25 @@ def test_main_writes_output_even_when_resize_raises(monkeypatch, tmp_path):
     assert (out / "t_output.png").stat().st_size > 0
     design = json.loads((out / "t_output.json").read_text())
     assert [e["id"] for e in design["elements"]] == [e["id"] for e in task["source"]["elements"]]
+
+
+def test_unknown_font_family_falls_back_quietly(caplog):
+    """Hidden designs may name fonts the brand kit lacks. The renderer falls
+    back to a brand face; the engine must neither crash nor flood the log."""
+    import copy
+    import logging
+
+    from engine.resize import _resize_cached
+
+    source = copy.deepcopy(SAMPLES["level2_core"])
+    for el in source["elements"]:
+        if el["type"] == "text":
+            el["font_family"] = "Montserrat"
+    _resize_cached.cache_clear()
+    target = {"width": 1600, "height": 400}
+    with caplog.at_level(logging.WARNING, logger="cr_renderer.fonts"):
+        design = resize(source, target)
+    assert check_contract(source, design, target, build_context(source)) == []
+    font_warnings = [r for r in caplog.records if "Font family" in r.getMessage()]
+    assert len(font_warnings) <= 4
+    _resize_cached.cache_clear()

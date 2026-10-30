@@ -9,10 +9,21 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23eb383b'/%3E%3Cpath d='M23 9a10 10 0 1 0 0 14' fill='none' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/workspace.css">
+<link rel="stylesheet" href="/startup.css">
 <script src="/app.js" defer></script>
 <script src="/workspace.js" defer></script>
+<script src="/startup-art.js" defer></script>
+<script src="/startup.js" defer></script>
 </head>
 <body class="studio-ui">
+<dialog id="startupIntro" class="startup-intro" aria-labelledby="startupTitle" aria-describedby="startupDescription" hidden>
+  <div class="startup-topline"><span class="startup-studio"><span class="startup-mark" aria-hidden="true">Ch</span> A Chameleon production</span><button id="startupSkip" class="startup-skip" type="button" autofocus>Skip intro <span aria-hidden="true">↗</span></button></div>
+  <div class="startup-scene">
+    <canvas id="startupCanvas" class="startup-canvas" width="1100" height="460" aria-hidden="true"></canvas>
+    <div class="startup-wordmark"><h2 id="startupTitle">Chameleon<span aria-hidden="true"></span></h2><p id="startupDescription">A little change. A whole new perspective.</p></div>
+  </div>
+  <div class="startup-bottomline"><span class="startup-palette" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p id="startupCaption">A little curiosity goes a long way.</p><span class="startup-edition" aria-hidden="true">Always adapting.</span></div>
+</dialog>
 <a class="skip-link" href="#workspace">Skip to workspace</a>
 <header class="topbar">
   <a class="brand" href="/" aria-label="Chameleon home"><span class="brand-mark" aria-hidden="true">Ch</span><span>Chameleon</span></a>
@@ -113,7 +124,7 @@
         </details>
       </aside>
     </div>
-    <footer><span>Chameleon · Local design engine</span><span>Local checks support visual review; they are not Adobe's official score.</span></footer>
+    <footer><span class="startup-footer-brand">Chameleon · Local design engine <button class="startup-replay" type="button" data-startup-replay aria-label="Replay startup animation">↺ <span>Replay intro</span></button></span><span>Local checks support visual review; they are not Adobe's official score.</span></footer>
   </section>
 </main>
 </body>

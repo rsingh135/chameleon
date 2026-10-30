@@ -30,6 +30,14 @@ and export state; they do not trigger a resize.
 
 No frontend build step or new dependency is required. `app.js` owns the document,
 rendering, imports, and exports; `workspace.js` and `workspace.css` own the frame.
+`startup-art.js`, `startup.js`, and `startup.css` provide a five-second, procedural
+Canvas introduction: a chameleon walks in, catches a color swatch, and changes
+its printed colors. Its halftone palette and ink registration take inspiration
+from [Kevin Ngo's creative-coding animation](https://x.com/kevin_t_ngo/status/2099477219877978289).
+The intro plays once per tab session while the engine loads independently.
+**Skip intro** or Escape opens the studio immediately; **Replay intro** in the
+footer plays it again. Reduced-motion preferences skip it entirely. It also
+dismisses when the tab is hidden and fails open if Canvas is unavailable.
 The former trial URLs redirect to these production views. The full three-option
 experiment is captured in
 [checkpoint e9d651b](https://github.com/rsingh135/chameleon/tree/e9d651b), with

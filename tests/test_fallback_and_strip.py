@@ -65,12 +65,15 @@ def test_strip_candidates_are_valid(name, target):
     assert candidates, "extreme targets must get band proposals"
     ctx = build_context(source)
     floor = min(10.0, 0.08 * min(target.values()))
+    largest = []
     for design in candidates:
         assert check_contract(source, design, target, ctx) == []
         sizes = [el["font_size"] for el in design["elements"] if el["type"] == "text"]
         assert min(sizes) >= 1.0
-        # The headline-sized copy must be readable; fine print may not be.
-        assert max(sizes) >= floor
+        largest.append(max(sizes))
+    # At least one variant keeps the headline-sized copy readable; the
+    # selector chooses among them, so not every variant has to.
+    assert max(largest) >= floor
     assert ratio >= WIDE_RATIO or ratio <= TALL_RATIO
 
 

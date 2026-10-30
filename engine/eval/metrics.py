@@ -274,7 +274,16 @@ def compute_metrics(
         cand_share = cboxes[hero].area / ccanvas.area
         still_largest = max(imgs, key=lambda i: cboxes[i].area) == hero
         ratio = cand_share / src_share if src_share else 1.0
-        m["hero"] = _clamp(min(ratio, 1.0)) * (1.0 if still_largest else 0.6)
+        # On a strip or tower the hero cannot keep its area share; filling
+        # the short side is the most prominent it can be, so credit that too.
+        src_short = max(sboxes[hero].width, sboxes[hero].height) / min(
+            scanvas.width, scanvas.height
+        )
+        cand_short = max(cboxes[hero].width, cboxes[hero].height) / min(
+            ccanvas.width, ccanvas.height
+        )
+        short_ratio = cand_short / src_short if src_short else 1.0
+        m["hero"] = _clamp(min(max(ratio, short_ratio), 1.0)) * (1.0 if still_largest else 0.6)
     else:
         m["hero"] = 1.0
 

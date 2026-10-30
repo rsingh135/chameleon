@@ -205,7 +205,33 @@ def _wide_band(
         elements.extend(_place_fit(unit, Box(x, y, copy_w, h), max(4.0, min_font * 0.6)))
         y += h
 
+    _cap_control_labels(elements, roles)
     return _finish(source, target, elements)
+
+
+def _cap_control_labels(elements: list[dict], roles: dict[str, list[Unit]]) -> None:
+    """Button and badge labels keep their source size ratio to the headline.
+    A band gives controls generous boxes; without this cap a call-to-action
+    label can come out larger than the headline, inverting the hierarchy."""
+    headlines = roles.get("headline", [])
+    if not headlines:
+        return
+    src_headline = max(e["font_size"] for u in headlines for e in u.text)
+    by_id = {e["id"]: e for e in elements}
+    headline_font = max(
+        (by_id[e["id"]]["font_size"] for u in headlines for e in u.text if e["id"] in by_id),
+        default=None,
+    )
+    if headline_font is None:
+        return
+    for role in ("action", "badge", "support", "legal"):
+        for unit in roles.get(role, []):
+            for original in unit.text:
+                placed = by_id.get(original["id"])
+                if placed is None:
+                    continue
+                ratio = min(1.0, original["font_size"] / src_headline)
+                placed["font_size"] = max(1.0, min(placed["font_size"], headline_font * ratio))
 
 
 def _tall_stack(
@@ -266,6 +292,7 @@ def _tall_stack(
             else _place(unit, box, 1.0)
         )
         y += h + gap * factor
+    _cap_control_labels(elements, roles)
     return _finish(source, target, elements)
 
 

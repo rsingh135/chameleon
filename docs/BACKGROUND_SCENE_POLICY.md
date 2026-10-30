@@ -18,9 +18,9 @@ The background family proposes alternate compositions when the aspect changes.
 
 Background caption search includes its existing bounded height samples and,
 where it falls between those samples, the source-derived minimum-readable type
-scale. This closes a demonstrated search gap at800×500: a smaller sample made
+scale. This closes a demonstrated search gap at 800×500: a smaller sample made
 the header too small, while the next sample's fade hid too much photo. The new
-boundary candidate retains the existing85% relative photo-visibility guard,
+boundary candidate retains the existing 85% relative photo-visibility guard,
 caption-support checks and one common scale for all source typography.
 
 ## Crop authority

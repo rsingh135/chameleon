@@ -32,6 +32,14 @@
             <p class="field-help">JSON tasks and portable JSON bundles retain editable elements. PNG/JPEG files remain one flat image; they test fitting, not element reflow. Up to 8 scenes.</p>
             <button id="addSamples" class="secondary" type="button">Add bundled smoke scenes</button>
             <p class="field-help">Bundled examples share a campaign. Add different source families to investigate generalization.</p>
+            <button id="loadReviewed" class="secondary" type="button">Browse reviewed posters</button>
+            <div id="reviewedPicker" class="reviewed-picker" hidden>
+              <label for="reviewedPosters">Reviewed, editable posters</label>
+              <select id="reviewedPosters" multiple size="5" aria-describedby="reviewedHelp"></select>
+              <p id="reviewedHelp" class="field-help">Select up to 4. Use Ctrl or Command to select several. Reserved and unprepared sources are excluded.</p>
+              <div class="poster-actions"><button id="addReviewed" class="secondary" type="button">Add selected posters</button><button id="addReviewedPack" class="secondary" type="button">Add first 4 available</button></div>
+              <p id="reviewedStatus" class="field-help" role="status"></p>
+            </div>
             <ul id="sceneList" class="scene-list" aria-label="Queued scenes"></ul>
           </section>
           <section class="batch-section">
@@ -41,11 +49,15 @@
             <p class="field-help">Current deterministic engine. Vision analyzer and learned critic are off. No model is downloaded or trained here.</p>
           </section>
           <section class="batch-section">
-            <h2>Shared targets</h2>
-            <label for="targetSizes">Width × height, one per line</label>
+            <h2>Resize comparison</h2>
+            <label for="comparisonMode">Comparison mode</label>
+            <select id="comparisonMode"><option value="shared">Shared target sizes</option><option value="two-level">Two levels: resolution + aspect ratio</option></select>
+            <p id="levelOneHelp" class="field-help" hidden>Level 1 requests 50% and 25% of each original canvas, rounded to whole pixels. Level 2 uses the shared sizes below. Every job starts from the original; results are never resized again.</p>
+            <button id="twoLevelPreset" class="secondary" type="button">Use two-level comparison</button>
+            <label id="targetSizesLabel" for="targetSizes">Shared width × height, one per line</label>
             <textarea id="targetSizes" rows="3" required spellcheck="false">1080x1080
 1600x900</textarea>
-            <p class="field-help">Up to 4 targets and 16 total jobs. Each target is applied to every scene. Maximum 8192 px per side and 20 MP.</p>
+            <p id="targetPlanHelp" class="field-help">Up to 4 targets and 16 total jobs. Each target is applied to every scene. Maximum 8192 px per side and 20 MP.</p>
             <label for="evaluationUse">Evaluation purpose</label>
             <select id="evaluationUse"><option value="exploration">Exploration</option><option value="declared-holdout">Declared holdout</option></select>
             <p class="field-help">This records your intent. It does not verify that scenes were excluded from training.</p>

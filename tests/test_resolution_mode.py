@@ -161,3 +161,132 @@ def test_uniform_candidate_cannot_waive_a_hard_font_floor():
         (ROOT / "input/chameleon_sample_level2_core.json").read_text(encoding="utf-8")
     )["source"]
     assert module._resolution_state(source, {"width": 1, "height": 1}) is None
+
+
+def _odd_source():
+    return {
+        "canvas": {"width": 101, "height": 81},
+        "elements": [
+            {
+                "id": "plate",
+                "type": "shape",
+                "shape_type": "rectangle",
+                "x": 4,
+                "y": 4,
+                "width": 93,
+                "height": 73,
+                "fill_color": "#223344",
+                "corner_radius": 5,
+                "stroke_width": 2,
+                "stroke_color": "#ffffff",
+                "opacity": 0.8,
+                "z_index": 0,
+            },
+            {
+                "id": "logo",
+                "type": "image",
+                "asset_id": "solstice_logo_lockup.png",
+                "fit": "contain",
+                "x": 12,
+                "y": 12,
+                "width": 32,
+                "height": 10,
+                "z_index": 1,
+            },
+            {
+                "id": "copy",
+                "type": "text",
+                "content": "Hello",
+                "font_family": "Solstice Sans",
+                "font_size": 10,
+                "font_weight": "bold",
+                "color": "#ffffff",
+                "text_align": "left",
+                "line_height": 1.2,
+                "x": 12,
+                "y": 35,
+                "width": 70,
+                "height": 20,
+                "group_id": "source-copy",
+                "z_index": 2,
+            },
+        ],
+    }
+
+
+def _assert_padded_similarity(source, design, target):
+    """All components retain one similarity, with at most a quarter-pixel inset."""
+    scale = min(target[key] / source["canvas"][key] for key in ("width", "height"))
+    offsets = {
+        "x": (target["width"] - source["canvas"]["width"] * scale) / 2,
+        "y": (target["height"] - source["canvas"]["height"] * scale) / 2,
+    }
+    assert design["canvas"] == target
+    assert all(-1e-9 <= offset <= 0.25 + 1e-9 for offset in offsets.values())
+    assert [e["id"] for e in design["elements"]] == [e["id"] for e in source["elements"]]
+    for original, changed in zip(source["elements"], design["elements"], strict=True):
+        for key in SCALED & original.keys():
+            assert changed[key] == pytest.approx(original[key] * scale + offsets.get(key, 0))
+        assert {k: v for k, v in changed.items() if k not in SCALED} == {
+            k: v for k, v in original.items() if k not in SCALED
+        }
+    assert check_contract(source, design, target) == []
+
+
+@pytest.mark.parametrize(
+    ("canvas", "target"),
+    [
+        ({"width": 101, "height": 81}, {"width": 51, "height": 41}),
+        ({"width": 1001, "height": 800}, {"width": 501, "height": 400}),
+    ],
+)
+def test_rounded_resolution_preserves_all_components_at_one_scale(canvas, target):
+    source = _odd_source()
+    source["canvas"] = canvas
+    before = deepcopy(source)
+    state = module._resolution_state(source, target)
+    assert state is not None
+    assert state.name == "resolution-scale" and state.topology == "source-similarity"
+    assert len(state.exceptions) == 1
+    assert state.exceptions[0].startswith("resolution-rounding-padding:")
+    _assert_padded_similarity(source, state.design, target)
+    assert source == before
+
+
+@pytest.mark.parametrize(
+    ("name", "target"),
+    [
+        ("opensuse_trifold_front", {"width": 573, "height": 408}),
+        ("opensuse_trifold_front", {"width": 286, "height": 204}),
+        ("opensuse_cheatsheet", {"width": 421, "height": 144}),
+    ],
+)
+def test_actual_reviewed_rounded_resolution_avoids_repacking_and_retains_contract(
+    name, target, monkeypatch
+):
+    folder = ROOT / "fixtures/open_posters/prepared" / name
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+
+    def unexpected_search(*_args):
+        pytest.fail("A bounded rounded-resolution request must not enter composition search")
+
+    monkeypatch.setattr(module, "generate_candidates", unexpected_search)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        assert module._resolution_state(source, target) is not None
+        result = module.resize_with_state(source, target)
+        assert result["state"]["name"] == "resolution-scale"
+        assert result["state"]["sizing_exceptions"][0].startswith("resolution-rounding-padding:")
+        _assert_padded_similarity(source, result["design"], target)
+    assert source == before
+
+
+@pytest.mark.parametrize("target", [{"width": 51, "height": 42}, {"width": 121, "height": 96}])
+def test_nearby_actual_aspect_changes_do_not_gain_a_resolution_exception(target):
+    assert module._resolution_state(_odd_source(), target) is None
+
+
+def test_rounded_resolution_still_declines_a_cropped_source_image():
+    source = _odd_source()
+    source["elements"][1]["x"] = -1
+    assert module._resolution_state(source, {"width": 51, "height": 41}) is None

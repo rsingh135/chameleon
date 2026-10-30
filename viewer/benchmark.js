@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const state = {scenes: [], method: null, report: null, busy: false, stop: false, urls: []};
+  const state = {scenes: [], reviewed: [], method: null, report: null, busy: false, stop: false, urls: []};
   const node = (tag, text, className) => {
     const element = document.createElement(tag);
     if (text !== undefined) element.textContent = text;
@@ -150,6 +150,88 @@
       return {width, height};
     });
   }
+  function comparisonMode() { return $('comparisonMode').value === 'two-level' ? 'two-level' : 'shared'; }
+  function updateComparisonMode() {
+    const twoLevel = comparisonMode() === 'two-level';
+    $('levelOneHelp').hidden = !twoLevel;
+    $('targetSizesLabel').textContent = twoLevel ? 'Level 2 · shared width × height, one per line' : 'Shared width × height, one per line';
+    $('targetPlanHelp').textContent = twoLevel
+      ? 'Up to 2 shared sizes plus 2 proportional sizes per scene, and 16 unique jobs total. Four scenes × four sizes fits. Repeated sizes share one verified job. Engine layout changes remain visible in diagnostics.'
+      : 'Up to 4 targets and 16 total jobs. Each target is applied to every scene. Maximum 8192 px per side and 20 MP.';
+  }
+  function jobPlan(scenes, targets, mode) {
+    if (mode === 'two-level' && targets.length > 2) throw new Error('Two-level comparison allows up to 2 shared targets, plus 50% and 25% proportional targets.');
+    const jobs = [];
+    for (const scene of scenes) {
+      const perScene = [];
+      const add = (target, comparison) => {
+        let job = perScene.find(item => item.target_canvas.width === target.width && item.target_canvas.height === target.height);
+        if (!job) {
+          job = {job_key: `${scene.id}-${target.width}x${target.height}`, scene_id: scene.id, target_canvas: {...target}, comparisons: []};
+          perScene.push(job);
+        }
+        job.comparisons.push(comparison);
+      };
+      if (mode === 'two-level') {
+        for (const scale of [0.5, 0.25]) {
+          const canvas = scene.payload.source.canvas;
+          add({width: Math.max(1, Math.round(canvas.width * scale)), height: Math.max(1, Math.round(canvas.height * scale))}, {level: 'resolution', requested_scale: scale});
+        }
+      }
+      for (const target of targets) add(target, {level: mode === 'two-level' ? 'shared-aspect' : 'shared'});
+      if (perScene.length > 4) throw new Error('Each scene is limited to 4 target sizes.');
+      jobs.push(...perScene);
+    }
+    if (jobs.length > 16) throw new Error('A benchmark is limited to 16 jobs. Reduce scenes or targets.');
+    return jobs;
+  }
+  async function browseReviewed() {
+    if (state.busy) return;
+    error(); setBusy(true);
+    try {
+      const {examples} = await request('/api/posters');
+      if (!Array.isArray(examples)) throw new Error('The reviewed poster catalogue is unavailable. Your scenes are unchanged.');
+      const reviewed = examples.filter(item => item?.split === 'reviewed' && item.ready === true);
+      const ids = new Set();
+      for (const item of reviewed) {
+        if (typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,99}$/.test(item.id) || ids.has(item.id) || typeof item.title !== 'string' || !item.title.trim() || item.title.length > 200 || /[\x00-\x1f]/.test(item.title)) throw new Error('Reviewed poster IDs and titles must be valid and unique. Your scenes are unchanged.');
+        ids.add(item.id);
+      }
+      state.reviewed = reviewed;
+      $('reviewedPosters').replaceChildren();
+      for (const poster of reviewed) {
+        const option = node('option', poster.title); option.value = poster.id;
+        $('reviewedPosters').append(option);
+      }
+      $('reviewedPicker').hidden = false;
+      $('reviewedStatus').textContent = `${reviewed.length} reviewed posters available. Source families remain for you to declare.`;
+    } catch (failure) { error(failure.message); }
+    finally { setBusy(false); }
+  }
+  async function addReviewed(pack = false) {
+    if (state.busy) return;
+    error(); setBusy(true);
+    try {
+      const selected = pack
+        ? state.reviewed.filter(item => !state.scenes.some(scene => scene.id === `poster-${item.id}`)).slice(0, Math.min(4, 8 - state.scenes.length)).map(item => item.id)
+        : [...$('reviewedPosters').selectedOptions].map(option => option.value);
+      if (!selected.length || selected.length > 4 || new Set(selected).size !== selected.length) throw new Error('Select between 1 and 4 different reviewed posters.');
+      const posters = selected.map(id => state.reviewed.find(item => item.id === id));
+      if (posters.some(item => !item)) throw new Error('Only reviewed, ready posters from this catalogue can be added.');
+      const added = posters.filter(item => !state.scenes.some(scene => scene.id === `poster-${item.id}`));
+      if (state.scenes.length + added.length > 8) throw new Error('Keep at most 8 scenes in one benchmark.');
+      const queued = [];
+      for (const poster of added) {
+        const payload = sourcePayload(await request(`/api/posters/${encodeURIComponent(poster.id)}/bundle`));
+        queued.push({id: `poster-${poster.id}`, label: poster.title, family: 'unassigned', input_kind: 'editable-design', library_poster_id: poster.id, payload});
+      }
+      if (!queued.length) { $('reviewedStatus').textContent = 'Those posters are already queued.'; return; }
+      state.scenes.push(...queued); dirty(); renderQueue();
+      $('batchStatus').textContent = `Added ${queued.length} reviewed poster${queued.length === 1 ? '' : 's'}. Choose comparison levels and source families, then run.`;
+      $('reviewedStatus').textContent = 'Exact editable source bundles loaded. Reserved sources were not loaded.';
+    } catch (failure) { error(failure.message); }
+    finally { setBusy(false); }
+  }
   async function imagePayload(file) {
     if (file.size > 8 * 1024 * 1024) throw new Error(`${file.name}: images must be at most 8 MiB.`);
     const bytes = await file.arrayBuffer();
@@ -198,8 +280,9 @@
     } catch (failure) { error(failure.message); }
     finally { $('sceneFiles').value = ''; setBusy(false); }
   }
-  function rowFor(report, scene, target) {
-    const matches = row => row?.scene_id === scene.id && row.target_canvas.width === target.width && row.target_canvas.height === target.height;
+  function rowFor(report, scene, plan) {
+    const target = plan.target_canvas || plan;
+    const matches = row => row?.scene_id === scene.id && row.target_canvas.width === target.width && row.target_canvas.height === target.height && (!report.job_plan || row.job_key === plan.job_key);
     return report.results.find(matches) || (matches(report.interrupted_job) ? report.interrupted_job : undefined);
   }
   async function validateResult(row, scene, target) {
@@ -235,6 +318,48 @@
       throw new Error(`Cannot verify the rendered preview: ${failure.message}`);
     } finally { clearTimeout(timeout); }
   }
+  function renderResultCell(report, scene, plan, level) {
+    const target = plan.target_canvas || plan;
+    const row = rowFor(report, scene, plan);
+    const cell = node('div', undefined, 'render-cell');
+    const uses = (plan.comparisons || []).filter(item => item.level === level);
+    const requested = level === 'resolution' ? `${uses.map(item => `${item.requested_scale * 100}%`).join(' / ')} requested · ` : '';
+    cell.append(node('p', `${requested}${target.width} × ${target.height}`, 'render-label'));
+    const stage = node('div', undefined, 'render-stage');
+    if (row?.result) {
+      const image = node('img'); image.src = row.result.output_png; image.alt = `${scene.label}, result at ${target.width} by ${target.height}`; stage.append(image);
+      cell.append(stage);
+      const diagnostic = node('p', `${row.contract_passed ? 'Contract checks passed' : 'Contract needs review'} · ${(row.elapsed_ms / 1000).toFixed(2)} s · visual quality unreviewed`, 'render-notes');
+      diagnostic.dataset.outcome = row.contract_passed ? 'pass' : 'review';
+      cell.append(diagnostic);
+      const smallText = row.result.design.elements.filter(element => element.type === 'text' && Number.isFinite(element.font_size) && element.font_size < 10);
+      if (smallText.length) {
+        const smallest = Math.min(...smallText.map(element => element.font_size));
+        cell.append(node('p', `${smallText.length} text element${smallText.length === 1 ? '' : 's'} below 10 px (smallest ${smallest.toFixed(1)} px). Inspect readability at export size.`, 'render-notes'));
+      }
+      if (report.job_plan) {
+        const layout = row.result.report.layout_state || {};
+        const actual = [...new Set([layout.name, layout.mode, layout.topology].filter(value => typeof value === 'string' && value))].join(' · ') || 'not reported';
+        cell.append(node('p', `Engine layout: ${actual}. Proportional targets are a request, not proof of unchanged composition.`, 'field-help'));
+      }
+      const links = node('div', undefined, 'result-links');
+      const basename = `${scene.id}-${target.width}x${target.height}`;
+      const sourcePayload = state.scenes.find(item => item.id === scene.id)?.payload;
+      const portable = sourcePayload && ['document', 'assets', 'fonts'].some(key => key in sourcePayload);
+      const exported = portable ? {...sourcePayload, source: row.result.design, target_canvas: {...target}} : row.result.design;
+      links.append(blobLink('JSON ↓', exported, `${basename}.json`));
+      const binary = atob(row.result.output_png.split(',')[1]);
+      const pngBytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+      links.append(blobLink('PNG ↓', pngBytes, `${basename}.png`, 'image/png'));
+      cell.append(links);
+      const details = node('details'); details.append(node('summary', 'Diagnostics and resource identity'));
+      details.append(node('pre', JSON.stringify({job_key: row.job_key, comparisons: row.comparisons, source_sha256: row.source_sha256, resources_sha256: row.resources_sha256, report: row.result.report, warnings: row.result.warnings}, null, 2)));
+      cell.append(details);
+    } else {
+      stage.append(node('p', row?.error || (report.status === 'running' ? 'Waiting for this job' : 'Not run'))); cell.append(stage);
+    }
+    return cell;
+  }
   function renderResults(report) {
     releaseUrls();
     $('batchResults').replaceChildren();
@@ -245,7 +370,7 @@
       title.append(node('h3', scene.label), node('p', `${scene.family} · ${scene.input_kind === 'flat-image' ? 'Flat image: whole-image fit only' : 'Editable design'}`));
       heading.append(title);
       article.append(heading);
-      const renders = node('div', undefined, 'scene-renders');
+      const renders = node('div', undefined, report.job_plan ? 'scene-comparison' : 'scene-renders');
       const first = report.results.find(row => row.scene_id === scene.id && row.result);
       const original = node('div', undefined, 'render-cell');
       original.append(node('p', 'Original', 'render-label'));
@@ -254,37 +379,20 @@
       else sourceStage.append(node('p', 'Original render pending'));
       original.append(sourceStage, node('p', first ? `Source ${first.source_sha256.slice(0, 12)}…` : 'Bound source receipt appears after rendering', 'field-help fingerprint'));
       renders.append(original);
-      for (const target of report.targets) {
-        const row = rowFor(report, scene, target);
-        const cell = node('div', undefined, 'render-cell');
-        cell.append(node('p', `${target.width} × ${target.height}`, 'render-label'));
-        const stage = node('div', undefined, 'render-stage');
-        if (row?.result) {
-          const image = node('img'); image.src = row.result.output_png; image.alt = `${scene.label}, result at ${target.width} by ${target.height}`; stage.append(image);
-          cell.append(stage);
-          const diagnostic = node('p', `${row.contract_passed ? 'Contract checks passed' : 'Contract needs review'} · ${(row.elapsed_ms / 1000).toFixed(2)} s · visual quality unreviewed`, 'render-notes');
-          diagnostic.dataset.outcome = row.contract_passed ? 'pass' : 'review';
-          cell.append(diagnostic);
-          const links = node('div', undefined, 'result-links');
-          const basename = `${scene.id}-${target.width}x${target.height}`;
-          const sourcePayload = state.scenes.find(item => item.id === scene.id)?.payload;
-          const portable = sourcePayload && ['document', 'assets', 'fonts'].some(key => key in sourcePayload);
-          const exported = portable ? {
-            ...sourcePayload, source: row.result.design, target_canvas: {...target},
-          } : row.result.design;
-          links.append(blobLink('JSON ↓', exported, `${basename}.json`));
-          const binary = atob(row.result.output_png.split(',')[1]);
-          const pngBytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-          links.append(blobLink('PNG ↓', pngBytes, `${basename}.png`, 'image/png'));
-          cell.append(links);
-          const details = node('details'); details.append(node('summary', 'Diagnostics and resource identity'));
-          details.append(node('pre', JSON.stringify({source_sha256: row.source_sha256, resources_sha256: row.resources_sha256, report: row.result.report, warnings: row.result.warnings}, null, 2)));
-          cell.append(details);
-        } else {
-          stage.append(node('p', row?.error || (report.status === 'running' ? 'Waiting for this job' : 'Not run'))); cell.append(stage);
+      if (report.job_plan) {
+        const levels = node('div', undefined, 'scene-levels');
+        for (const [level, title, description] of [
+          ['resolution', 'Level 1 · Proportional resolution', '50% and 25% of the original canvas, rounded to pixels. Compare the actual composition and engine diagnostics.'],
+          ['shared-aspect', 'Level 2 · Shared canvas sizes', 'The same target sizes for every poster. Each result starts from the original, not a Level 1 result.'],
+        ]) {
+          const section = node('section', undefined, 'resize-level');
+          const header = node('header'); header.append(node('h4', title), node('p', description)); section.append(header);
+          const grid = node('div', undefined, 'scene-renders');
+          for (const plan of report.job_plan.filter(item => item.scene_id === scene.id && item.comparisons.some(use => use.level === level))) grid.append(renderResultCell(report, scene, plan, level));
+          section.append(grid); levels.append(section);
         }
-        renders.append(cell);
-      }
+        renders.append(levels);
+      } else for (const target of report.targets) renders.append(renderResultCell(report, scene, target));
       article.append(renders);
       $('batchResults').append(article);
     }
@@ -292,7 +400,7 @@
     const succeeded = rows.filter(row => row.status === 'ok').length;
     const passed = rows.filter(row => row.contract_passed === true).length;
     $('batchSummary').hidden = false;
-    $('batchSummary').replaceChildren(node('strong', `${rows.length} / ${report.scenes.length * report.targets.length} jobs completed`), node('span', `${succeeded} rendered`), node('span', `${rows.length - succeeded} failed`), node('span', `${passed} contract passes`), node('span', 'Visual approval: unreviewed'));
+    $('batchSummary').replaceChildren(node('strong', `${rows.length} / ${report.job_plan?.length || report.scenes.length * report.targets.length} jobs completed`), node('span', `${succeeded} rendered`), node('span', `${rows.length - succeeded} failed`), node('span', `${passed} contract passes`), node('span', 'Visual approval: unreviewed'));
     if (report.interrupted_job) $('batchSummary').append(node('span', '1 unverified attempt'));
     const table = node('table'); table.append(node('caption', 'Breakdown by declared source family · structural diagnostics only'));
     const head = node('thead'), header = node('tr');
@@ -321,35 +429,39 @@
     try {
       const targets = targetsFromText($('targetSizes').value);
       if (!state.scenes.length) throw new Error('Add at least one scene.');
-      if (state.scenes.length * targets.length > 16) throw new Error('A benchmark is limited to 16 jobs. Reduce scenes or targets.');
+      const mode = comparisonMode(), jobs = jobPlan(state.scenes, targets, mode);
       setBusy(true); state.stop = false;
       const method = await request('/api/benchmark/method');
       setMethod(method);
       state.report = {schema_version: 'scene-benchmark-ui-v1', run_id: `benchmark-${new Date().toISOString().replace(/[:.]/g, '-')}`, started_at: new Date().toISOString(), method, evaluation_use: $('evaluationUse').value, status: 'running', visual_review: 'not_reviewed', scenes: state.scenes.map(({payload, ...scene}) => ({...scene})), targets, results: []};
       const report = state.report;
+      if (mode === 'two-level') {
+        report.schema_version = 'scene-benchmark-ui-v2'; report.comparison_mode = mode;
+        report.job_plan = JSON.parse(JSON.stringify(jobs));
+        report.scenes.forEach(scene => { scene.source_canvas = {...state.scenes.find(item => item.id === scene.id).payload.source.canvas}; });
+      }
       $('downloadReport').removeAttribute('href'); $('downloadReport').setAttribute('aria-disabled', 'true'); $('downloadReport').tabIndex = -1;
       $('runIdentity').textContent = `${report.run_id} · method ${method.digest.slice(0, 12)}…`;
-      $('batchProgress').hidden = false; $('batchProgress').max = state.scenes.length * targets.length; $('batchProgress').value = 0;
+      $('batchProgress').hidden = false; $('batchProgress').max = jobs.length; $('batchProgress').value = 0;
       $('stopBatch').hidden = false; $('stopBatch').disabled = false;
       renderResults(report);
-      outer: for (const scene of state.scenes) {
-        for (const target of targets) {
-          if (state.stop) break outer;
+      for (const job of jobs) {
+          if (state.stop) break;
+          const scene = state.scenes.find(item => item.id === job.scene_id), target = job.target_canvas;
           $('batchStatus').textContent = `Rendering ${report.results.length + 1} / ${$('batchProgress').max}: ${scene.label} at ${target.width} × ${target.height}.`;
-          activeJob = {scene_id: scene.id, target_canvas: {...target}, status: 'unverified'};
+          activeJob = {scene_id: scene.id, target_canvas: {...target}, status: 'unverified', ...(report.job_plan ? {job_key: job.job_key, comparisons: job.comparisons} : {})};
           const response = await request('/api/benchmark/run', {method: method.id, expected_method_digest: method.digest, targets: [target], scenes: [scene]});
           const row = response.results?.[0];
           if (response.method?.digest !== method.digest || response.comparable !== true || response.results?.length !== 1 || row.scene_id !== scene.id || row.target_canvas?.width !== target.width || row.target_canvas?.height !== target.height || !['ok', 'error'].includes(row.status)) throw new Error('Method, scene or target identity changed, or the response was inconsistent. The run stopped.');
           await validateResult(row, scene, target);
-          report.results.push(row);
+          report.results.push(report.job_plan ? {...row, job_key: job.job_key, comparisons: job.comparisons} : row);
           activeJob = null;
           $('batchProgress').value = report.results.length;
           renderResults(report);
-        }
       }
       report.status = state.stop ? 'stopped' : 'completed'; report.finished_at = new Date().toISOString();
       renderResults(report); reportDownload();
-      $('batchStatus').textContent = state.stop ? `Stopped after ${report.results.length} job${report.results.length === 1 ? '' : 's'}. Completed results are available; unrun jobs are marked.` : `Finished ${report.results.length} job${report.results.length === 1 ? '' : 's'} with the same method and targets. Inspect the renders; visual quality has not been graded.`;
+      $('batchStatus').textContent = state.stop ? `Stopped after ${report.results.length} job${report.results.length === 1 ? '' : 's'}. Completed results are available; unrun jobs are marked.` : `Finished ${report.results.length} job${report.results.length === 1 ? '' : 's'} with ${report.job_plan ? 'the same method and recorded two-level plan' : 'the same method and targets'}. Inspect the renders; visual quality has not been graded.`;
     } catch (failure) {
       error(failure.message);
       if (!state.method || failure.reconnect) $('retryConnection').hidden = false;
@@ -363,6 +475,15 @@
     } finally { setBusy(false); $('stopBatch').hidden = true; }
   }
   $('sceneFiles').addEventListener('change', importFiles);
+  $('loadReviewed').addEventListener('click', browseReviewed);
+  $('addReviewed').addEventListener('click', () => addReviewed());
+  $('addReviewedPack').addEventListener('click', () => addReviewed(true));
+  $('comparisonMode').addEventListener('change', () => { updateComparisonMode(); dirty(); });
+  $('twoLevelPreset').addEventListener('click', () => {
+    if (state.busy) return;
+    $('comparisonMode').value = 'two-level'; $('targetSizes').value = '800x500\n500x800';
+    updateComparisonMode(); dirty();
+  });
   $('addSamples').addEventListener('click', async () => {
     if (state.busy) return;
     error(); setBusy(true);
@@ -400,4 +521,5 @@
   request('/api/benchmark/method').then(method => {
     setMethod(method); dirty();
   }).catch(failure => { error(failure.message); $('methodName').textContent = 'Method unavailable'; $('retryConnection').hidden = false; });
+  updateComparisonMode();
 })();

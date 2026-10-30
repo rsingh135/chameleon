@@ -22,6 +22,17 @@
 .scene-title button { border: 0; background: transparent; color: var(--muted); padding: 0 4px; }
 .scene-list label { font-size: 11px; margin-block: 8px 4px; }
 .scene-list input { width: 100%; background: var(--input); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; min-width: 0; }
+.reviewed-picker select { width: 100%; min-height: 128px; padding: 4px; }
+.reviewed-picker option { padding: 8px; white-space: normal; }
+.poster-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.poster-actions .secondary { margin-bottom: 0; }
+.scene-comparison { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(0, 2fr); }
+.scene-levels { min-width: 0; border-left: 1px solid var(--divider); }
+.resize-level > header { padding: 14px 16px 0; }
+.resize-level h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.resize-level header p { color: var(--muted); font-size: 12px; }
+.resize-level .scene-renders { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.scene-comparison > .render-cell { border-top: 0; }
 .scene-list .field-help { margin: 4px 0; }
 .batch-main { min-width: 0; }
 .batch-heading { padding: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid var(--divider); }
@@ -59,6 +70,14 @@
 .scene-result pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 280px; overflow: auto; font: 11px/16px ui-monospace, monospace; }
 .benchmark-ui footer { padding: 20px 24px; display: flex; gap: 16px; flex-wrap: wrap; color: var(--muted); font-size: 12px; border-top: 1px solid var(--divider); }
 [aria-disabled=true] { pointer-events: none; opacity: .5; }
+@media (min-width: 1100px) {
+  .benchmark-layout:has(#batchSetup:not([open])) { grid-template-columns: minmax(0, 1fr); }
+  .batch-setup:has(#batchSetup:not([open])) { border-right: 0; border-bottom: 1px solid var(--divider); }
+  .batch-setup:has(#batchSetup:not([open])) .batch-local { display: none; }
+  .benchmark-layout:has(#batchSetup:not([open])) .scene-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .benchmark-layout:has(#batchSetup:not([open])) .resize-level + .resize-level { border-left: 1px solid var(--divider); }
+  .benchmark-layout:has(#batchSetup:not([open])) .resize-level .scene-renders { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 1000px) { .benchmark-layout { grid-template-columns: 270px minmax(0, 1fr); } .batch-heading { align-items: start; flex-direction: column; } .render-stage { height: 210px; } }
 @media (max-width: 760px) {
   .benchmark-ui .topbar { padding: 12px 16px; gap: 12px; }
@@ -71,6 +90,9 @@
   .batch-main > .status, .batch-main > .error, .batch-summary, .family-summary { margin-inline: 16px; }
   .batch-results { padding-inline: 16px; }
   .scene-renders { grid-template-columns: 1fr; }
+  .scene-comparison { display: block; }
+  .scene-levels { border-left: 0; }
+  .resize-level .scene-renders { grid-template-columns: 1fr; }
   .render-cell + .render-cell { border-left: 0; }
   .render-stage { height: 260px; }
   .batch-empty { margin-block: 32px; }

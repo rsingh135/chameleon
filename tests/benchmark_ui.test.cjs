@@ -32,7 +32,7 @@ const rowFor = body => {
 const responseFor = body => ({method, comparable: true, results: [rowFor(body)]});
 
 function application(settings = {}) {
-  const app = {requests: [], blobs: new Map(), revoked: [], images: new Map(), timers: new Map(), handler: body => responseFor(body)};
+  const app = {requests: [], posterRequests: [], blobs: new Map(), revoked: [], images: new Map(), timers: new Map(), handler: body => responseFor(body)};
   const windowListeners = new Map();
   let methodRequests = 0;
   class Element {
@@ -97,6 +97,16 @@ function application(settings = {}) {
         return {ok: true, json: async () => method};
       }
       if (url === '/api/samples') return {ok: true, json: async () => ({samples: [sample('one'), sample('two', {width: 555, height: 777})]})};
+      if (url === '/api/posters') return {ok: true, json: async () => ({examples: settings.posters || [
+        {id: 'reviewed-one', title: 'Reviewed One', split: 'reviewed', ready: true},
+        {id: 'reviewed-two', title: 'Reviewed Two', split: 'reviewed', ready: true},
+        {id: 'reserved', title: 'Reserved source', split: 'reserve', ready: true},
+        {id: 'unprepared', title: 'Unprepared source', split: 'reviewed', ready: false},
+      ]})};
+      if (url.startsWith('/api/posters/') && url.endsWith('/bundle')) {
+        const id = url.split('/')[3]; app.posterRequests.push(id);
+        return {ok: true, json: async () => settings.posterBundle ? settings.posterBundle(id) : sample(id).task};
+      }
       assert.equal(url, '/api/benchmark/run');
       const body = JSON.parse(options.body); app.requests.push(body);
       return {ok: true, json: async () => {
@@ -115,6 +125,11 @@ function application(settings = {}) {
   app.elements = elements;
   app.flush = async () => { for (let i = 0; i < 3; i++) await new Promise(setImmediate); };
   app.addSamples = () => elements.addSamples.fire('click');
+  app.browseReviewed = () => elements.loadReviewed.fire('click');
+  app.addReviewed = ids => {
+    elements.reviewedPosters.selectedOptions = ids.map(value => ({value}));
+    return elements.addReviewed.fire('click');
+  };
   app.import = files => {
     elements.sceneFiles.files = files.map(([name, text]) => ({name, size: 100, text: async () => text}));
     return elements.sceneFiles.fire('change');
@@ -145,6 +160,145 @@ test('every scene uses the same explicit target list and frozen method digest', 
   assert.equal(report.results.length, 4);
   assert.deepEqual(report.targets, [{width: 100, height: 100}, {width: 300, height: 200}]);
   assert.equal(report.visual_review, 'not_reviewed');
+  assert.match(app.elements.batchStatus.textContent, /same method and targets/);
+});
+
+test('reviewed picker excludes reserved/unprepared posters and loads exact original bundles', async () => {
+  const task = {...sample('poster').task, assets: [{asset_id: 'exact.png', data_base64: 'eGFjdA=='}], fonts: [], document: {snapshot_id: 'original'}};
+  const app = application({posterBundle: () => task}); await app.flush();
+  await app.browseReviewed();
+  assert.deepEqual(app.elements.reviewedPosters.children.map(option => option.value), ['reviewed-one', 'reviewed-two']);
+  assert.equal(app.elements.reviewedPicker.hidden, false);
+  await app.addReviewed(['reviewed-two']);
+  app.elements.targetSizes.value = '300x200'; await app.run();
+  assert.deepEqual(app.posterRequests, ['reviewed-two']);
+  assert.equal(JSON.stringify(app.requests[0].scenes[0].payload), JSON.stringify(task));
+  assert.equal(app.requests[0].scenes[0].family, 'unassigned');
+  assert.equal(app.requests[0].scenes[0].library_poster_id, 'reviewed-two');
+  const count = app.posterRequests.length;
+  await app.addReviewed(['reserved']);
+  assert.equal(app.posterRequests.length, count);
+  assert.match(app.elements.batchError.textContent, /Only reviewed/);
+});
+
+test('reviewed multi-add is atomic when a later bundle is invalid', async () => {
+  const app = application({posterBundle: id => id === 'reviewed-two' ? {} : sample(id).task});
+  await app.flush(); await app.addSamples();
+  app.elements.targetSizes.value = '100x100'; await app.run();
+  const report = app.elements.downloadReport.href;
+  await app.browseReviewed(); await app.addReviewed(['reviewed-one', 'reviewed-two']);
+  assert.equal(app.elements.sceneList.children.length, 2);
+  assert.equal(app.elements.downloadReport.href, report);
+  assert.equal(app.elements.batchSettings.disabled, false);
+  assert.equal(app.elements.batchError.hidden, false);
+});
+
+test('reviewed pack adds at most four and repeated additions never duplicate scene IDs', async () => {
+  const posters = Array.from({length: 6}, (_, index) => ({id: `poster-${index}`, title: `Poster ${index}`, split: 'reviewed', ready: true}));
+  const app = application({posters}); await app.flush(); await app.browseReviewed();
+  await app.elements.addReviewedPack.fire('click');
+  assert.equal(app.elements.sceneList.children.length, 4);
+  assert.equal(app.posterRequests.length, 4);
+  await app.addReviewed(['poster-0']);
+  assert.equal(app.posterRequests.length, 4);
+  assert.equal(app.elements.sceneList.children.length, 4);
+  await app.addReviewed(posters.slice(0, 5).map(poster => poster.id));
+  assert.match(app.elements.batchError.textContent, /between 1 and 4/);
+  assert.equal(app.elements.sceneList.children.length, 4);
+});
+
+test('two-level plan uses per-original rounded targets and never cascades resized output', async () => {
+  const app = application(); await app.flush();
+  const first = source(), second = source();
+  first.canvas = {width: 101, height: 199}; second.canvas = {width: 200, height: 100};
+  await app.import([['first.json', JSON.stringify(first)], ['second.json', JSON.stringify(second)]]);
+  await app.elements.twoLevelPreset.fire('click'); await app.run();
+  assert.deepEqual(app.requests.map(request => request.targets[0]), [
+    {width: 51, height: 100}, {width: 25, height: 50}, {width: 800, height: 500}, {width: 500, height: 800},
+    {width: 100, height: 50}, {width: 50, height: 25}, {width: 800, height: 500}, {width: 500, height: 800},
+  ]);
+  assert.ok(app.requests.slice(0, 4).every(request => JSON.stringify(request.scenes[0].payload.source) === JSON.stringify(first)));
+  assert.ok(app.requests.slice(4).every(request => JSON.stringify(request.scenes[0].payload.source) === JSON.stringify(second)));
+  assert.ok(app.requests.every(request => request.expected_method_digest === method.digest));
+  const report = await app.report();
+  assert.equal(report.schema_version, 'scene-benchmark-ui-v2');
+  assert.equal(report.comparison_mode, 'two-level');
+  assert.equal(report.job_plan.length, 8);
+  assert.equal(report.results.length, 8);
+  assert.deepEqual(report.results[0].comparisons, [{level: 'resolution', requested_scale: 0.5}]);
+  assert.equal(report.results[0].job_key, report.job_plan[0].job_key);
+  assert.equal(report.job_plan[2].comparisons[0].level, 'shared-aspect');
+  assert.match(app.elements.batchStatus.textContent, /same method and recorded two-level plan/);
+  const text = element => [element.textContent, ...element.children.flatMap(child => text(child))].join(' ');
+  assert.match(text(app.elements.batchResults), /Level 1 · Proportional resolution/);
+  assert.match(text(app.elements.batchResults), /Level 2 · Shared canvas sizes/);
+  assert.match(text(app.elements.batchResults), /Engine layout: not reported/);
+});
+
+test('rounded proportional duplicates and shared-size overlap reuse one verified job', async () => {
+  const app = application(); await app.flush();
+  const tiny = source(); tiny.canvas = {width: 1, height: 1};
+  await app.import([['tiny.json', JSON.stringify(tiny)]]);
+  app.elements.comparisonMode.value = 'two-level';
+  app.elements.targetSizes.value = '1x1\n2x1'; await app.run();
+  assert.equal(app.requests.length, 2);
+  const report = await app.report();
+  assert.equal(report.job_plan[0].comparisons.length, 3);
+  assert.deepEqual(report.job_plan[0].comparisons, [
+    {level: 'resolution', requested_scale: 0.5}, {level: 'resolution', requested_scale: 0.25}, {level: 'shared-aspect'},
+  ]);
+  assert.equal(report.results.length, 2);
+  assert.equal(app.elements.batchProgress.max, 2);
+});
+
+test('two-level job and shared-target limits reject before any engine job', async () => {
+  const app = application(); await app.flush();
+  await app.import(Array.from({length: 5}, (_, index) => [`scene-${index}.json`, JSON.stringify(source())]));
+  await app.elements.twoLevelPreset.fire('click'); await app.run();
+  assert.equal(app.requests.length, 0);
+  assert.match(app.elements.batchError.textContent, /16 jobs/);
+  app.elements.targetSizes.value = '80x50\n50x80\n60x60'; await app.run();
+  assert.equal(app.requests.length, 0);
+  assert.match(app.elements.batchError.textContent, /up to 2 shared targets/);
+});
+
+test('changing comparison mode invalidates exports and shared-only reports remain v1', async () => {
+  const app = application(); await app.flush(); await app.addSamples(); await app.run();
+  assert.equal((await app.report()).schema_version, 'scene-benchmark-ui-v1');
+  const links = app.elements.batchResults.querySelectorAll('a[download]');
+  app.elements.comparisonMode.value = 'two-level'; await app.elements.comparisonMode.fire('change');
+  assert.equal(app.elements.downloadReport.href, '');
+  assert.ok(links.every(link => !link.href));
+  assert.match(app.elements.runIdentity.textContent, /previous run/);
+});
+
+test('two-level cells expose actual engine topology and small text without modifying reports', async () => {
+  const app = application(); await app.flush();
+  const original = source();
+  original.elements = [{id: 'label', type: 'text', x: 0, y: 0, width: 100, height: 50, font_size: 16, content: 'Same source'}];
+  await app.import([['type.json', JSON.stringify(original)]]);
+  await app.elements.twoLevelPreset.fire('click');
+  app.handler = body => {
+    const response = responseFor(body);
+    response.results[0].result.design = {...body.scenes[0].payload.source, canvas: body.targets[0],
+      elements: body.scenes[0].payload.source.elements.map(element => ({...element, font_size: 8}))};
+    response.results[0].result.report.layout_state = {name: 'source-guide', topology: 'rows'};
+    return response;
+  };
+  await app.run();
+  const text = element => [element.textContent, ...element.children.flatMap(child => text(child))].join(' ');
+  assert.match(text(app.elements.batchResults), /below 10 px \(smallest 8.0 px\)/);
+  assert.match(text(app.elements.batchResults), /Engine layout: source-guide · rows/);
+  const report = await app.report();
+  assert.deepEqual(report.results[0].result.report, {violations: [], layout_state: {name: 'source-guide', topology: 'rows'}});
+  assert.equal(report.results[0].comparisons[0].requested_scale, 0.5);
+});
+
+test('reviewed picker is a labeled multi-select hidden until catalogue loading succeeds', () => {
+  assert.match(markup, /id="reviewedPicker"[^>]*hidden/);
+  assert.match(markup, /<label for="reviewedPosters">/);
+  assert.match(markup, /<select id="reviewedPosters"[^>]*multiple/);
+  assert.match(markup, /id="reviewedHelp"/);
 });
 
 test('stop waits for the current job and exports completed work without submitting another', async () => {

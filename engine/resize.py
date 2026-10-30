@@ -107,11 +107,14 @@ def _safe_identity(source: dict, target: dict) -> bool:
 
 
 def _resolution_state(source, target):
-    """A valid exact-aspect request changes resolution, not composition.
+    """A valid proportional request changes resolution, not composition.
 
     Keep every permitted pixel geometry field at one scale, including authored
     decorative clipping. Cropped source images and invalid text fits decline
     this route; the ordinary constrained composition search remains available.
+    Integer raster dimensions may leave at most half a pixel after uniform fit;
+    center that remainder without stretching. This bounds rounding in pixels,
+    not relative aspect error or an inferred requested scale at tiny resolutions.
     """
     dimensions = [source["canvas"][key] for key in ("width", "height")]
     dimensions += [target[key] for key in ("width", "height")]
@@ -121,7 +124,17 @@ def _resolution_state(source, target):
     ):
         return None
     source_width, source_height, width, height = dimensions
-    if source_width * height != source_height * width:
+    exact_aspect = source_width * height == source_height * width
+    scale = width / source_width
+    dx = dy = 0.0
+    if not exact_aspect:
+        scale = min(scale, height / source_height)
+        remaining_width = max(0.0, width - source_width * scale)
+        remaining_height = max(0.0, height - source_height * scale)
+        if max(remaining_width, remaining_height) > 0.5 + 1e-9:
+            return None
+        dx, dy = remaining_width / 2, remaining_height / 2
+    if not math.isfinite(scale) or scale <= 0:
         return None
     for element in source["elements"]:
         if any(
@@ -144,8 +157,8 @@ def _resolution_state(source, target):
             return None
         design = deepcopy(source)
         design["canvas"] = dict(target)
-        if width != source_width:
-            design["elements"] = _transform(source["elements"], width / source_width, 0.0, 0.0)
+        if scale != 1.0 or dx or dy:
+            design["elements"] = _transform(source["elements"], scale, dx, dy)
         if check_contract(source, design, target_canvas=target):
             return None
     except (ImportError, OSError, RuntimeError, ValueError):
@@ -156,6 +169,7 @@ def _resolution_state(source, target):
         "source" if identity else "source-similarity",
         (),
         json.dumps(design, sort_keys=True, separators=(",", ":")),
+        () if exact_aspect else (f"resolution-rounding-padding:{dx:.9g},{dy:.9g}",),
     )
 
 

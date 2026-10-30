@@ -1,8 +1,9 @@
 """Bounded proposals derived from authored rows instead of inferred role order.
 
 Source rows and media/information regions retain a shared internal geometry/font
-scale: rules, icons, text and their authored offsets move together. Only an
-ungrouped singleton text frame may widen to accommodate immutable tracking.
+scale: rules, icons, text and their authored offsets move together. Singleton
+frames may widen for immutable tracking. Imported SVG single-line frames may
+also correct a small native glyph-advance overflow within their panel cell.
 These proposals supplement the other families; they do not select a winner.
 """
 
@@ -203,7 +204,7 @@ def _panel_place(panel, cell, scale):
         exceptions = []
         for element in moved:
             if element["type"] == "text" and not _text_fits(element):
-                if _tracking_frame(element, frame) is None:
+                if _tracking_frame(element, frame, allow_svg_group=True) is None:
                     return None
                 exceptions.append("tracking-frame:" + element["id"])
         return moved, exceptions
@@ -280,7 +281,7 @@ def _panel_place(panel, cell, scale):
                 element["width"] = (right - left) * cell.width
                 exceptions.append("container-frame:" + element["id"] + ": source section")
             elif element["type"] == "text" and not _text_fits(element):
-                if _tracking_frame(element, row_inner) is None:
+                if _tracking_frame(element, row_inner, allow_svg_group=True) is None:
                     return None
                 exceptions.append("tracking-frame:" + element["id"])
         result.extend(moved)
@@ -467,7 +468,12 @@ def _panel_states(source, target, context):
             )
         for element in elements:
             if element["type"] == "text" and not _text_fits(element):
-                if _tracking_frame(element, Box(inset, 0, width - 2 * inset, height)) is None:
+                if (
+                    _tracking_frame(
+                        element, Box(inset, 0, width - 2 * inset, height), allow_svg_group=True
+                    )
+                    is None
+                ):
                     valid = False
                     break
                 exceptions.append("tracking-frame:" + element["id"])
@@ -1066,11 +1072,28 @@ def _text_fits(element):
     )
 
 
-def _tracking_frame(element, cell):
-    """Widen a singleton about its authored text anchor; never change its font."""
+def _tracking_frame(element, cell, *, allow_svg_group=False):
+    """Widen a frame about its authored text anchor; never change its font.
+
+    A grouped SVG line has an imported calibrated frame, not a wrapping choice.
+    Native hinted advances can differ slightly between renderers at the current
+    scaled size. Only panel callers may repair that frame, below the existing
+    rigid-group deformation bound and inside the assigned row/panel cell.
+    """
     if _text_fits(element):
         return False
-    if element.get("rotation", 0) or element.get("group_id"):
+    grouped = bool(element.get("group_id"))
+    if element.get("rotation", 0):
+        return None
+    if grouped and (
+        not allow_svg_group
+        or not get_measurer().native_document
+        or not element.get("svg_font_family")
+        or element.get("max_lines") != 1
+        or "\n" in element.get("content", "")
+        or element.get("text_align", "left") not in {"left", "center", "right", "end"}
+        or (element.get("native_text_effects") or {}).get("gradient") is not None
+    ):
         return None
     left, right = cell.x, cell.x + cell.width
     align = element.get("text_align", "left")
@@ -1083,11 +1106,33 @@ def _tracking_frame(element, cell):
     else:
         anchor = element["x"]
         maximum = right - anchor
+    if grouped:
+        # Width and alignment-origin changes remain below the unchanged 5%
+        # source-group guard. Do not grow a frame to hide a genuine reflow or
+        # squeeze unrelated text into its neighbor's row/panel.
+        maximum = min(maximum, element["width"] * 1.049)
     if maximum <= element["width"] + _EPS:
         return None
     # Tracking is frozen by the document contract. Its advances can therefore
     # require more than the similarity-scaled frame, especially when shrinking.
     original_width = element["width"]
+    if grouped:
+        measured = get_measurer().measure(element, element["font_size"], math.inf)
+        preferred = max(original_width, measured.width + 0.02)
+        if preferred > maximum or measured.wrapped != element.get("content", ""):
+            return None
+        repaired = dict(element, width=preferred)
+        repaired["x"] = (
+            anchor - preferred / 2
+            if align == "center"
+            else anchor - preferred
+            if align in {"right", "end"}
+            else anchor
+        )
+        if not _text_fits(repaired):
+            return None
+        element.update(x=repaired["x"], width=preferred)
+        return True
     measured = get_measurer().measure(element, element["font_size"], maximum)
     preferred = max(original_width, min(maximum, measured.width + 0.02))
     widths = sorted(

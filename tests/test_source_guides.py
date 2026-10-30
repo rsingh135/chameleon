@@ -259,6 +259,103 @@ def test_tracking_expands_standalone_frame_without_changing_font_or_tracking():
     assert state.exceptions
 
 
+@pytest.mark.parametrize("align", ["left", "center", "right"])
+def test_native_svg_grouped_line_repairs_actual_advances_without_changing_ink_anchor(align):
+    from engine.layout.geometry import Box
+    from engine.layout.source_guides import _text_fits, _tracking_frame
+    from engine.layout.text import get_measurer
+
+    package = ROOT / "fixtures/open_posters/prepared/opensuse_trifold_front"
+    source = json.loads((package / "source.json").read_text(encoding="utf-8"))
+    # A genuine grouped SVG line, with a fractional native font size. Recreate
+    # the measured Linux failure: glyphs need slightly more room than the
+    # similarity-scaled frame, although the authored line is still one line.
+    element = deepcopy(
+        next(e for e in source["elements"] if e.get("group_id") and e["type"] == "text")
+    )
+    with using_resources(package / "resources/assets", package / "resources/fonts"):
+        advance = get_measurer().measure(element, element["font_size"], float("inf")).width
+        element.update(x=200, y=40, width=advance / 1.02, text_align=align)
+        original = deepcopy(element)
+        assert not _text_fits(element)
+        assert _tracking_frame(element, Box(0, 0, 1000, 300), allow_svg_group=True)
+        factor = {"left": 0, "center": 0.5, "right": 1}[align]
+        assert element["x"] + element["width"] * factor == pytest.approx(
+            original["x"] + original["width"] * factor
+        )
+        assert advance <= element["width"] < original["width"] * 1.05
+        assert _text_fits(element)
+        assert (
+            get_measurer().measure(element, element["font_size"], element["width"]).wrapped
+            == element["content"]
+        )
+        assert {k: v for k, v in element.items() if k not in {"x", "width"}} == {
+            k: v for k, v in original.items() if k not in {"x", "width"}
+        }
+        fitted = deepcopy(element)
+        assert _tracking_frame(element, Box(0, 0, 1000, 300), allow_svg_group=True) is False
+        assert element == fitted
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"rotation": 1},
+        {"max_lines": 2},
+        {"svg_font_family": None},
+        {"text_align": "justify"},
+        {"native_text_effects": {"gradient": {"kind": "linear"}}},
+        {"content": "One\ntwo"},
+    ],
+)
+def test_native_svg_group_frame_repair_rejects_unproven_or_frame_dependent_lines(change):
+    from engine.layout.geometry import Box
+    from engine.layout.source_guides import _tracking_frame
+    from engine.layout.text import get_measurer
+
+    package = ROOT / "fixtures/open_posters/prepared/opensuse_trifold_front"
+    element = dict(
+        _text("line", "A native grouped line", 40, 18, group_id="authored-group"),
+        font_family="OpenSans-Regular",
+        svg_font_family="Open Sans",
+        max_lines=1,
+    )
+    element.update(change)
+    with using_resources(package / "resources/assets", package / "resources/fonts"):
+        advance = get_measurer().measure(element, element["font_size"], float("inf")).width
+        element["width"] = advance / 1.02
+        before = deepcopy(element)
+        assert _tracking_frame(element, Box(0, 0, 1000, 300), allow_svg_group=True) is None
+        assert element == before
+
+
+def test_native_svg_group_frame_repair_keeps_strict_cell_and_group_limits():
+    from engine.layout.geometry import Box
+    from engine.layout.source_guides import _tracking_frame
+    from engine.layout.text import get_measurer
+
+    package = ROOT / "fixtures/open_posters/prepared/opensuse_trifold_front"
+    element = dict(
+        _text("line", "A native grouped line", 40, 18, group_id="authored-group"),
+        x=10,
+        text_align="left",
+        font_family="OpenSans-Regular",
+        svg_font_family="Open Sans",
+        max_lines=1,
+    )
+    with using_resources(package / "resources/assets", package / "resources/fonts"):
+        advance = get_measurer().measure(element, element["font_size"], float("inf")).width
+        element["width"] = advance / 1.02
+        before = deepcopy(element)
+        assert _tracking_frame(element, Box(0, 0, 1000, 300)) is None
+        assert _tracking_frame(element, Box(10, 0, advance - 1, 300), allow_svg_group=True) is None
+        assert element == before
+        element["width"] = advance / 1.06
+        before = deepcopy(element)
+        assert _tracking_frame(element, Box(0, 0, 1000, 300), allow_svg_group=True) is None
+        assert element == before
+
+
 def test_vector_provenance_allows_pair_rows_but_unmarked_photo_does_not():
     source = _simple()
     for i, y in enumerate([320, 450, 580]):

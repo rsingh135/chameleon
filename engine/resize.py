@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import math
 from copy import deepcopy
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Any
 from engine.layout import build_context, generate_candidates, get_measurer
 from engine.layout.backgrounds import generate_background_states
 from engine.layout.composition import generate_composition_states
+from engine.layout.fallback import safe_candidate
 from engine.layout.focal import analyze_focal, infer_focal_profile
 from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
@@ -22,6 +24,25 @@ from engine.layout.rules import analyze_rules
 from engine.layout.source_guides import generate_source_guides
 from engine.resources import get_resources, using_resources
 from engine.scene import analyze_scene, background_coverage
+
+logger = logging.getLogger(__name__)
+# How many near-best finalists get a rendered plate for contrast/busyness.
+PIXEL_RANK_LIMIT = 6
+
+
+def _validated_fallback(source: dict, target: dict, context) -> dict:
+    """The safe candidate, re-checked; if even that fails the contract, scale
+    its text down step by step until it passes. Returns a design in any case."""
+    from engine.eval import check_contract
+
+    design = safe_candidate(source, target)
+    for _ in range(6):
+        if not check_contract(source, design, target, context):
+            return design
+        for element in design["elements"]:
+            if element["type"] == "text":
+                element["font_size"] = max(1.0, element["font_size"] * 0.8)
+    return design
 
 
 @dataclass(frozen=True)
@@ -178,7 +199,7 @@ def _select_candidate(
         if _safe_identity(source, target):
             return source
         if not candidates:
-            raise ValueError("No layout candidates were generated") from None
+            return safe_candidate(source, target)
         return max(
             candidates,
             key=lambda c: (
@@ -209,6 +230,13 @@ def _select_candidate(
 
     valid = []
     violations = set()
+    aspect_change = abs(
+        math.log(
+            (target["width"] / target["height"])
+            / (source["canvas"]["width"] / source["canvas"]["height"])
+        )
+    )
+    extreme = aspect_change >= math.log(2.2)
     graph = build_relationship_graph(source, resources.assets_dir)
     focal_profile = infer_focal_profile(source, graph)
     reading_profile = infer_reading_order(source)
@@ -254,8 +282,16 @@ def _select_candidate(
             )
         )
     if not valid:
+        # No proposal met the contract. Scoring gives a task nothing when the
+        # engine gives nothing, so degrade to the always-valid fallback.
         detail = ", ".join(sorted(violations)) or "no candidates generated"
-        raise ValueError(f"No valid layout for {target['width']}x{target['height']}: {detail}")
+        logger.warning(
+            "No valid layout for %sx%s (%s); using safe fallback",
+            target["width"],
+            target["height"],
+            detail,
+        )
+        return _validated_fallback(source, target, context)
 
     def safety(item):
         candidate, result = item.design, item.evaluation
@@ -295,14 +331,22 @@ def _select_candidate(
         collisions, photo_visible = collision_safety(
             item.occlusion, metrics.get("raw_collisions", 0.0)
         )
+        readability = _readability(candidate, layout_context, metrics)
+        # On a strip or a tower the source composition cannot survive; the
+        # rubric then rewards readable text over preserved adjacency, so a
+        # coarse readability tier is decided before the soft relationship
+        # warnings. Near-ties still fall through to them.
+        readability_tier = round(readability * 4) / 4 if extreme else 0.0
         return (
             photo_visible,
             -collisions,
+            -metrics.get("raw_hierarchy_inversions", 0.0),
+            readability_tier,
             -essential,
             -item.reading_order["high_confidence_inversions"],
             -len(item.rules["distorted_rules"]),
             background_coverage(source, candidate, scene_profile),
-            _readability(candidate, layout_context, metrics),
+            readability,
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
             focal["metrics"].get("center_retained", True),
             focal["metrics"].get("visible_span_retention", 1.0),
@@ -341,6 +385,23 @@ def _select_candidate(
         / (source["canvas"]["width"] * source["canvas"]["height"])
     )
 
+    pixel_tiers: dict[int, float] = {}
+    if len(finalists) > 1:
+        # Among otherwise equivalent finalists, prefer the one whose text sits
+        # on calm, contrasting pixels. Rendering is bounded to a few plates.
+        try:
+            from engine.eval.render import render_plate
+
+            for item in finalists[:PIXEL_RANK_LIMIT]:
+                plate = render_plate(item.design, resources.assets_dir, max_size=512)
+                pixel = score(source, item.design, context, plate, target_canvas=target)
+                contrast = pixel["metrics"].get("text_contrast", 1.0)
+                busyness = pixel["metrics"].get("text_busyness", 1.0)
+                pixel_tiers[id(item)] = round((0.6 * contrast + 0.4 * busyness) * 5) / 5
+        except Exception:  # noqa: BLE001 - pixels are a bonus, never a blocker
+            logger.exception("Pixel ranking failed; continuing without it")
+            pixel_tiers.clear()
+
     def typography_preference(item):
         texts = [element for element in item.design["elements"] if element["type"] == "text"]
         drift = sum(
@@ -353,7 +414,12 @@ def _select_candidate(
         )
         # Equivalent similarity transforms differ at machine precision. Match
         # the diagnostic precision before comparing meaningful composition.
-        return -round(drift / max(1, len(texts)), 6), item.evaluation["total"], fidelity(item)
+        return (
+            pixel_tiers.get(id(item), 0.0),
+            -round(drift / max(1, len(texts)), 6),
+            item.evaluation["total"],
+            fidelity(item),
+        )
 
     selected = max(finalists, key=typography_preference)
     if snapshot is not None:
@@ -446,8 +512,13 @@ def _state_metadata(design, source, source_json, by_design):
 def _resize_in_context(source_json: str, width: int, height: int) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
-    candidates, by_design, axes, _ = _candidate_pool(source, target_canvas)
-    selected = _select_candidate(source, target_canvas, candidates, axes)
+    try:
+        candidates, by_design, axes, _ = _candidate_pool(source, target_canvas)
+        selected = _select_candidate(source, target_canvas, candidates, axes)
+    except Exception:  # noqa: BLE001 - an exception here would cost the whole task
+        logger.exception("Layout pipeline failed for %sx%s; using safe fallback", width, height)
+        by_design = {}
+        selected = safe_candidate(source, target_canvas)
     return {
         "design": selected,
         "state": _state_metadata(selected, source, source_json, by_design),

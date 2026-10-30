@@ -1,0 +1,21 @@
+# Only what the engine needs at run time goes into the image: engine/,
+# renderer/, brand_kit/ and the schema (see Dockerfile COPY lines). Keep the
+# build context small so builds are fast and nothing stray is shipped.
+.git
+.venv
+.github
+.ruff_cache
+.pytest_cache
+__pycache__
+*.pyc
+docs
+fixtures
+integrations
+viewer
+tests
+tools
+eval
+eval_out*
+output
+input
+*.md

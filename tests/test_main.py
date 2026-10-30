@@ -75,7 +75,10 @@ def test_malformed_task_does_not_stop_later_tasks(batch, task, capsys):
     assert "b_valid.json" in captured.out
 
 
-def test_contract_failure_is_not_reported_as_success(batch, task, monkeypatch, capsys):
+def test_structural_contract_failure_ships_the_fallback(batch, task, monkeypatch, capsys):
+    """An output with wrong ids scores nothing; no output scores nothing too.
+    The CLI therefore substitutes the always-valid fallback, reports why on
+    stderr, and still writes both artifacts."""
     inputs, outputs = batch
     (inputs / "invalid.json").write_text(json.dumps(task), encoding="utf-8")
 
@@ -83,8 +86,10 @@ def test_contract_failure_is_not_reported_as_success(batch, task, monkeypatch, c
         return {"canvas": target, "elements": []}
 
     monkeypatch.setattr(cli, "resize", drop_element)
-    assert cli.main() == 1
-    assert not (outputs / "invalid_output.png").exists()
+    assert cli.main() == 0
+    assert (outputs / "invalid_output.png").stat().st_size > 0
+    written = json.loads((outputs / "invalid_output.json").read_text(encoding="utf-8"))
+    assert [e["id"] for e in written["elements"]] == [e["id"] for e in task["source"]["elements"]]
     assert "id_missing" in capsys.readouterr().err
 
 

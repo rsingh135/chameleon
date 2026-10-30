@@ -195,6 +195,35 @@ def test_validated_model_also_remains_review_only(document, tmp_path, monkeypatc
     assert report["targets"] == []
 
 
+def test_protect_policy_passes_validated_prediction_to_resize(document, tmp_path, monkeypatch):
+    import engine.resize as resize
+
+    source, assets, fonts, profile = document
+    monkeypatch.setattr(harness, "_analyze", lambda *_args: deepcopy(profile))
+    calls = []
+
+    def protected(value, target, *, scene_proposal):
+        calls.append(deepcopy(scene_proposal))
+        return {"design": deepcopy(value), "state": {"name": "test-protect"}}
+
+    monkeypatch.setattr(resize, "resize_with_state", protected)
+    proposed = tmp_path / "proposal.json"
+    proposed.write_text(json.dumps(_response(profile)), encoding="utf-8")
+    report = harness.inspect_scene(
+        source,
+        assets,
+        fonts,
+        tmp_path / "out",
+        targets=[source["canvas"]],
+        model_response=proposed,
+        model_policy="protect",
+    )
+    assert calls == [_response(profile)]
+    assert report["model_review"]["used_for_resize"] is True
+    assert report["model_review"]["authority"] == "crop_veto_only"
+    assert report["targets"][0]["status"] == "contract_valid"
+
+
 def test_mid_run_implementation_change_is_labeled_incomplete(document, tmp_path, monkeypatch):
     source, assets, fonts, profile = document
     monkeypatch.setattr(harness, "_analyze", lambda *_args: deepcopy(profile))

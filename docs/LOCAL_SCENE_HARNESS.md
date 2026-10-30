@@ -5,6 +5,12 @@ is loaded, renders its actual source, and optionally renders requested resize
 targets. It does not start a server, download models, alter author originals,
 or enable a model in production selection.
 
+An operator can now explicitly connect a source-bound local prediction to the
+resize backend with `--model-policy protect`. This only vetoes new crops of
+products/logos classified with confidence at least 0.8; it never creates a
+background cover permission. The ordinary viewer and default CLI remain on
+their existing deterministic policy.
+
 Run from the repository root:
 
 ```powershell
@@ -68,6 +74,22 @@ A failed resize is recorded explicitly; no substitute preview is generated.
 visual approval and never claims an Adobe Express host round trip.
 
 ## Optional local model proposals
+
+`--model-policy review` is the default. With `--model-policy protect`, a validated
+response is passed to `engine.resize.resize_with_state(..., scene_proposal=...)`.
+Every target state records the proposal digest, protected IDs and candidate veto
+count. Low confidence and unknown roles abstain; background predictions only
+corroborate the independent source/pixel policy. Model inputs have a separate
+result-cache key and are rebound to current asset bytes before cache access.
+Invalid responses fall back to the ordinary deterministic path in the harness.
+The public resize API rejects invalid/stale supplied proposals explicitly.
+
+The protection retains each product/logo's authored crop, image proportions,
+and image position while allowing uniform scaling and cluster translation.
+Protected-region suggestions remain review evidence: the current classifier
+does not measure object boxes. Confidence is a pilot score, not a calibrated
+probability or proof of semantic correctness. See the local scene-model pilot
+instructions for the actual provider, training and evaluation status.
 
 No model is installed or started automatically. A review response can be loaded
 with `--model-response response.json`, or an explicitly chosen local program can

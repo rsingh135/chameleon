@@ -22,6 +22,7 @@ from engine.layout.rules import analyze_rules
 from engine.layout.source_guides import generate_source_guides
 from engine.resources import get_resources, using_resources
 from engine.scene import analyze_scene, background_coverage
+from engine.scene_model import constrain_candidates, validate_model_response
 
 
 @dataclass(frozen=True)
@@ -386,13 +387,25 @@ def _select_candidate(
 
 @lru_cache(maxsize=64)
 def _resize_cached(
-    source_json: str, width: int, height: int, assets_dir: str, fonts_dir: str
+    source_json: str,
+    width: int,
+    height: int,
+    assets_dir: str,
+    fonts_dir: str,
+    scene_proposal_json: str = "",
 ) -> dict:
     with using_resources(assets_dir, fonts_dir):
-        return _resize_in_context(source_json, width, height)
+        return _resize_in_context(
+            source_json,
+            width,
+            height,
+            scene_proposal=json.loads(scene_proposal_json) if scene_proposal_json else None,
+        )
 
 
-def _candidate_pool(source, target_canvas, *, capture_origins=False):
+def _candidate_pool(
+    source, target_canvas, *, capture_origins=False, scene_proposal=None, model_trace=None
+):
     candidates = generate_candidates(source, target_canvas)
     legacy_count = len(candidates)
     graph = build_relationship_graph(source)
@@ -429,6 +442,12 @@ def _candidate_pool(source, target_canvas, *, capture_origins=False):
                     "sizing_exceptions": list(getattr(state, "exceptions", ())),
                 }
             )
+    if scene_proposal is not None:
+        candidates, trace = constrain_candidates(
+            source, candidates, scene_proposal, analyze_scene(source)
+        )
+        if model_trace is not None:
+            model_trace.update(trace)
     return candidates, by_design, axes, origins
 
 
@@ -443,14 +462,20 @@ def _state_metadata(design, source, source_json, by_design):
     }
 
 
-def _resize_in_context(source_json: str, width: int, height: int) -> dict:
+def _resize_in_context(source_json: str, width: int, height: int, *, scene_proposal=None) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
-    candidates, by_design, axes, _ = _candidate_pool(source, target_canvas)
+    model_trace = {}
+    candidates, by_design, axes, _ = _candidate_pool(
+        source, target_canvas, scene_proposal=scene_proposal, model_trace=model_trace
+    )
     selected = _select_candidate(source, target_canvas, candidates, axes)
+    state = _state_metadata(selected, source, source_json, by_design)
+    if scene_proposal is not None:
+        state["scene_model"] = model_trace
     return {
         "design": selected,
-        "state": _state_metadata(selected, source, source_json, by_design),
+        "state": state,
     }
 
 
@@ -517,9 +542,13 @@ def resize_with_state(
     *,
     assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
+    scene_proposal: dict | None = None,
 ) -> dict:
     """Return a fresh design and the exact declared state used during selection."""
     with using_resources(assets_dir, fonts_dir) as resources:
+        if scene_proposal is not None:
+            # Rebind current asset bytes even on a result-cache hit.
+            scene_proposal = validate_model_response(scene_proposal, analyze_scene(source))
         return deepcopy(
             _resize_cached(
                 json.dumps(source, sort_keys=True),
@@ -527,6 +556,9 @@ def resize_with_state(
                 target_canvas["height"],
                 str(resources.assets_dir),
                 str(resources.fonts_dir),
+                json.dumps(scene_proposal, sort_keys=True, allow_nan=False)
+                if scene_proposal is not None
+                else "",
             )
         )
 
@@ -537,12 +569,17 @@ def resize(
     *,
     assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
+    scene_proposal: dict | None = None,
 ) -> dict[str, Any]:
     """Adapt composition without changing the supplied assets, fonts or copy.
 
     Deterministic, offline, and does not mutate either argument. A bounded task
     cache speeds up repeated viewer requests; each caller receives its own copy.
     """
-    return resize_with_state(source, target_canvas, assets_dir=assets_dir, fonts_dir=fonts_dir)[
-        "design"
-    ]
+    return resize_with_state(
+        source,
+        target_canvas,
+        assets_dir=assets_dir,
+        fonts_dir=fonts_dir,
+        scene_proposal=scene_proposal,
+    )["design"]

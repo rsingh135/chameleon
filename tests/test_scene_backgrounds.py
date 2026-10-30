@@ -64,6 +64,34 @@ def test_initial_scene_distinguishes_background_and_caption_support(rooftop):
     assert analyze_scene(rooftop)["images"][0]["allow_cover"] is True
 
 
+def test_opt_in_model_protects_product_crop_without_contaminating_baseline_cache(rooftop):
+    from engine.resize import resize_with_state
+
+    profile = analyze_scene(rooftop)
+    image = profile["images"][0]
+    proposal = {
+        "schema_version": 1,
+        "source_digest": profile["source_digest"],
+        "scene_digest": profile["scene_digest"],
+        "images": [
+            {
+                "element_id": image["element_id"],
+                "asset_sha256": image["asset_sha256"],
+                "proposed_role": "product",
+                "confidence": 0.95,
+            }
+        ],
+    }
+    baseline = resize_with_state(rooftop, TARGETS[1])
+    protected = resize_with_state(rooftop, TARGETS[1], scene_proposal=proposal)
+    assert baseline["state"]["topology"] == "source-background-cover"
+    assert protected["state"]["scene_model"]["candidates_vetoed"] >= 3
+    assert protected["state"]["topology"] != baseline["state"]["topology"]
+    assert check_contract(rooftop, protected["design"], TARGETS[1]) == []
+    assert resize_with_state(rooftop, TARGETS[1]) == baseline
+    assert "scene_model" not in baseline["state"]
+
+
 @pytest.mark.parametrize("role", ["product", "hero", "logo"])
 def test_explicit_foreground_role_cannot_be_overridden_by_background_geometry(rooftop, role):
     source = deepcopy(rooftop)

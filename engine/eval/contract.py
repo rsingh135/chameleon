@@ -116,6 +116,7 @@ def check_contract(
     context = context or build_context(source)
     cbox = canvas_box(canvas)
     measurer = get_measurer(context.fonts_dir)
+    scene = None
 
     for el in candidate["elements"]:
         eid = el["id"]
@@ -137,8 +138,20 @@ def check_contract(
             # numbers never reach bounds, aspect ratios or text measurement.
             continue
 
+        cover, support = False, False
+        if el["type"] == "image" and src.get("fit") == "fill":
+            from engine.scene import analyze_scene, approved_cover, approved_support
+
+            if scene is None:
+                scene = analyze_scene(
+                    source, assets_dir=context.assets_dir, fonts_dir=context.fonts_dir
+                )
+            cover = approved_cover(scene, el, canvas)
+            support = approved_support(scene, el, canvas)
         for f in FROZEN_FIELDS:
             if f in src and el.get(f) != src[f]:
+                if f == "fit" and cover:
+                    continue
                 out.append(
                     Violation("frozen_field_changed", eid, f"{f}: {src[f]!r} -> {el.get(f)!r}")
                 )
@@ -157,7 +170,11 @@ def check_contract(
                 )
             )
 
-        if el["type"] == "image" and src.get("fit", "contain") != "cover":
+        if (
+            el["type"] == "image"
+            and src.get("fit", "contain") != "cover"
+            and not (cover or support)
+        ):
             src_ratio = src["width"] / src["height"] if src["height"] else 0
             if src_ratio:
                 drift = abs(el["width"] / el["height"] - src_ratio) / src_ratio

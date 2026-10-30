@@ -7,6 +7,7 @@ and provenance. Candidates are measured against the original graph only.
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import asdict, dataclass
 from functools import lru_cache
@@ -106,6 +107,7 @@ class SourceRelationshipGraph:
     fonts_dir: str | None = None
     overlays: tuple[SourceOverlay, ...] = ()
     reading_profile: ReadingOrderProfile | None = None
+    source_json: str | None = None
 
 
 def _primary(box: Box, axis: str) -> tuple[float, float]:
@@ -980,6 +982,7 @@ def build_relationship_graph(
         str(resources.fonts_dir),
         overlays,
         infer_reading_order(source),
+        json.dumps(source, sort_keys=True, separators=(",", ":"), allow_nan=False),
     )
 
 
@@ -1371,6 +1374,15 @@ def analyze_relationships(
     # so check raw element frames rather than requiring two foreground units.
     for overlay in graph.overlays:
         layer, photo = by_id[overlay.overlay_id], by_id[overlay.underlay_id]
+        viewport = False
+        if graph.source_json and photo.get("fit") == "cover" and layer.get("fit") == "fill":
+            from engine.scene import analyze_scene, approved_cover, support_retained
+
+            original_scene = json.loads(graph.source_json)
+            scene = analyze_scene(original_scene, assets_dir=graph.assets_dir)
+            viewport = approved_cover(scene, photo, candidate["canvas"]) and support_retained(
+                original_scene, candidate, scene, layer["id"]
+            )
         relative = (
             (layer["x"] - photo["x"]) / max(photo["width"], 1e-9),
             (layer["y"] - photo["y"]) / max(photo["height"], 1e-9),
@@ -1379,7 +1391,7 @@ def analyze_relationships(
         )
         drift = max(abs(a - b) for a, b in zip(relative, overlay.relative_frame, strict=True))
         rotation_drift = abs(layer.get("rotation", 0) - photo.get("rotation", 0))
-        fidelity = math.exp(-drift * 4 - rotation_drift / 30)
+        fidelity = 1.0 if viewport else math.exp(-drift * 4 - rotation_drift / 30)
         values["overlay_attachment"].append(fidelity)
         affected = [overlay.underlay_id, overlay.overlay_id]
         relations.append(
@@ -1388,11 +1400,12 @@ def analyze_relationships(
                 "cluster_id": f"overlay:{overlay.overlay_id}",
                 "element_ids": affected,
                 "relative_frame_error": round(drift, 6),
+                "background_viewport_support": viewport,
                 "score": round(fidelity, 6),
                 "confidence": overlay.confidence,
             }
         )
-        if drift > 0.05 or rotation_drift > 0.5:
+        if (drift > 0.05 and not viewport) or rotation_drift > 0.5:
             warnings.append(
                 {
                     "code": "overlay_attachment",

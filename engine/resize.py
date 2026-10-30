@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from engine.layout import build_context, generate_candidates, get_measurer
+from engine.layout.backgrounds import generate_background_states
 from engine.layout.composition import generate_composition_states
 from engine.layout.focal import analyze_focal, infer_focal_profile
 from engine.layout.focal_states import generate_focal_states
@@ -20,6 +21,7 @@ from engine.layout.relationships import analyze_relationships, build_relationshi
 from engine.layout.rules import analyze_rules
 from engine.layout.source_guides import generate_source_guides
 from engine.resources import get_resources, using_resources
+from engine.scene import analyze_scene, background_coverage
 
 
 @dataclass(frozen=True)
@@ -210,6 +212,7 @@ def _select_candidate(
     graph = build_relationship_graph(source, resources.assets_dir)
     focal_profile = infer_focal_profile(source, graph)
     reading_profile = infer_reading_order(source)
+    scene_profile = analyze_scene(source)
     try:
         occlusion_profile = infer_occlusion_profile(source)
     except (OSError, ValueError, RuntimeError):
@@ -298,6 +301,7 @@ def _select_candidate(
             -essential,
             -item.reading_order["high_confidence_inversions"],
             -len(item.rules["distorted_rules"]),
+            background_coverage(source, candidate, scene_profile),
             _readability(candidate, layout_context, metrics),
             proportions["metrics"].get("rigid_group_error", 0.0) <= math.log(1.05),
             focal["metrics"].get("center_retained", True),
@@ -393,6 +397,7 @@ def _candidate_pool(source, target_canvas, *, capture_origins=False):
     legacy_count = len(candidates)
     graph = build_relationship_graph(source)
     states = (
+        *generate_background_states(source, target_canvas),
         *generate_composition_states(source, target_canvas, graph),
         *generate_grouped_states(source, target_canvas, graph),
         *generate_focal_states(source, target_canvas, graph),

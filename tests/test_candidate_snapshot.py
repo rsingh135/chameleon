@@ -182,15 +182,22 @@ def test_active_and_explicit_resource_contexts_are_restored(task, tmp_path):
     assert get_resources() == original
 
 
-def test_no_valid_baseline_raises_instead_of_inventing_admission(task, monkeypatch):
+def test_no_valid_baseline_falls_back_without_inventing_admission(task, monkeypatch):
+    """When every proposal fails the contract the engine returns the safe
+    fallback; the snapshot admits none of the failed proposals."""
+    from engine.eval import build_context, check_contract
+
     source, target = task
     monkeypatch.setattr(
         engine, "generate_candidates", lambda *_: [{"canvas": target, "elements": []}]
     )
-    with pytest.raises(ValueError, match="id_missing"):
-        engine.collect_candidate_snapshot(source, target)
-    with pytest.raises(ValueError, match="id_missing"):
-        engine.resize(source, target)
+    engine._resize_cached.cache_clear()
+    snapshot = engine.collect_candidate_snapshot(source, target)
+    assert snapshot["admitted_finalist_ids"] == []
+    assert all(not row["contract_valid"] for row in snapshot["candidates"])
+    design = engine.resize(source, target)
+    assert check_contract(source, design, target, build_context(source)) == []
+    engine._resize_cached.cache_clear()
 
 
 def test_snapshot_requires_evaluation_but_default_development_fallback_still_works(

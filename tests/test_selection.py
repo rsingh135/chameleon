@@ -51,12 +51,16 @@ def test_invalid_candidate_cannot_win_a_quality_tie(monkeypatch, design):
     assert module.resize(design, target) == valid
 
 
-def test_all_invalid_candidates_report_the_contract_failure(monkeypatch, design):
+def test_all_invalid_candidates_degrade_to_a_valid_fallback(monkeypatch, design):
+    from engine.eval import build_context, check_contract
+
     invalid = {**deepcopy(design), "canvas": {"width": 300, "height": 100}}
     invalid["elements"] = []
     monkeypatch.setattr(module, "generate_candidates", lambda *_: [invalid])
-    with pytest.raises(ValueError, match="id_missing"):
-        module.resize(design, invalid["canvas"])
+    module._resize_cached.cache_clear()
+    result = module.resize(design, invalid["canvas"])
+    assert check_contract(design, result, invalid["canvas"], build_context(design)) == []
+    module._resize_cached.cache_clear()
 
 
 def test_source_aware_ranking_keeps_the_hero_prominent(monkeypatch):

@@ -22,6 +22,7 @@ from io import BytesIO
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from engine.design_semantics import audit_semantic_preservation, describe_design
 from engine.eval import build_context, score
 from engine.eval.catalogue import CATALOGUE
 from engine.eval.occlusion import conservative_occlusion
@@ -305,6 +306,20 @@ def _resize_response(value, started, *, result_hit, source_hit):
     return value
 
 
+def _source_semantics(source, state, *, assets_dir, fonts_dir):
+    candidate = state.get("design_semantics")
+    if candidate is not None:
+        try:
+            # The source-to-source audit validates digest and complete coverage.
+            # Omit resources here so validation repeats no native ink analysis.
+            audit_semantic_preservation(source, source, candidate)
+        except (ArithmeticError, IndexError, KeyError, TypeError, ValueError):
+            pass
+        else:
+            return deepcopy(candidate)
+    return describe_design(source, assets_dir=assets_dir, fonts_dir=fonts_dir)
+
+
 def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -> dict:
     validate_request(payload)
     # Engine/renderer caches are reused, and one request owns them at a time.
@@ -351,6 +366,9 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         design = plan["design"]
         if design.get("canvas") != requested_target:
             raise RuntimeError("The processor returned a mismatched target canvas.")
+        design_semantics = _source_semantics(
+            source, plan["state"], assets_dir=assets_dir, fonts_dir=fonts_dir
+        )
         context = build_context(source, assets_dir, fonts_dir)
         plate = render_plate(design, assets_dir, fonts_dir, max_size=1024)
         result = score(source, design, context, plate, target)
@@ -385,6 +403,7 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
                 "rules": rules,
                 "reading_order": reading_order,
                 "occlusion": occlusion,
+                "design_semantics": design_semantics,
                 "layout_state": plan["state"],
             },
             "warnings": list(dict.fromkeys(source_warnings + output_warnings)),

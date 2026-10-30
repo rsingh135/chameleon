@@ -93,6 +93,27 @@
       if (element.type === 'text' && (typeof element.content !== 'string' || !Number.isFinite(element.font_size) || element.font_size <= 0)) throw new Error(`Text element ${element.id} needs content and a positive font size.`);
     }
   }
+  function validateSemantics(value, source) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)
+      || value.source_canvas?.width !== source.canvas.width || value.source_canvas?.height !== source.canvas.height
+      || !Array.isArray(value.elements) || value.elements.length !== source.elements.length) return null;
+    const ids = new Set(source.elements.map(element => element.id)), seen = new Set();
+    for (const row of value.elements) {
+      if (!row || !ids.has(row.element_id) || seen.has(row.element_id)
+        || !['purpose', 'design_purpose', 'provenance'].every(key => typeof row[key] === 'string')
+        || (row.rigid_group !== null && typeof row.rigid_group !== 'string')
+        || !Array.isArray(row.anchors) || !row.anchors.every(anchor => anchor && Array.isArray(anchor.edges)
+          && anchor.edges.every(edge => ['top', 'right', 'bottom', 'left'].includes(edge))
+          && (anchor.horizontal === undefined || ['left', 'center', 'right'].includes(anchor.horizontal)))
+        || !Array.isArray(row.relationships) || !row.relationships.every(relation => relation
+          && ids.has(relation.source_id) && ids.has(relation.target_id)
+          && [relation.source_id, relation.target_id].includes(row.element_id)
+          && typeof relation.type === 'string'
+          && (relation.origin === undefined || typeof relation.origin === 'string'))) return null;
+      seen.add(row.element_id);
+    }
+    return value;
+  }
   function validateResult(value, source, target) {
     if (!value || !value.report || !Array.isArray(value.report.violations) || value.report.violations.some(message => typeof message !== 'string')) throw new Error('The engine returned an incomplete result report. Retry the resize.');
     validateDesign(value.design);
@@ -107,6 +128,9 @@
     }
     if (value.warnings !== undefined && (!Array.isArray(value.warnings) || value.warnings.some(message => typeof message !== 'string'))) throw new Error('The engine returned invalid warnings. Retry the resize.');
     const report = {...value.report};
+    const semantics = validateSemantics(report.design_semantics, source);
+    if (semantics) report.design_semantics = semantics;
+    else delete report.design_semantics;
     for (const key of ['style', 'relationships', 'proportions', 'focal']) {
       if (report[key] == null) continue;
       if (typeof report[key] !== 'object' || Array.isArray(report[key]) || (report[key].warnings !== undefined && (!Array.isArray(report[key].warnings) || report[key].warnings.some(warning => !warning || typeof warning.message !== 'string')))) throw new Error('The engine returned invalid review diagnostics. Retry the resize.');
@@ -307,12 +331,44 @@
     $('propertyTitle').textContent = elementLabel(el);
     $('propertyType').textContent = `${el.type} · ${view === 'source' ? 'Original' : 'Result'}`;
     $('properties').textContent = JSON.stringify(el, null, 2);
+    renderSemanticProperties(id);
     $('propertyHint').hidden = true;
     $('geometry').hidden = false;
     $('propertyPanel').open = true;
     for (const [field, id] of [['x', 'propX'], ['y', 'propY'], ['width', 'propWidth'], ['height', 'propHeight']]) $(id).textContent = `${Number(el[field].toFixed(1))} px`;
     for (const button of $('elements').children) button.setAttribute('aria-pressed', String(button.dataset.id === id));
     redraw();
+  }
+  function renderSemanticProperties(id) {
+    const row = state.result?.report.design_semantics?.elements.find(element => element.element_id === id);
+    const fields = $('semanticFields');
+    fields.replaceChildren();
+    $('designSemantics').hidden = !row;
+    if (!row) return;
+    const words = value => value.replace(/_/g, ' ');
+    const field = (label, value) => {
+      const item = document.createElement('div'), term = document.createElement('dt'), detail = document.createElement('dd');
+      term.textContent = label;
+      if (typeof value === 'string') detail.textContent = value;
+      else detail.append(value);
+      item.append(term, detail); fields.append(item);
+    };
+    field('Purpose', row.design_purpose);
+    field('Role', words(row.purpose));
+    field('Evidence', words(row.provenance));
+    field('Source anchors', row.anchors.length ? row.anchors.map(anchor =>
+      `${anchor.edges.join(' + ')}${anchor.horizontal ? ` · ${anchor.horizontal} aligned` : ''}`
+    ).join('; ') : 'None inferred');
+    field('Authored group', row.rigid_group || 'None declared');
+    if (row.relationships.length) {
+      const list = document.createElement('ul');
+      for (const relation of row.relationships) {
+        const item = document.createElement('li');
+        item.textContent = `${words(relation.type)}: ${relation.source_id} → ${relation.target_id}${relation.origin ? ` · ${words(relation.origin)}` : ''}`;
+        list.append(item);
+      }
+      field('Connections', list);
+    } else field('Connections', 'None recorded');
   }
   function renderElements() {
     resetInspector();
@@ -336,6 +392,8 @@
     $('properties').textContent = '';
     $('propertyHint').hidden = false;
     $('geometry').hidden = true;
+    $('designSemantics').hidden = true;
+    $('semanticFields').replaceChildren();
   }
   function enableDownloads() {
     const downloadable = hasResources(state.task) ? {...state.task, source: state.result.design, target_canvas: state.result.design.canvas} : state.result.design;

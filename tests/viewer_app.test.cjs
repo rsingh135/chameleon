@@ -30,6 +30,29 @@ const rendered = payload => ({
   source_png: png('source'), output_png: png('output'), elapsed_ms: 20,
   warnings: [], report: {violations: []},
 });
+const semanticReport = source => ({
+  source_canvas: {...source.canvas},
+  elements: source.elements.map((element, index) => ({
+    element_id: element.id,
+    purpose: index ? 'corner_brand_mark' : 'background_layer',
+    design_purpose: index ? 'Keep the emblem attached to its source corner.' : 'Provide the design background.',
+    provenance: index ? 'geometry_inferred' : 'authored_metadata',
+    rigid_group: index ? 'brand-cluster' : null,
+    anchors: index ? [{edges: ['top', 'right'], horizontal: 'right'}] : [],
+    relationships: index ? [{source_id: element.id, target_id: source.elements[0].id,
+      type: 'overlays_background', origin: 'source_geometry'}] : [],
+    confidence: 0.973,
+  })),
+});
+const renderedWithSemantics = payload => {
+  const result = rendered(payload);
+  result.report.design_semantics = semanticReport(payload.source);
+  return result;
+};
+const elementText = element => element.textContent + element.children.map(elementText).join('');
+const semanticFields = app => Object.fromEntries(app.elements.semanticFields.children.map(field => [
+  field.children[0].textContent, elementText(field.children[1]),
+]));
 
 function application({meta = metadata(), posters = [], workspace = false, storageFailure = false, search = ''} = {}) {
   const environment = {
@@ -478,6 +501,138 @@ test('inspection uses the clicked canvas and follows Original/Result view change
   await app.views.find(button => button.dataset.view === 'result').fire('click');
   assert.equal(app.elements.propX.textContent, '40 px');
   assert.match(app.elements.propertyType.textContent, /Result/);
+});
+
+test('semantic inspection follows the same source element across Original and Result geometry', async () => {
+  const app = application(); await app.flush();
+  app.resizeHandler = payload => {
+    const result = renderedWithSemantics(payload); result.design.elements[1].x = 40; return result;
+  };
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.equal(app.elements.designSemantics.hidden, true);
+  app.elements.outputCanvas.onclick({clientX: 45, clientY: 15});
+  const expected = {
+    Purpose: 'Keep the emblem attached to its source corner.',
+    Role: 'corner brand mark',
+    Evidence: 'geometry inferred',
+    'Source anchors': 'top + right · right aligned',
+    'Authored group': 'brand-cluster',
+    Connections: 'overlays background: hero → paper · source geometry',
+  };
+  assert.equal(app.elements.propertyTitle.textContent, 'hero');
+  assert.equal(app.elements.propX.textContent, '40 px');
+  assert.equal(app.elements.designSemantics.hidden, false);
+  assert.deepEqual(semanticFields(app), expected);
+  assert.doesNotMatch(elementText(app.elements.semanticFields), /confidence|0\.973/i);
+
+  await app.views.find(button => button.dataset.view === 'source').fire('click');
+  assert.equal(app.elements.propX.textContent, '10 px');
+  assert.match(app.elements.propertyType.textContent, /Original/);
+  assert.deepEqual(semanticFields(app), expected);
+  await app.views.find(button => button.dataset.view === 'compare').fire('click');
+  app.elements.sourceCanvas.onclick({clientX: 15, clientY: 15});
+  assert.deepEqual(semanticFields(app), expected);
+  await app.views.find(button => button.dataset.view === 'result').fire('click');
+  assert.equal(app.elements.propX.textContent, '40 px');
+  assert.match(app.elements.propertyType.textContent, /Result/);
+  assert.deepEqual(semanticFields(app), expected);
+});
+
+test('a missing optional semantic report keeps inspection and current exports available', async () => {
+  const app = application(); await app.flush();
+  app.elements.outputCanvas.onclick({clientX: 15, clientY: 15});
+  assert.equal(app.elements.propertyTitle.textContent, 'hero');
+  assert.equal(app.elements.designSemantics.hidden, true);
+  assert.equal(app.elements.semanticFields.children.length, 0);
+  assert.equal(app.elements.error.hidden, true);
+  assert.equal(app.elements.downloadJson.getAttribute('aria-disabled'), 'false');
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+  const exported = JSON.parse(await app.blobs.get(app.elements.downloadJson.href).text());
+  assert.deepEqual(exported.elements.map(element => element.id), ['paper', 'hero']);
+});
+
+for (const [name, corrupt] of [
+  ['a mismatched source canvas', report => { report.source_canvas.width += 1; }],
+  ['incomplete source coverage', report => { report.elements.pop(); }],
+  ['duplicate element IDs', report => { report.elements[1].element_id = 'paper'; }],
+  ['an unknown element ID', report => { report.elements[1].element_id = 'unrelated'; }],
+  ['an unknown connection ID', report => { report.elements[1].relationships[0].target_id = 'unrelated'; }],
+  ['a connection unrelated to its row', report => { report.elements[1].relationships[0].source_id = 'paper'; }],
+  ['a non-text purpose', report => { report.elements[1].design_purpose = {text: 'invalid'}; }],
+  ['an invalid source anchor', report => { report.elements[1].anchors[0].edges = ['diagonal']; }],
+]) test(`malformed optional semantics are discarded for ${name} while resize and export succeed`, async () => {
+  const app = application(); await app.flush();
+  app.resizeHandler = payload => {
+    const result = renderedWithSemantics(payload); corrupt(result.report.design_semantics); return result;
+  };
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  app.elements.outputCanvas.onclick({clientX: 15, clientY: 15});
+  assert.equal(app.elements.propertyTitle.textContent, 'hero');
+  assert.equal(app.elements.designSemantics.hidden, true);
+  assert.equal(app.elements.semanticFields.children.length, 0);
+  assert.equal(app.elements.error.hidden, true);
+  assert.equal(app.elements.downloadJson.getAttribute('aria-disabled'), 'false');
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+  const exported = JSON.parse(await app.blobs.get(app.elements.downloadJson.href).text());
+  assert.deepEqual(exported.canvas, {width: 100, height: 100});
+});
+
+test('semantic descriptions and connections render untrusted markup as literal text', async () => {
+  const app = application(); await app.flush();
+  const injected = '<img src=x onerror="alert(1)">';
+  app.resizeHandler = payload => {
+    const result = renderedWithSemantics(payload);
+    const row = result.report.design_semantics.elements[1];
+    row.design_purpose = row.purpose = row.provenance = row.rigid_group = injected;
+    row.relationships[0].type = row.relationships[0].origin = injected;
+    return result;
+  };
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  app.elements.outputCanvas.onclick({clientX: 15, clientY: 15});
+  assert.equal(app.elements.designSemantics.hidden, false);
+  const fields = semanticFields(app);
+  for (const name of ['Purpose', 'Role', 'Evidence', 'Authored group']) assert.equal(fields[name], injected);
+  assert.equal(fields.Connections, `${injected}: hero → paper · ${injected}`);
+  for (const field of app.elements.semanticFields.children) {
+    const detail = field.children[1];
+    if (field.children[0].textContent === 'Connections') {
+      assert.equal(detail.children[0].tagName, 'UL');
+      assert.equal(detail.children[0].children[0].tagName, 'LI');
+      assert.equal(detail.children[0].children[0].children.length, 0);
+    } else assert.equal(detail.children.length, 0);
+  }
+});
+
+test('a new source clears semantic inspection and an older response cannot replace its current panel', async () => {
+  const app = application(); await app.flush();
+  app.resizeHandler = renderedWithSemantics;
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  app.elements.outputCanvas.onclick({clientX: 15, clientY: 15});
+  assert.equal(app.elements.designSemantics.hidden, false);
+  const oldResult = deferred(), freshResult = deferred(); let count = 0;
+  app.resizeHandler = () => ++count === 1 ? oldResult.promise : freshResult.promise;
+  const oldRun = app.elements.resizeForm.fire('submit'); await app.flush();
+  const oldRequest = app.requests.at(-1);
+  const task = sample('fresh').task; task.source.elements[1].id = 'fresh-hero';
+  await app.file('fresh.json', task); await app.flush();
+  const freshRequest = app.requests.at(-1);
+  assert.equal(oldRequest.signal.aborted, true);
+  assert.equal(app.elements.designSemantics.hidden, true);
+  assert.equal(app.elements.semanticFields.children.length, 0);
+
+  const fresh = renderedWithSemantics(freshRequest.payload);
+  fresh.report.design_semantics.elements[1].design_purpose = 'Current imported emblem.';
+  freshResult.resolve(fresh); await app.flush();
+  app.elements.outputCanvas.onclick({clientX: 15, clientY: 15});
+  assert.equal(app.elements.propertyTitle.textContent, 'fresh-hero');
+  assert.equal(semanticFields(app).Purpose, 'Current imported emblem.');
+  oldResult.resolve(renderedWithSemantics(oldRequest.payload)); await oldRun; await app.flush();
+  assert.equal(app.elements.taskName.textContent, 'fresh.json');
+  assert.equal(app.elements.designSemantics.hidden, false);
+  assert.equal(app.elements.propertyTitle.textContent, 'fresh-hero');
+  assert.equal(semanticFields(app).Purpose, 'Current imported emblem.');
+  assert.match(semanticFields(app).Connections, /fresh-hero → paper/);
+  assert.equal(app.elements.downloadJson.getAttribute('aria-disabled'), 'false');
 });
 
 test('pasted plain source keeps the selected target canvas and current exports', async () => {

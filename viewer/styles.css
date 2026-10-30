@@ -168,6 +168,11 @@ a[aria-disabled="true"] { opacity: .4; cursor: default; pointer-events: none; }
 .geometry div { min-width: 0; }
 .geometry dt { color: var(--muted); margin-bottom: 4px; }
 .geometry dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.semantic-properties { border-top: 1px solid var(--divider); margin: 16px 0; padding-top: 16px; }
+.semantic-properties h4 { font-size: 12px; font-weight: 600; margin: 0 0 8px; }
+.semantic-properties .geometry { grid-template-columns: 1fr; margin: 12px 0; }
+.semantic-properties ul { margin: 0; padding-left: 16px; }
+.semantic-properties li + li { margin-top: 8px; }
 .raw-properties summary { font-size: 12px; color: var(--muted); cursor: pointer; }
 .properties pre { max-height: 280px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/16px ui-monospace, monospace; color: var(--muted); margin: 12px 0 0; }
 footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 24px; border-top: 1px solid var(--divider); font-size: 12px; line-height: 16px; color: var(--muted); }

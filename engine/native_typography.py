@@ -7,15 +7,57 @@ The bundled renderer and its default font directory keep their existing path.
 from __future__ import annotations
 
 import math
+from collections import OrderedDict
 from dataclasses import dataclass
 from itertools import accumulate
 from pathlib import Path
+from threading import RLock
 
 import skia
 
 from renderer.converter.convert import _is_italic, _normalize_weight
 
 _BOLD = {"bold", "semibold", "extrabold", "black"}
+_TYPEFACE_CACHE_LIMIT = 32
+_TYPEFACE_CACHE_BYTE_LIMIT = 32 * 1024 * 1024
+_typefaces = OrderedDict()
+_typeface_bytes = 0
+_typeface_lock = RLock()
+
+
+def clear_native_typeface_cache():
+    """Release bounded immutable face entries without retaining document managers."""
+    global _typeface_bytes
+    with _typeface_lock:
+        _typefaces.clear()
+        _typeface_bytes = 0
+
+
+def _native_typeface(data, index=0):
+    """Reuse only the exact face bytes/index; mutable Font objects stay per-call.
+
+    SkTypeface is immutable. Its data, not an alias/path/mtime, establishes
+    identity across documents. Failed parses and oversized faces are not cached.
+    """
+    global _typeface_bytes
+    data = data if isinstance(data, bytes) else bytes(data)
+    key = (data, index)
+    with _typeface_lock:
+        cached = _typefaces.get(key)
+        if cached is not None:
+            _typefaces.move_to_end(key)
+            return cached
+        typeface = skia.Typeface.MakeFromData(data, index)
+        if typeface is None or len(data) > _TYPEFACE_CACHE_BYTE_LIMIT:
+            return typeface
+        _typefaces[key] = typeface
+        _typeface_bytes += len(data)
+        while (
+            len(_typefaces) > _TYPEFACE_CACHE_LIMIT or _typeface_bytes > _TYPEFACE_CACHE_BYTE_LIMIT
+        ):
+            (old_data, _), _ = _typefaces.popitem(last=False)
+            _typeface_bytes -= len(old_data)
+        return typeface
 
 
 def native_font(font_manager, family, weight, style, size):
@@ -27,7 +69,7 @@ def native_font(font_manager, family, weight, style, size):
     antialiasing and the vendor's bundled-brand font policy remain unchanged.
     """
     data = font_manager.lookup(family, weight, style)
-    typeface = skia.Typeface.MakeFromData(data)
+    typeface = _native_typeface(data)
     if typeface is None:
         raise ValueError(f"Invalid native text face {family!r}.")
     font = skia.Font(typeface, float(size))

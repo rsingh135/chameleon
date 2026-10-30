@@ -32,7 +32,7 @@ const rowFor = body => {
 const responseFor = body => ({method, comparable: true, results: [rowFor(body)]});
 
 function application(settings = {}) {
-  const app = {requests: [], posterRequests: [], blobs: new Map(), revoked: [], images: new Map(), timers: new Map(), handler: body => responseFor(body)};
+  const app = {requests: [], posterRequests: [], blobs: new Map(), blobCreations: [], revoked: [], images: new Map(), timers: new Map(), handler: body => responseFor(body)};
   const windowListeners = new Map();
   let methodRequests = 0;
   class Element {
@@ -76,7 +76,9 @@ function application(settings = {}) {
     document: {getElementById: id => elements[id], createElement: tag => new Element(tag), documentElement: {dataset: {}}},
     window: {addEventListener(name, handler) { windowListeners.set(name, handler); }},
     localStorage: {getItem() { if (settings.storageFailure) throw new Error('Storage unavailable'); return null; }, setItem() { if (settings.storageFailure) throw new Error('Storage unavailable'); }},
-    URL: LocalURL, Blob, AbortController, Date, Uint8Array, atob, btoa,
+    URL: LocalURL, Blob: class extends Blob {
+      constructor(parts, options) { super(parts, options); app.blobCreations.push({type: this.type, size: this.size}); }
+    }, AbortController, Date, Uint8Array, atob, btoa,
     Image: class {
       set src(value) { this.url = value; }
       async decode() {
@@ -94,6 +96,8 @@ function application(settings = {}) {
     async fetch(url, options = {}) {
       if (url === '/api/benchmark/method') {
         if (settings.failInitialMethod && ++methodRequests === 1) throw new TypeError('Offline');
+        if (app.methodHandler) return {ok: true, json: async () => app.methodHandler()};
+        if (settings.configuredMethod) return {ok: true, json: async () => settings.configuredMethod};
         return {ok: true, json: async () => method};
       }
       if (url === '/api/samples') return {ok: true, json: async () => ({samples: [sample('one'), sample('two', {width: 555, height: 777})]})};
@@ -161,6 +165,244 @@ test('every scene uses the same explicit target list and frozen method digest', 
   assert.deepEqual(report.targets, [{width: 100, height: 100}, {width: 300, height: 200}]);
   assert.equal(report.visual_review, 'not_reviewed');
   assert.match(app.elements.batchStatus.textContent, /same method and targets/);
+  assert.equal(app.elements.methodName.textContent, 'deterministic-current');
+  assert.match(app.elements.methodPolicy.textContent, /Vision analyzer and learned critic are off/);
+});
+
+for (const [label, model_executed, layout_changed, message] of [
+  ['influenced', true, true, 'ran and influenced the layout'],
+  ['fallback', false, false, 'was requested but did not run; the engine used its fallback'],
+  ['unchanged', true, false, 'ran; no layout change was recorded'],
+]) test(`configured visual planner reports ${label} without claiming better quality`, async () => {
+  const configuredMethod = {...method, analyzer: {enabled: true}, critic: {enabled: label === 'influenced'}};
+  const app = application({configuredMethod}); await app.flush(); await app.addSamples();
+  app.elements.targetSizes.value = '100x100';
+  assert.equal(app.elements.methodName.textContent, 'Current engine · local visual planner requested');
+  assert.match(app.elements.methodPolicy.textContent, /Result traces report whether it ran/);
+  assert.match(app.elements.methodPolicy.textContent, label === 'influenced' ? /A learned critic is configured/ : /The learned critic is off/);
+  const pending = deferred();
+  const reply = body => {
+    const result = responseFor(body); result.method = configuredMethod;
+    result.results[0].result.report.layout_state = {visual_model: {requested: true, model_executed, layout_changed}};
+    return result;
+  };
+  app.handler = body => app.requests.length === 2 ? pending.promise : reply(body);
+  const running = app.run(); await app.flush();
+  const walk = element => [element, ...element.children.flatMap(walk)];
+  const note = walk(app.elements.batchResults).find(element => element.textContent.includes(`Local visual planner ${message}`));
+  assert.ok(note);
+  assert.match(note.textContent, /Visual quality is unreviewed/);
+  assert.doesNotMatch(note.textContent, /improved|better|approved/);
+  pending.resolve(reply(app.requests[1])); await running;
+  assert.ok(walk(app.elements.batchResults).includes(note), 'Later completions must preserve the admitted trace note');
+  assert.ok(app.requests.every(request => request.method === 'deterministic-current' && request.expected_method_digest === method.digest));
+  assert.deepEqual((await app.report()).results[0].result.report.layout_state.visual_model, {requested: true, model_executed, layout_changed});
+});
+
+test('critic-only configuration keeps the legacy method ID without claiming the critic is off', async () => {
+  const app = application({configuredMethod: {...method, analyzer: {enabled: false}, critic: {enabled: true}}});
+  await app.flush();
+  assert.equal(app.elements.methodName.textContent, 'deterministic-current');
+  assert.match(app.elements.methodPolicy.textContent, /Vision analyzer is off; a learned critic is configured/);
+});
+
+test('legacy batch methods keep the 120-second job timer after a short metadata lookup', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  const pending = deferred(); app.handler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  assert.ok([...app.timers.values()].some(timer => timer.milliseconds === 120000));
+  assert.ok(![...app.timers.values()].some(timer => timer.milliseconds === 10000));
+  await app.elements.stopBatch.fire('click'); pending.resolve(responseFor(app.requests[0])); await running;
+});
+
+test('a fresh configured batch method supplies its long POST budget without entering payloads', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  const configured = {...method, analyzer: {enabled: true}, options: {request_policy: {studio_timeout_ms: 630000, benchmark_timeout_ms: 630000, model_configured: true}}};
+  app.methodHandler = () => configured;
+  const pending = deferred(); app.handler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  assert.ok([...app.timers.values()].some(timer => timer.milliseconds === 630000));
+  assert.ok(![...app.timers.values()].some(timer => timer.milliseconds === 120000));
+  app.timeout(120000);
+  assert.equal(app.elements.batchSettings.disabled, true);
+  assert.deepEqual(Object.keys(app.requests[0]).sort(), ['expected_method_digest', 'method', 'scenes', 'targets']);
+  await app.elements.stopBatch.fire('click');
+  pending.resolve({...responseFor(app.requests[0]), method: configured}); await running;
+  assert.equal((await app.report()).method.options.request_policy.benchmark_timeout_ms, 630000);
+});
+
+test('a configured batch deadline rejects late response data and submits no further jobs', async () => {
+  const configuredMethod = {...method, options: {request_policy: {studio_timeout_ms: 630000, benchmark_timeout_ms: 630000, model_configured: true}}};
+  const app = application({configuredMethod}); await app.flush(); await app.addSamples();
+  const pending = deferred(); app.handler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  app.timeout(630000); pending.resolve({...responseFor(app.requests[0]), method: configuredMethod}); await running;
+  assert.equal(app.requests.length, 1);
+  const report = await app.report();
+  assert.equal(report.status, 'interrupted');
+  assert.equal(report.results.length, 0);
+  assert.match(app.elements.batchError.textContent, /Job timed out/);
+});
+
+for (const policy of [null,
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: 0, model_configured: false},
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: true, model_configured: false},
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: 120000.5, model_configured: false},
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: 1500001, model_configured: true},
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: 1},
+]) test(`malformed batch method policy rejects before POST: ${JSON.stringify(policy)}`, async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  app.methodHandler = () => ({...method, options: {request_policy: policy}});
+  await app.run();
+  assert.equal(app.requests.length, 0);
+  assert.match(app.elements.batchError.textContent, /invalid resize runtime policy/);
+  assert.equal(app.elements.batchSettings.disabled, false);
+  assert.equal(app.elements.retryConnection.hidden, false);
+});
+
+test('a late batch metadata response after 10 seconds cannot start an expensive job', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  const pending = deferred(); app.methodHandler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  assert.ok([...app.timers.values()].some(timer => timer.milliseconds === 10000));
+  app.timeout(10000); pending.resolve(method); await running;
+  assert.equal(app.requests.length, 0);
+  assert.match(app.elements.batchError.textContent, /metadata request timed out after 10 seconds/);
+  assert.equal(app.elements.batchSettings.disabled, false);
+});
+
+test('completed exports grow linearly and completed DOM stays alive as later jobs finish', async () => {
+  const app = application(); await app.flush();
+  const task = {...sample('portable').task, assets: [{asset_id: 'exact.png', data_base64: 'ZXhhY3Q='}],
+    fonts: [{family: 'Owned', data_base64: 'Zm9udA=='}], document: {snapshot_id: 'original'}};
+  await app.import([['portable.json', JSON.stringify(task)]]);
+  app.elements.targetSizes.value = '100x100\n200x100\n300x100\n400x100';
+  const second = deferred(), third = deferred();
+  app.handler = body => app.requests.length === 2 ? second.promise : app.requests.length === 3 ? third.promise : responseFor(body);
+  const running = app.run(); await app.flush();
+  assert.equal(app.requests.length, 2);
+  assert.equal(app.blobCreations.length, 2);
+  const walk = element => [element, ...element.children.flatMap(walk)];
+  const firstDetails = walk(app.elements.batchResults).find(element => element.tagName === 'DETAILS');
+  firstDetails.open = true;
+  const firstSource = walk(app.elements.batchResults).find(element => element.tagName === 'IMG');
+  const firstLinks = app.elements.batchResults.querySelectorAll('a[download]');
+  second.resolve(responseFor(app.requests[1])); await app.flush();
+  assert.equal(app.requests.length, 3);
+  assert.equal(app.blobCreations.length, 4, 'Each admitted job owns one JSON/PNG pair, with no reserialization of prior jobs');
+  assert.ok(walk(app.elements.batchResults).includes(firstDetails));
+  assert.equal(firstDetails.open, true);
+  assert.ok(walk(app.elements.batchResults).includes(firstSource));
+  assert.ok(firstLinks.every(link => !app.revoked.includes(link.href)));
+  third.resolve(responseFor(app.requests[2])); await running;
+  assert.equal(app.blobCreations.length, 9, 'Four pairs plus one final report');
+  assert.equal(app.revoked.length, 0);
+  assert.ok(app.requests.every(request => JSON.stringify(request.scenes[0].payload) === JSON.stringify(task)));
+});
+
+test('duplicate two-level uses share exactly one export pair per verified job', async () => {
+  const app = application(); await app.flush();
+  await app.import([['same-size.json', JSON.stringify(source())]]);
+  app.elements.comparisonMode.value = 'two-level'; app.elements.targetSizes.value = '50x50\n25x25';
+  await app.run();
+  assert.equal(app.requests.length, 2);
+  const links = app.elements.batchResults.querySelectorAll('a[download]');
+  const png = links.filter(link => link.textContent === 'PNG ↓'), json = links.filter(link => link.textContent === 'JSON ↓');
+  assert.equal(png.length, 4); assert.equal(json.length, 4);
+  assert.equal(new Set(png.map(link => link.href)).size, 2);
+  assert.equal(new Set(json.map(link => link.href)).size, 2);
+  assert.equal(app.blobCreations.length, 5);
+  assert.equal(app.revoked.length, 0);
+});
+
+test('the 16-job matrix owns 16 verified export pairs and one final report', async () => {
+  const app = application(); await app.flush();
+  const tasks = Array.from({length: 4}, (_, index) => ({source: source(),
+    assets: [{asset_id: `asset-${index}.png`, data_base64: `exact-${index}`}],
+    fonts: [{family: `Font ${index}`, data_base64: `font-${index}`}], document: {snapshot_id: `source-${index}`}}));
+  await app.import(tasks.map((task, index) => [`source-${index}.json`, JSON.stringify(task)]));
+  app.elements.targetSizes.value = '80x50\n50x80\n60x60\n90x60'; await app.run();
+  assert.equal(app.requests.length, 16);
+  assert.equal(app.blobCreations.length, 33);
+  assert.equal(app.blobCreations.filter(item => item.type === 'image/png').length, 16);
+  assert.equal(app.revoked.length, 0);
+  const links = app.elements.batchResults.querySelectorAll('a[download]').filter(link => link.textContent === 'JSON ↓');
+  assert.equal(links.length, 16);
+  for (let index = 0; index < links.length; index++) {
+    const exported = JSON.parse(await app.blobs.get(links[index].href).text());
+    const original = tasks[Math.floor(index / 4)];
+    assert.deepEqual(exported.assets, original.assets);
+    assert.deepEqual(exported.fonts, original.fonts);
+    assert.deepEqual(exported.document, original.document);
+    assert.deepEqual(app.requests[index].scenes[0].payload, original);
+  }
+});
+
+test('dirty cleanup revokes each URL once and a late status paint cannot restore exports', async () => {
+  const app = application(); await app.flush();
+  await app.import([['one.json', JSON.stringify(source())]]);
+  const pending = deferred();
+  app.handler = body => app.requests.length === 2 ? pending.promise : responseFor(body);
+  const running = app.run(); await app.flush();
+  assert.equal(app.blobCreations.length, 2);
+  const owned = [...app.blobs.keys()];
+  app.elements.targetSizes.value = '200x200'; await app.elements.targetSizes.fire('input');
+  await app.elements.targetSizes.fire('input');
+  assert.deepEqual(app.revoked, owned);
+  pending.resolve(responseFor(app.requests[1])); await running;
+  assert.equal(app.blobCreations.length, 2);
+  assert.equal(app.elements.downloadReport.href, '');
+  const walk = element => [element, ...element.children.flatMap(walk)];
+  const links = walk(app.elements.batchResults).filter(element => element.tagName === 'A');
+  assert.equal(links.length, 4);
+  assert.ok(links.every(link => !link.href && link.getAttribute('aria-disabled') === 'true'));
+  assert.deepEqual(app.revoked, owned);
+});
+
+test('a new report drops old cached nodes and URLs even when scene IDs and targets repeat', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  app.elements.targetSizes.value = '100x100'; await app.run();
+  const oldArticles = [...app.elements.batchResults.children], oldUrls = [...app.blobs.keys()];
+  assert.equal(app.blobCreations.length, 5);
+  app.handler = body => {
+    const result = responseFor(body);
+    result.results[0].result.output_png = 'data:image/png;base64,bmV3LW5hdGl2ZS1ieXRlcw==';
+    return result;
+  };
+  await app.run();
+  assert.equal(app.blobCreations.length, 10);
+  assert.deepEqual(app.revoked, oldUrls);
+  assert.ok(app.elements.batchResults.children.every(article => !oldArticles.includes(article)));
+  const png = app.elements.batchResults.querySelectorAll('a[download]').filter(link => link.textContent === 'PNG ↓');
+  for (const link of png) {
+    assert.ok(!oldUrls.includes(link.href));
+    assert.equal(Buffer.from(await app.blobs.get(link.href).arrayBuffer()).toString(), 'new-native-bytes');
+  }
+});
+
+test('source placeholders update independently after the first verified row and a stopped run', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  const pending = deferred(); app.handler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  const stages = app.elements.batchResults.children.map(article => article.children[1].children[0].children[1]);
+  assert.ok(stages.every(stage => stage.children[0].textContent === 'Original render pending'));
+  await app.elements.stopBatch.fire('click');
+  pending.resolve(responseFor(app.requests[0])); await running;
+  assert.equal(stages[0].children[0].tagName, 'IMG');
+  assert.equal(stages[0].children[0].src, 'data:image/png;base64,c291cmNl');
+  assert.equal(stages[1].children[0].textContent, 'Original render unavailable');
+  assert.equal(app.blobCreations.length, 3);
+});
+
+test('leaving an uncached page cannot create late export URLs after cleanup', async () => {
+  const app = application(); await app.flush(); await app.addSamples();
+  const pending = deferred(); app.handler = () => pending.promise;
+  const running = app.run(); await app.flush();
+  app.windowEvent('pagehide', {persisted: false});
+  pending.resolve(responseFor(app.requests[0])); await running;
+  assert.equal(app.requests.length, 1);
+  assert.equal(app.blobCreations.length, 0);
+  assert.equal(app.elements.downloadReport.href, '');
 });
 
 test('reviewed picker excludes reserved/unprepared posters and loads exact original bundles', async () => {
@@ -406,6 +648,7 @@ test('a later mismatched target preserves earlier completed work in an interrupt
   assert.deepEqual(report.results[0].target_canvas, {width: 100, height: 100});
   assert.equal(app.elements.batchSettings.disabled, false);
   assert.equal(app.elements.downloadReport.getAttribute('aria-disabled'), 'false');
+  assert.equal(app.blobCreations.length, 3, 'The earlier verified pair survives; the invalid attempt owns no exports');
 });
 
 test('a failed startup method can reconnect without losing the queued scenes', async () => {
@@ -427,6 +670,8 @@ test('a partial success response cannot count as a rendered or exportable result
   assert.equal(report.status, 'interrupted');
   assert.equal(report.results.length, 0);
   assert.equal(app.elements.batchSettings.disabled, false);
+  assert.equal(app.blobCreations.length, 1, 'Only the interrupted report is exportable');
+  assert.equal(app.blobCreations[0].type, 'application/json');
 });
 
 test('a malformed PNG response does not poison recovery or erase completed jobs', async () => {

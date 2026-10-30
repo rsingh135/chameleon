@@ -10,9 +10,11 @@ import base64
 import json
 import math
 import mimetypes
+import os
 import sys
 import threading
 import time
+from contextlib import suppress
 from copy import deepcopy
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -46,6 +48,13 @@ from viewer.document_bridge import (
     MAX_DOCUMENT_REQUEST_BYTES,
     prepare_document,
 )
+from viewer.resize_cache import (
+    ResourceBindings,
+    ResourceChangedError,
+    SerializedCache,
+    result_key,
+    source_key,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VIEWER_DIR = REPO_ROOT / "viewer"
@@ -58,6 +67,9 @@ MAX_ELEMENTS = 200
 BODY_READ_TIMEOUT = 10.0
 MAX_IN_FLIGHT_RESIZES = 4
 _ENGINE_LOCK = threading.Lock()
+_RESOURCE_BINDINGS = ResourceBindings()
+_SOURCE_PNG_CACHE = SerializedCache(kind="source")
+_RESIZE_RESULT_CACHE = SerializedCache(kind="result")
 _STATIC_SUFFIXES = {".html", ".css", ".js", ".json", ".svg", ".png", ".ico", ".woff", ".woff2"}
 
 
@@ -248,16 +260,97 @@ def _render_png(design: dict, attribution: dict | None = None) -> tuple[str, lis
     return "data:image/png;base64," + base64.b64encode(png).decode("ascii"), warnings
 
 
+def _execution_identity() -> str:
+    from viewer.benchmark import method_receipt
+
+    return method_receipt()["digest"]
+
+
+def _visual_model_enabled() -> bool:
+    # Invalid configured paths also bypass result reuse: a cached deterministic
+    # response must never conceal a requested model or its configuration error.
+    if not os.environ.get("CHAMELEON_VISUAL_PLANNER_CONFIG"):
+        return False
+    from engine.visual_pipeline import visual_model_enabled
+
+    return visual_model_enabled()
+
+
+def _configured_resize(source, target, *, assets_dir, fonts_dir):
+    from engine.visual_pipeline import resize_configured
+
+    return resize_configured(
+        source, target, assets_dir=assets_dir, fonts_dir=fonts_dir, strict_stage_one=True
+    )
+
+
+def _verify_resize_binding(source, resources, bound, execution, expected_source_key, attribution):
+    current = _RESOURCE_BINDINGS.bind(
+        source, resources.assets_dir, resources.fonts_dir, allow_missing=not bound.complete
+    )
+    if current.digest != bound.digest:
+        raise ResourceChangedError("Resize resources changed. Restart the server.")
+    if _execution_identity() != execution:
+        raise RuntimeError("Engine files changed. Restart the server before resizing.")
+    if (
+        source_key(source, resources=current, execution_identity=execution, attribution=attribution)
+        != expected_source_key
+    ):
+        raise RuntimeError("The processor changed the bound original source.")
+
+
+def _resize_response(value, started, *, result_hit, source_hit):
+    value["elapsed_ms"] = round((time.perf_counter() - started) * 1000, 1)
+    value["cache"] = {"result_hit": result_hit, "source_render_hit": source_hit}
+    return value
+
+
 def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -> dict:
     validate_request(payload)
     # Engine/renderer caches are reused, and one request owns them at a time.
     source, target = deepcopy(payload["source"]), deepcopy(payload["target_canvas"])
+    requested_target = deepcopy(target)
+    attribution = deepcopy(payload.get("attribution"))
     started = time.perf_counter()
     resources = resources or ResourceContext(ASSETS_DIR, FONTS_DIR)
     assets_dir, fonts_dir = resources.assets_dir, resources.fonts_dir
+    execution = _execution_identity()
+    model_enabled = _visual_model_enabled()
+    bound = _RESOURCE_BINDINGS.bind(source, assets_dir, fonts_dir, allow_missing=not model_enabled)
+    skey = source_key(
+        source, resources=bound, execution_identity=execution, attribution=attribution
+    )
+    # Legacy placeholder renders remain available, but incomplete packages
+    # cannot enter either cache. The full source key still guards mutation.
+    source_cache_key = skey if bound.complete else None
+    rkey = result_key(
+        source,
+        target,
+        resources=bound,
+        execution_identity=execution,
+        attribution=attribution,
+        model_enabled=model_enabled,
+    )
+    cached = _RESIZE_RESULT_CACHE.get(rkey)
+    if cached is not None:
+        _verify_resize_binding(source, resources, bound, execution, skey, attribution)
+        return _resize_response(cached, started, result_hit=True, source_hit=True)
     with _ENGINE_LOCK, using_resources(assets_dir, fonts_dir):
-        plan = resize_with_state(source, target)
+        _verify_resize_binding(source, resources, bound, execution, skey, attribution)
+        # Another request may have completed the same job while this one waited.
+        cached = _RESIZE_RESULT_CACHE.get(rkey)
+        if cached is not None:
+            _verify_resize_binding(source, resources, bound, execution, skey, attribution)
+            return _resize_response(cached, started, result_hit=True, source_hit=True)
+        if model_enabled:
+            plan = _configured_resize(
+                deepcopy(source), deepcopy(target), assets_dir=assets_dir, fonts_dir=fonts_dir
+            )
+        else:
+            plan = resize_with_state(deepcopy(source), deepcopy(target))
         design = plan["design"]
+        if design.get("canvas") != requested_target:
+            raise RuntimeError("The processor returned a mismatched target canvas.")
         context = build_context(source, assets_dir, fonts_dir)
         plate = render_plate(design, assets_dir, fonts_dir, max_size=1024)
         result = score(source, design, context, plate, target)
@@ -269,28 +362,39 @@ def perform_resize(payload: dict, *, resources: ResourceContext | None = None) -
         rules = analyze_rules(source, design)
         reading_order = analyze_reading_order(source, design)
         occlusion = conservative_occlusion(source, design)
-        source_png, source_warnings = _render_png(source, payload.get("attribution"))
-        output_png, output_warnings = _render_png(design, payload.get("attribution"))
-    return {
-        "design": design,
-        "source_png": source_png,
-        "output_png": output_png,
-        "report": {
-            "violations": [str(violation) for violation in result["violations"]],
-            "metrics": result["metrics"],
-            "total": result["total"],
-            "style": style,
-            "relationships": relationships,
-            "proportions": proportions,
-            "focal": focal,
-            "rules": rules,
-            "reading_order": reading_order,
-            "occlusion": occlusion,
-            "layout_state": plan["state"],
-        },
-        "warnings": list(dict.fromkeys(source_warnings + output_warnings)),
-        "elapsed_ms": round((time.perf_counter() - started) * 1000, 1),
-    }
+        source_render = _SOURCE_PNG_CACHE.get(source_cache_key)
+        source_hit = source_render is not None
+        if source_render is None:
+            source_png, source_warnings = _render_png(source, attribution)
+            source_render = {"png": source_png, "warnings": source_warnings}
+        else:
+            source_png, source_warnings = source_render["png"], source_render["warnings"]
+        output_png, output_warnings = _render_png(design, attribution)
+        response = {
+            "design": design,
+            "source_png": source_png,
+            "output_png": output_png,
+            "report": {
+                "violations": [str(violation) for violation in result["violations"]],
+                "metrics": result["metrics"],
+                "total": result["total"],
+                "style": style,
+                "relationships": relationships,
+                "proportions": proportions,
+                "focal": focal,
+                "rules": rules,
+                "reading_order": reading_order,
+                "occlusion": occlusion,
+                "layout_state": plan["state"],
+            },
+            "warnings": list(dict.fromkeys(source_warnings + output_warnings)),
+        }
+        if target != requested_target:
+            raise RuntimeError("The processor changed the requested target canvas.")
+        _verify_resize_binding(source, resources, bound, execution, skey, attribution)
+        _SOURCE_PNG_CACHE.put_success(source_cache_key, source_render)
+        _RESIZE_RESULT_CACHE.put_success(rkey, response)
+        return _resize_response(response, started, result_hit=False, source_hit=source_hit)
 
 
 def sample_catalogue() -> dict:
@@ -311,6 +415,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
     # Also bound incomplete headers; the tighter total-body deadline below
     # prevents a trickling upload from extending its processing time forever.
     timeout = 15
+    _rejection_drain_bytes = 64 * 1024
+    _rejection_drain_seconds = 0.25
 
     def _send(
         self,
@@ -326,6 +432,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        if status >= 400:
+            self.close_connection = True
+            self.send_header("Connection", "close")
         for name, value in (extra_headers or {}).items():
             self.send_header(name, value)
         if (
@@ -345,6 +454,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self.end_headers()
             if not head:
                 self.wfile.write(body)
+            self.wfile.flush()
+            if status >= 400:
+                self._discard_rejected_body()
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             # Browser cancellation is normal. Never attempt a second error
             # response on the same disconnected socket or strand a work slot.
@@ -375,6 +487,27 @@ class ViewerHandler(BaseHTTPRequestHandler):
             return False
         return True
 
+    def _require_current_method(self, *, action="Benchmark", head=False) -> bool:
+        from viewer.benchmark import method_receipt
+
+        try:
+            current = method_receipt()
+        except Exception as exc:
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": f"{action} failed: {exc}"},
+                head=head,
+            )
+            return False
+        if current["digest"] != self.server.benchmark_method["digest"]:
+            self._json(
+                HTTPStatus.CONFLICT,
+                {"error": "Engine files changed. Restart the server before resizing."},
+                head=head,
+            )
+            return False
+        return True
+
     def _get(self, *, head: bool = False) -> None:
         if not self._local_request():
             return
@@ -383,25 +516,16 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.OK, {"status": "ok"}, head=head)
             return
         if route == "/api/benchmark/method":
-            from viewer.benchmark import method_receipt
-
-            try:
-                current = method_receipt()
-            except Exception as exc:
-                self._json(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    {"error": f"Benchmark failed: {exc}"},
-                    head=head,
-                )
-                return
-            if current["digest"] != self.server.benchmark_method["digest"]:
-                self._json(
-                    HTTPStatus.CONFLICT,
-                    {"error": "Engine files changed. Restart the server before benchmarking."},
-                    head=head,
-                )
-            else:
+            if self._require_current_method(head=head):
                 self._json(HTTPStatus.OK, self.server.benchmark_method, head=head)
+            return
+        if route == "/api/resize/policy":
+            if self._require_current_method(action="Resize", head=head):
+                self._json(
+                    HTTPStatus.OK,
+                    self.server.benchmark_method["options"]["request_policy"],
+                    head=head,
+                )
             return
         if route == "/api/samples":
             try:
@@ -512,6 +636,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self._send(HTTPStatus.NO_CONTENT, b"", "application/json")
 
     def do_POST(self) -> None:
+        self._body_read_attempted = False
         route = urlsplit(self.path).path
         document = route == "/api/document/resize"
         if not self._local_request(document=document):
@@ -561,7 +686,49 @@ class ViewerHandler(BaseHTTPRequestHandler):
         finally:
             self.server.resize_slots.release()
 
+    def _discard_rejected_body(self) -> None:
+        """Bounded transport cleanup after an early error was already flushed.
+
+        Windows can reset a socket closed with ordinary POST bytes unread,
+        concealing a complete 403/415 response. Never parse rejected data, wait
+        before sending the rejection, follow ambiguous framing, or drain without
+        independent byte and absolute-time limits.
+        """
+        if self.command != "POST" or getattr(self, "_body_read_attempted", False):
+            return
+        self._body_read_attempted = True
+        lengths = self.headers.get_all("Content-Length", [])
+        if (
+            len(lengths) != 1
+            or not lengths[0].isascii()
+            or not lengths[0].isdigit()
+            or len(lengths[0]) > 10
+            or self.headers.get("Transfer-Encoding")
+        ):
+            return
+        remaining = min(int(lengths[0]), self._rejection_drain_bytes)
+        if remaining <= 0:
+            return
+        deadline = time.monotonic() + self._rejection_drain_seconds
+        previous_timeout = self.connection.gettimeout()
+        try:
+            while remaining:
+                budget = deadline - time.monotonic()
+                if budget <= 0:
+                    break
+                self.connection.settimeout(budget)
+                chunk = self.rfile.read1(min(remaining, 8192))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+        except (OSError, ValueError):
+            pass  # Cleanup must never replace the error already sent.
+        finally:
+            with suppress(OSError):
+                self.connection.settimeout(previous_timeout)
+
     def _read_body(self, length: int) -> bytes:
+        self._body_read_attempted = True
         deadline = time.monotonic() + BODY_READ_TIMEOUT
         previous_timeout = self.connection.gettimeout()
         remaining = length
@@ -585,21 +752,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(raw.decode("utf-8"))
             if benchmark:
-                from viewer.benchmark import method_receipt, run_benchmark
+                from viewer.benchmark import run_benchmark
 
-                try:
-                    current = method_receipt()
-                except Exception as exc:
-                    self._json(
-                        HTTPStatus.INTERNAL_SERVER_ERROR,
-                        {"error": f"Benchmark failed: {exc}"},
-                    )
-                    return
-                if current["digest"] != self.server.benchmark_method["digest"]:
-                    self._json(
-                        HTTPStatus.CONFLICT,
-                        {"error": "Engine files changed. Restart the server before benchmarking."},
-                    )
+                if not self._require_current_method():
                     return
                 try:
                     result = run_benchmark(payload)
@@ -614,6 +769,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, result)
                 return
             validate_request(payload)
+            if not self._require_current_method(action="Resize"):
+                return
             prepared = prepare_document(payload) if document else None
         except (ValueError, UnicodeError, RecursionError) as exc:
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
@@ -625,12 +782,16 @@ class ViewerHandler(BaseHTTPRequestHandler):
             )
             return
         try:
+            if not self._require_current_method(action="Resize"):
+                return
             if prepared is None:
                 result = perform_resize(payload)
             else:
                 result = perform_resize(payload, resources=prepared.resources)
                 result["document"] = prepared.receipt
                 result["preview_url"] = result["output_png"]
+            if not self._require_current_method(action="Resize"):
+                return
             self._json(HTTPStatus.OK, result)
         except Exception as exc:
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Resize failed: {exc}"})

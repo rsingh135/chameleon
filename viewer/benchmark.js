@@ -2,7 +2,8 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const state = {scenes: [], reviewed: [], method: null, report: null, busy: false, stop: false, urls: []};
+  const state = {scenes: [], reviewed: [], method: null, report: null, busy: false, stop: false, urls: [],
+    renderedReport: null, sceneViews: new Map(), runSources: new Map(), jobExports: new Map(), reportExport: null, stale: false, disposed: false};
   const node = (tag, text, className) => {
     const element = document.createElement(tag);
     if (text !== undefined) element.textContent = text;
@@ -17,11 +18,25 @@
     $('connection').classList.toggle('online', online);
     $('connection').textContent = online ? 'Engine connected' : 'Engine unavailable';
   }
+  function validateRequestPolicy(policy) {
+    if (!policy || typeof policy !== 'object' || Array.isArray(policy)
+      || !['studio_timeout_ms', 'benchmark_timeout_ms'].every(key => Number.isInteger(policy[key]) && policy[key] > 0 && policy[key] <= 1500000)
+      || typeof policy.model_configured !== 'boolean') throw Object.assign(new Error('The engine returned an invalid resize runtime policy. Reconnect before testing; no resize job was submitted.'), {reconnect: true});
+    return policy;
+  }
   function setMethod(method) {
     if (method?.id !== 'deterministic-current' || !/^[a-f0-9]{64}$/.test(method?.digest || '')) throw Object.assign(new Error('The engine returned an invalid method identity. Reconnect before testing.'), {reconnect: true});
+    if (method.options?.request_policy !== undefined) validateRequestPolicy(method.options.request_policy);
     if (state.report && state.report.method.digest !== method.digest) dirty();
     state.method = method;
-    $('methodName').textContent = method.id;
+    const plannerRequested = method.analyzer?.enabled === true;
+    const criticRequested = method.critic?.enabled === true;
+    $('methodName').textContent = plannerRequested ? 'Current engine · local visual planner requested' : method.id;
+    $('methodPolicy').textContent = plannerRequested
+      ? `A local visual planner is configured. Result traces report whether it ran, changed the layout, or used a fallback. ${criticRequested ? 'A learned critic is configured.' : 'The learned critic is off.'} Visual quality remains unreviewed. No model is downloaded or trained here.`
+      : criticRequested
+        ? 'Current deterministic engine. Vision analyzer is off; a learned critic is configured. Visual quality remains unreviewed. No model is downloaded or trained here.'
+        : 'Current deterministic engine. Vision analyzer and learned critic are off. No model is downloaded or trained here.';
     $('methodDigest').textContent = `Code ${method.digest.slice(0, 16)}…`;
     $('retryConnection').hidden = true;
   }
@@ -41,22 +56,29 @@
   }
   async function request(path, body) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000);
+    const declared = state.method?.options?.request_policy;
+    const budget = body ? (declared === undefined ? 120000 : validateRequestPolicy(declared).benchmark_timeout_ms) : 10000;
+    const timeout = setTimeout(() => controller.abort(), budget);
+    const timeoutError = () => new Error(body
+      ? 'Job timed out. The local engine may still be finishing it. No further jobs were submitted.'
+      : 'Engine metadata request timed out after 10 seconds. Reconnect and retry; this request submitted no resize job.');
     try {
       let response;
       try {
-        response = await fetch(path, {signal: controller.signal, ...(body ? {
+        response = await fetch(path, {signal: controller.signal, cache: 'no-store', ...(body ? {
           method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
         } : {})});
+        if (controller.signal.aborted) throw Object.assign(new Error('Request expired.'), {name: 'AbortError'});
       } catch (failure) {
-        if (failure.name === 'AbortError') throw new Error('Job timed out. The local engine may still be finishing it. No further jobs were submitted.');
+        if (failure.name === 'AbortError') throw timeoutError();
         connection(false);
         throw Object.assign(new Error('Cannot reach the local engine. Start the server, then reconnect.'), {reconnect: true});
       }
       connection(true);
       let result;
       try { result = await response.json(); }
-      catch (failure) { throw new Error(failure.name === 'AbortError' ? 'Job timed out while receiving data. No further jobs were submitted.' : 'The engine returned invalid JSON. Completed jobs are preserved; retry the run.'); }
+      catch (failure) { if (failure.name === 'AbortError') throw timeoutError(); throw new Error('The engine returned invalid JSON. Completed jobs are preserved; retry the run.'); }
+      if (controller.signal.aborted) throw timeoutError();
       if (!response.ok) throw Object.assign(new Error(result?.error || `Request failed (${response.status}).`), {reconnect: response.status >= 500 || response.status === 409});
       return result;
     } finally { clearTimeout(timeout); }
@@ -64,13 +86,18 @@
   function releaseUrls() {
     for (const url of state.urls) URL.revokeObjectURL(url);
     state.urls = [];
+    state.jobExports.clear();
+    state.reportExport = null;
   }
-  function blobLink(text, data, filename, type = 'application/json') {
+  function blobResource(data, filename, type = 'application/json') {
     const url = URL.createObjectURL(new Blob([type === 'application/json' ? JSON.stringify(data, null, 2) : data], {type}));
     state.urls.push(url);
+    return Object.freeze({url, filename});
+  }
+  function exportLink(text, resource) {
     const link = node('a', text);
-    link.href = url;
-    link.download = filename;
+    if (resource) { link.href = resource.url; link.download = resource.filename; }
+    else { link.setAttribute('aria-disabled', 'true'); link.tabIndex = -1; }
     return link;
   }
   function dirty() {
@@ -78,6 +105,7 @@
     $('downloadReport').setAttribute('aria-disabled', 'true');
     $('downloadReport').tabIndex = -1;
     if (state.report) {
+      state.stale = true;
       $('runIdentity').textContent = `${state.report.run_id} · previous run; setup changed`;
       $('batchStatus').textContent = 'Setup changed. Displayed results belong to the previous run; run again to update.';
       for (const link of $('batchResults').querySelectorAll('a[download]')) {
@@ -85,6 +113,8 @@
         link.setAttribute('aria-disabled', 'true');
         link.tabIndex = -1;
       }
+      releaseUrls();
+      state.runSources.clear();
     }
     $('runBatch').disabled = state.busy || !state.method || !state.scenes.length;
   }
@@ -318,6 +348,26 @@
       throw new Error(`Cannot verify the rendered preview: ${failure.message}`);
     } finally { clearTimeout(timeout); }
   }
+  function exportsFor(scene, target, row) {
+    if (state.stale || state.disposed) return null;
+    const key = row.job_key || `${scene.id}-${target.width}x${target.height}`;
+    const cached = state.jobExports.get(key);
+    if (cached) return cached;
+    if (state.jobExports.size >= 16) throw new Error('The verified export cache exceeded the job limit.');
+    const source = state.runSources.get(scene.id);
+    if (!source) throw new Error('The frozen original input is unavailable for this result.');
+    const basename = `${scene.id}-${target.width}x${target.height}`;
+    const portable = ['document', 'assets', 'fonts'].some(field => field in source);
+    const exported = portable ? {...source, source: row.result.design, target_canvas: {...target}} : row.result.design;
+    const binary = atob(row.result.output_png.split(',')[1]);
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+    const pair = Object.freeze({
+      json: blobResource(exported, `${basename}.json`),
+      png: blobResource(bytes, `${basename}.png`, 'image/png'),
+    });
+    state.jobExports.set(key, pair);
+    return pair;
+  }
   function renderResultCell(report, scene, plan, level) {
     const target = plan.target_canvas || plan;
     const row = rowFor(report, scene, plan);
@@ -337,20 +387,23 @@
         const smallest = Math.min(...smallText.map(element => element.font_size));
         cell.append(node('p', `${smallText.length} text element${smallText.length === 1 ? '' : 's'} below 10 px (smallest ${smallest.toFixed(1)} px). Inspect readability at export size.`, 'render-notes'));
       }
+      const visualModel = row.result.report.layout_state?.visual_model;
+      if (visualModel?.requested === true) {
+        const outcome = visualModel.model_executed !== true
+          ? 'Local visual planner was requested but did not run; the engine used its fallback.'
+          : visualModel.layout_changed === true
+            ? 'Local visual planner ran and influenced the layout.'
+            : 'Local visual planner ran; no layout change was recorded.';
+        cell.append(node('p', `${outcome} Visual quality is unreviewed.`, 'render-notes'));
+      }
       if (report.job_plan) {
         const layout = row.result.report.layout_state || {};
         const actual = [...new Set([layout.name, layout.mode, layout.topology].filter(value => typeof value === 'string' && value))].join(' · ') || 'not reported';
         cell.append(node('p', `Engine layout: ${actual}. Proportional targets are a request, not proof of unchanged composition.`, 'field-help'));
       }
       const links = node('div', undefined, 'result-links');
-      const basename = `${scene.id}-${target.width}x${target.height}`;
-      const sourcePayload = state.scenes.find(item => item.id === scene.id)?.payload;
-      const portable = sourcePayload && ['document', 'assets', 'fonts'].some(key => key in sourcePayload);
-      const exported = portable ? {...sourcePayload, source: row.result.design, target_canvas: {...target}} : row.result.design;
-      links.append(blobLink('JSON ↓', exported, `${basename}.json`));
-      const binary = atob(row.result.output_png.split(',')[1]);
-      const pngBytes = Uint8Array.from(binary, character => character.charCodeAt(0));
-      links.append(blobLink('PNG ↓', pngBytes, `${basename}.png`, 'image/png'));
+      const pair = exportsFor(scene, target, row);
+      links.append(exportLink('JSON ↓', pair?.json), exportLink('PNG ↓', pair?.png));
       cell.append(links);
       const details = node('details'); details.append(node('summary', 'Diagnostics and resource identity'));
       details.append(node('pre', JSON.stringify({job_key: row.job_key, comparisons: row.comparisons, source_sha256: row.source_sha256, resources_sha256: row.resources_sha256, report: row.result.report, warnings: row.result.warnings}, null, 2)));
@@ -360,10 +413,12 @@
     }
     return cell;
   }
-  function renderResults(report) {
-    releaseUrls();
-    $('batchResults').replaceChildren();
-    for (const scene of report.scenes) {
+  function createSceneView(report, scene) {
+      const cells = [];
+      const appendCell = (parent, plan, level) => {
+        const cell = node('div', undefined, 'render-cell');
+        parent.append(cell); cells.push({cell, plan, level, row: null, phase: null});
+      };
       const article = node('article', undefined, 'scene-result');
       const heading = node('header');
       const title = node('div');
@@ -371,13 +426,11 @@
       heading.append(title);
       article.append(heading);
       const renders = node('div', undefined, report.job_plan ? 'scene-comparison' : 'scene-renders');
-      const first = report.results.find(row => row.scene_id === scene.id && row.result);
       const original = node('div', undefined, 'render-cell');
       original.append(node('p', 'Original', 'render-label'));
       const sourceStage = node('div', undefined, 'render-stage');
-      if (first) { const image = node('img'); image.src = first.result.source_png; image.alt = `${scene.label}, original scene`; sourceStage.append(image); }
-      else sourceStage.append(node('p', 'Original render pending'));
-      original.append(sourceStage, node('p', first ? `Source ${first.source_sha256.slice(0, 12)}…` : 'Bound source receipt appears after rendering', 'field-help fingerprint'));
+      const sourceReceipt = node('p', 'Bound source receipt appears after rendering', 'field-help fingerprint');
+      original.append(sourceStage, sourceReceipt);
       renders.append(original);
       if (report.job_plan) {
         const levels = node('div', undefined, 'scene-levels');
@@ -388,13 +441,45 @@
           const section = node('section', undefined, 'resize-level');
           const header = node('header'); header.append(node('h4', title), node('p', description)); section.append(header);
           const grid = node('div', undefined, 'scene-renders');
-          for (const plan of report.job_plan.filter(item => item.scene_id === scene.id && item.comparisons.some(use => use.level === level))) grid.append(renderResultCell(report, scene, plan, level));
+          for (const plan of report.job_plan.filter(item => item.scene_id === scene.id && item.comparisons.some(use => use.level === level))) appendCell(grid, plan, level);
           section.append(grid); levels.append(section);
         }
         renders.append(levels);
-      } else for (const target of report.targets) renders.append(renderResultCell(report, scene, target));
+      } else for (const target of report.targets) appendCell(renders, target);
       article.append(renders);
-      $('batchResults').append(article);
+      return {article, scene, sourceStage, sourceReceipt, sourceRow: null, phase: null, cells};
+  }
+  function renderResults(report) {
+    if (state.renderedReport !== report) {
+      releaseUrls();
+      state.sceneViews.clear();
+      state.runSources = new Map(state.scenes.map(scene => [scene.id, scene.payload]));
+      state.renderedReport = report;
+      state.stale = false;
+      $('batchResults').replaceChildren();
+      for (const scene of report.scenes) {
+        const view = createSceneView(report, scene);
+        state.sceneViews.set(scene.id, view);
+        $('batchResults').append(view.article);
+      }
+    }
+    for (const view of state.sceneViews.values()) {
+      const first = report.results.find(row => row.scene_id === view.scene.id && row.result);
+      if (view.sourceRow !== first || (!first && view.phase !== report.status)) {
+        if (first) {
+          const image = node('img'); image.src = first.result.source_png; image.alt = `${view.scene.label}, original scene`;
+          view.sourceStage.replaceChildren(image);
+          view.sourceReceipt.textContent = `Source ${first.source_sha256.slice(0, 12)}…`;
+        } else view.sourceStage.replaceChildren(node('p', report.status === 'running' ? 'Original render pending' : 'Original render unavailable'));
+        view.sourceRow = first; view.phase = report.status;
+      }
+      for (const binding of view.cells) {
+        const row = rowFor(report, view.scene, binding.plan);
+        if (binding.row === row && (row || binding.phase === report.status)) continue;
+        const updated = renderResultCell(report, view.scene, binding.plan, binding.level);
+        binding.cell.replaceChildren(...updated.children);
+        binding.row = row; binding.phase = report.status;
+      }
     }
     const rows = report.results;
     const succeeded = rows.filter(row => row.status === 'ok').length;
@@ -417,8 +502,9 @@
     table.append(body); $('familySummary').replaceChildren(table); $('familySummary').hidden = false;
   }
   function reportDownload() {
-    const link = blobLink('Download run report ↓', state.report, `${state.report.run_id}.json`);
-    $('downloadReport').href = link.href; $('downloadReport').download = link.download;
+    if (state.stale || state.disposed) return;
+    state.reportExport ||= blobResource(state.report, `${state.report.run_id}.json`);
+    $('downloadReport').href = state.reportExport.url; $('downloadReport').download = state.reportExport.filename;
     $('downloadReport').setAttribute('aria-disabled', 'false'); $('downloadReport').removeAttribute('tabindex');
   }
   async function run(event) {
@@ -516,7 +602,7 @@
   });
   window.addEventListener('pagehide', event => {
     state.stop = true;
-    if (!event.persisted) releaseUrls();
+    if (!event.persisted) { state.disposed = true; releaseUrls(); }
   });
   request('/api/benchmark/method').then(method => {
     setMethod(method); dirty();

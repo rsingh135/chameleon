@@ -1,7 +1,8 @@
 """Bounded, source-bound evaluation of one frozen method across native scenes.
 
-This runner uses the current deterministic engine. It does not invoke a model,
-train anything, approve visual quality, or turn flattened images into elements.
+This runner defaults to the deterministic engine. Explicit operator visual
+configuration uses the shared planning path. It does not train anything,
+approve visual quality, or turn flattened images into elements.
 The browser can submit one job at a time while retaining the expected method
 digest; a changed implementation is rejected before rendering the next job.
 """
@@ -11,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import importlib.metadata
 import json
+import os
 import platform
 import time
 from copy import deepcopy
@@ -25,6 +27,33 @@ METHOD_ID = "deterministic-current"
 MAX_SCENES = 8
 MAX_TARGETS = 4
 MAX_JOBS = 16
+
+
+def _visual_identity():
+    policy = {
+        "studio_timeout_ms": 60_000,
+        "benchmark_timeout_ms": 120_000,
+        "model_configured": False,
+    }
+    if not os.environ.get("CHAMELEON_VISUAL_PLANNER_CONFIG"):
+        return {"enabled": False}, False, policy
+    from engine.visual_config import resolve_config
+    from engine.visual_pipeline import visual_execution_identity
+
+    identity = visual_execution_identity()
+    policy["model_configured"] = bool(identity["enabled"])
+    try:
+        operator, _ = resolve_config()
+        critic = bool(operator and operator["enabled"] and operator["critic"])
+        if operator and operator["enabled"]:
+            # Each optional provider invocation has its own bounded deadline.
+            # Allow native layout/rendering plus transport after planner/critic.
+            budget = (operator["timeout_seconds"] * (1 + critic) + 150) * 1000
+            policy["studio_timeout_ms"] = max(policy["studio_timeout_ms"], budget)
+            policy["benchmark_timeout_ms"] = max(policy["benchmark_timeout_ms"], budget)
+    except (ValueError, OSError, TypeError):
+        critic = False
+    return identity, critic, policy
 
 
 def _canonical(value: object) -> bytes:
@@ -49,6 +78,7 @@ def method_receipt() -> dict:
         ROOT / "tools" / "scene_harness.py",
         ROOT / "viewer" / "server.py",
         ROOT / "viewer" / "document_bridge.py",
+        ROOT / "viewer" / "resize_cache.py",
         Path(__file__),
     ]
     files = {
@@ -61,14 +91,23 @@ def method_receipt() -> dict:
             packages[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             packages[name] = "not-installed-as-distribution"
+    visual, critic, policy = _visual_identity()
     receipt = {
         "id": METHOD_ID,
         "protocol": "scene-benchmark-v1",
         "implementation_sha256": _digest(files),
         "runtime": {"python": platform.python_version(), "packages": packages},
-        "analyzer": {"enabled": False},
-        "critic": {"enabled": False},
-        "options": {"layout": "current-engine-defaults", "native_renderer": True},
+        "analyzer": visual,
+        "critic": {"enabled": critic},
+        "options": {
+            "layout": "configured-visual-pipeline"
+            if visual["enabled"]
+            else "current-engine-defaults",
+            "native_renderer": True,
+            "renderer_workers": 1,
+            "execution_cache": "resource-bound-successes-v1",
+            "request_policy": policy,
+        },
         "fingerprint_scope": "engine+renderer+viewer resize implementation and runtime versions",
         "restart_after_code_changes": True,
     }
@@ -93,7 +132,9 @@ def validate_benchmark(payload: object) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Benchmark request must be an object.")
     if payload.get("method", METHOD_ID) != METHOD_ID:
-        raise ValueError("Only deterministic-current is available; no vision model is enabled.")
+        raise ValueError(
+            "Only deterministic-current protocol is available. Models use operator configuration."
+        )
     if len(_canonical(payload)) > MAX_DOCUMENT_REQUEST_BYTES:
         raise ValueError("Benchmark request exceeds 24 MiB.")
     scenes, targets = payload.get("scenes"), payload.get("targets")

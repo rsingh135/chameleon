@@ -33,8 +33,9 @@ const rendered = payload => ({
 
 function application({meta = metadata(), posters = [], workspace = false, storageFailure = false, search = ''} = {}) {
   const environment = {
-    requests: [], images: [], imageLoads: true, blobs: new Map(), revoked: [], timers: new Map(),
+    requests: [], policyRequests: [], images: [], imageLoads: true, blobs: new Map(), revoked: [], timers: new Map(),
     resizeHandler: payload => rendered(payload), windowEvents: new Map(), imageSizes: new Map(), observers: [],
+    policyHandler: () => ({studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: false}),
   };
   class Element {
     constructor(id = '', tagName = 'DIV') {
@@ -152,6 +153,11 @@ function application({meta = metadata(), posters = [], workspace = false, storag
     async fetch(url, options = {}) {
       if (url === '/api/samples') return response(await (typeof meta === 'function' ? meta() : meta));
       if (url === '/api/posters') return response({examples: posters});
+      if (url === '/api/resize/policy') {
+        const request = {url, signal: options.signal, cache: options.cache};
+        environment.policyRequests.push(request);
+        return response(await environment.policyHandler(request), environment.policyStatus || 200);
+      }
       if (url === '/api/resize' || url === '/api/document/resize') {
         const payload = JSON.parse(options.body);
         const request = {url, payload, signal: options.signal}; environment.requests.push(request);
@@ -184,9 +190,9 @@ function application({meta = metadata(), posters = [], workspace = false, storag
     return input.fire('change');
   };
   environment.select = async id => { elements.sample.value = id; await elements.sample.fire('change'); await environment.flush(); };
-  environment.timeout = async () => {
+  environment.timeout = async (delay = 60000) => {
     for (const [id, timer] of [...environment.timers]) {
-      if (timer.delay === 60000) { environment.timers.delete(id); timer.callback(); }
+      if (timer.delay === delay) { environment.timers.delete(id); timer.callback(); }
     }
     await environment.flush();
   };
@@ -280,6 +286,136 @@ test('the resize timeout also releases pending image decoding and permits retry'
   app.imageLoads = true;
   await app.elements.resizeForm.fire('submit'); await app.flush();
   assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+});
+
+test('every Studio POST obtains a fresh uncached policy and retains the default 60-second timer', async () => {
+  const app = application(); await app.flush();
+  const calls = app.requests.length, lookups = app.policyRequests.length;
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.equal(app.policyRequests.length, lookups + 1);
+  assert.equal(app.requests.length, calls + 1);
+  assert.equal(app.policyRequests.at(-1).cache, 'no-store');
+  assert.equal(app.policyRequests.at(-1).signal, app.requests.at(-1).signal);
+  assert.ok([...app.timers.values()].some(timer => timer.delay === 60000));
+  assert.ok(![...app.timers.values()].some(timer => timer.delay === 10000));
+  assert.deepEqual(Object.keys(app.requests.at(-1).payload).sort(), ['source', 'target_canvas']);
+  pending.resolve(rendered(app.requests.at(-1).payload)); await running;
+  assert.equal(app.timers.size, 0);
+});
+
+test('configured Studio model budgets exceed 240 seconds without an old 60-second abort', async () => {
+  const app = application(); await app.flush();
+  app.policyHandler = () => ({studio_timeout_ms: 630000, benchmark_timeout_ms: 630000, model_configured: true});
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.ok([...app.timers.values()].some(timer => timer.delay === 630000));
+  assert.ok(![...app.timers.values()].some(timer => timer.delay === 60000));
+  assert.match(app.elements.status.textContent, /configured local model pipeline/);
+  await app.timeout(60000);
+  assert.equal(app.requests.at(-1).signal.aborted, false);
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'true');
+  pending.resolve(rendered(app.requests.at(-1).payload)); await running;
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+  assert.equal(app.timers.size, 0);
+});
+
+test('the configured Studio deadline rejects a noncooperative late response without publishing it', async () => {
+  const app = application(); await app.flush();
+  app.policyHandler = () => ({studio_timeout_ms: 630000, benchmark_timeout_ms: 630000, model_configured: true});
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  const request = app.requests.at(-1);
+  await app.timeout(630000);
+  assert.equal(request.signal.aborted, true);
+  pending.resolve(rendered(request.payload)); await running;
+  assert.match(app.elements.error.textContent, /configured 630-second runtime budget/);
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+  assert.equal(app.timers.size, 0);
+});
+
+test('a deadline abort at the resolved-preview boundary cannot publish downloads', async () => {
+  const app = application(); await app.flush(); app.imageLoads = false;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  for (const image of app.images.slice(-2)) image.onload();
+  await app.timeout(60000); await running;
+  assert.match(app.elements.error.textContent, /60 seconds/);
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+});
+
+for (const policy of [null,
+  {studio_timeout_ms: 0, benchmark_timeout_ms: 120000, model_configured: false},
+  {studio_timeout_ms: true, benchmark_timeout_ms: 120000, model_configured: false},
+  {studio_timeout_ms: 60000.5, benchmark_timeout_ms: 120000, model_configured: false},
+  {studio_timeout_ms: 1500001, benchmark_timeout_ms: 120000, model_configured: true},
+  {studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: 'true'},
+]) test(`invalid Studio policy fails before expensive submission: ${JSON.stringify(policy)}`, async () => {
+  const app = application(); await app.flush();
+  const count = app.requests.length, name = app.elements.taskName.textContent;
+  app.policyHandler = () => policy;
+  await app.elements.resizeForm.fire('submit');
+  assert.equal(app.requests.length, count);
+  assert.match(app.elements.error.textContent, /runtime policy.*No resize was submitted|No resize was submitted.*runtime policy/);
+  assert.equal(app.elements.taskName.textContent, name);
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.equal(app.timers.size, 0);
+});
+
+test('an unavailable policy is not replaced with a silent default Studio deadline', async () => {
+  const app = application(); await app.flush(); const count = app.requests.length;
+  app.policyStatus = 404; app.policyHandler = () => ({error: 'Runtime policy endpoint is unavailable'});
+  await app.elements.resizeForm.fire('submit');
+  assert.equal(app.requests.length, count);
+  assert.match(app.elements.error.textContent, /No resize was submitted/);
+  assert.match(app.elements.error.textContent, /endpoint is unavailable/);
+});
+
+test('a late policy response after its 10-second timeout cannot submit a Studio POST', async () => {
+  const app = application(); await app.flush(); const count = app.requests.length;
+  const policy = deferred(); app.policyHandler = () => policy.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.ok([...app.timers.values()].some(timer => timer.delay === 10000));
+  await app.timeout(10000);
+  policy.resolve({studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: false}); await running;
+  assert.equal(app.requests.length, count);
+  assert.match(app.elements.error.textContent, /lookup exceeded 10 seconds/);
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+});
+
+for (const action of ['canvas', 'navigation']) test(`a late policy after ${action} cannot submit stale Studio work`, async () => {
+  const app = application(); await app.flush(); const count = app.requests.length;
+  const policy = deferred(); app.policyHandler = () => policy.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  const old = app.policyRequests.at(-1);
+  if (action === 'canvas') { app.elements.width.value = '200'; await app.elements.width.fire('input'); }
+  else await app.windowEvent('pagehide', {persisted: true});
+  policy.resolve({studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: false}); await running;
+  assert.equal(old.signal.aborted, true);
+  assert.equal(app.requests.length, count);
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.match(app.elements.status.textContent, action === 'canvas' ? /Canvas changed/ : /paused/);
+});
+
+test('an obsolete source policy cannot submit or release a newer resource-bound resize', async () => {
+  const app = application(); await app.flush(); const before = app.requests.length;
+  const oldPolicy = deferred(), freshResult = deferred(); let count = 0;
+  app.policyHandler = () => ++count === 1 ? oldPolicy.promise : {studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: false};
+  const old = app.elements.resizeForm.fire('submit'); await app.flush();
+  app.resizeHandler = () => freshResult.promise;
+  const owned = {...sample('fresh').task, assets: [{asset_id: 'original.png'}], fonts: [], document: {snapshot_id: 'owned'}};
+  await app.file('fresh.json', owned); await app.flush();
+  const latest = app.requests.at(-1);
+  oldPolicy.resolve({studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: false}); await old;
+  assert.equal(app.requests.length, before + 1);
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'true');
+  assert.deepEqual(latest.payload.assets, owned.assets);
+  assert.equal(latest.url, '/api/document/resize');
+  freshResult.resolve(rendered(latest.payload)); await app.flush();
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+  assert.match(app.elements.downloadJson.download, /^fresh_/);
 });
 
 test('a network failure marks the engine unavailable and a successful retry restores it', async () => {

@@ -74,6 +74,12 @@
       && canvas.width >= 1 && canvas.height >= 1 && canvas.width <= 8192 && canvas.height <= 8192
       && canvas.width * canvas.height <= 20000000;
   }
+  function validateRequestPolicy(policy) {
+    if (!policy || typeof policy !== 'object' || Array.isArray(policy)
+      || !['studio_timeout_ms', 'benchmark_timeout_ms'].every(key => Number.isInteger(policy[key]) && policy[key] > 0 && policy[key] <= 1500000)
+      || typeof policy.model_configured !== 'boolean') throw new Error('The engine returned an invalid resize runtime policy. Restart or update the local server, then retry.');
+    return policy;
+  }
   function validateDesign(design) {
     if (!design || !design.canvas || !Array.isArray(design.elements) || !design.elements.length) throw new Error('A design needs a canvas and a nonempty elements array.');
     if (!validateCanvas(design.canvas)) throw new Error('Canvas dimensions must be whole numbers from 1 to 8192 px and at most 20 million pixels.');
@@ -358,15 +364,26 @@
     disableDownloads();
     const controller = beginRequest();
     $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
-    $('status').textContent = 'Reflowing elements and rendering real previews…';
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    $('status').textContent = 'Checking the local resize runtime policy…';
+    let phase = 'policy', budget = 60000;
+    let timeout = setTimeout(() => controller.abort(), 10000);
     try {
-      const payload = hasResources(state.task) ? {...state.task, target_canvas: {width, height}} : {source: state.task.source, target_canvas: {width, height}};
-      const response = await requestJSON(hasResources(state.task) ? '/api/document/resize' : '/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal: controller.signal});
+      const portable = hasResources(state.task);
+      const payload = portable ? {...state.task, target_canvas: {width, height}} : {source: state.task.source, target_canvas: {width, height}};
+      const policy = validateRequestPolicy(await requestJSON('/api/resize/policy', {signal: controller.signal, cache: 'no-store'}));
       if (version !== state.version || state.controller !== controller) return;
+      if (controller.signal.aborted) throw new DOMException('Policy request expired.', 'AbortError');
+      clearTimeout(timeout);
+      phase = 'resize'; budget = policy.studio_timeout_ms;
+      timeout = setTimeout(() => controller.abort(), budget);
+      $('status').textContent = policy.model_configured ? 'Running the configured local model pipeline and rendering real previews…' : 'Reflowing elements and rendering real previews…';
+      const response = await requestJSON(portable ? '/api/document/resize' : '/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal: controller.signal});
+      if (version !== state.version || state.controller !== controller) return;
+      if (controller.signal.aborted) throw new DOMException('Resize request expired.', 'AbortError');
       const result = validateResult(response, payload.source, {width, height});
       const [source, output] = await Promise.all([loadImage(result.source_png, controller.signal), loadImage(result.output_png, controller.signal)]);
       if (version !== state.version || state.controller !== controller) return;
+      if (controller.signal.aborted) throw new DOMException('Preview request expired.', 'AbortError');
       if (source.naturalWidth !== payload.source.canvas.width || source.naturalHeight !== payload.source.canvas.height || output.naturalWidth !== width || output.naturalHeight !== height) throw new Error('The preview image dimensions do not match the source and target canvases. Retry the resize.');
       state.result = result; state.images = {source, output}; state.dirty = false; state.selected = null;
       redraw();
@@ -402,7 +419,12 @@
       renderElements(); enableDownloads();
     } catch (error) {
       if (version !== state.version || state.controller !== controller) return;
-      errorMessage(error.name === 'AbortError' ? new Error('The resize exceeded 60 seconds. Try a smaller canvas or a simpler design.') : error);
+      const timeoutMessage = phase === 'policy'
+        ? 'Resize policy lookup exceeded 10 seconds. No resize was submitted. Try again.'
+        : budget === 60000 ? 'The resize exceeded 60 seconds. Try a smaller canvas or a simpler design.'
+          : `The resize exceeded the configured ${Math.ceil(budget / 1000)}-second runtime budget. The local engine may still be finishing; retry after it completes.`;
+      errorMessage(error.name === 'AbortError' ? new Error(timeoutMessage)
+        : phase === 'policy' ? new Error(`Cannot verify the local resize runtime policy. No resize was submitted. ${error.message}`) : error);
       $('status').textContent = 'Resize failed. Adjust the input and try again.';
     } finally { clearTimeout(timeout); finishRequest(controller); }
   }

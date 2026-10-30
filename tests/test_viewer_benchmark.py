@@ -355,9 +355,7 @@ def test_http_changed_files_reject_boot_receipt_before_work(
     benchmark_server, batch, monkeypatch, route
 ):
     instance, receipt = benchmark_server
-    monkeypatch.setattr(
-        benchmark, "method_receipt", lambda: {**receipt, "digest": "0" * 64}
-    )
+    monkeypatch.setattr(benchmark, "method_receipt", lambda: {**receipt, "digest": "0" * 64})
     monkeypatch.setattr(
         benchmark, "run_benchmark", lambda payload: pytest.fail("Changed engine must not run")
     )

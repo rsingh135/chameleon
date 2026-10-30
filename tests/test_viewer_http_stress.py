@@ -57,9 +57,7 @@ def shape_task():
 def _request(instance, path, payload, timeout=30):
     connection = http.client.HTTPConnection("127.0.0.1", instance.server_port, timeout=timeout)
     try:
-        connection.request(
-            "POST", path, json.dumps(payload), {"Content-Type": "application/json"}
-        )
+        connection.request("POST", path, json.dumps(payload), {"Content-Type": "application/json"})
         response = connection.getresponse()
         return response.status, json.loads(response.read())
     finally:

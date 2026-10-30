@@ -1,7 +1,8 @@
 """Bounded, source-bound evaluation of one frozen method across native scenes.
 
-This runner defaults to the deterministic engine. Explicit operator visual
-configuration uses the shared planning path. It does not train anything,
+This runner uses the engine's default fit planner when its trained artifact is
+available. Explicit operator visual configuration uses the shared planning path.
+It does not train anything,
 approve visual quality, or turn flattened images into elements.
 The browser can submit one job at a time while retaining the expected method
 digest; a changed implementation is rejected before rendering the next job.
@@ -18,6 +19,7 @@ import time
 from copy import deepcopy
 from pathlib import Path
 
+from engine.fit_policy import fit_policy_identity
 from engine.resources import ResourceContext
 from tools.scene_harness import resource_hashes
 from viewer.document_bridge import MAX_DOCUMENT_REQUEST_BYTES, prepare_document
@@ -78,6 +80,7 @@ def method_receipt() -> dict:
         ROOT / "tools" / "scene_harness.py",
         ROOT / "viewer" / "server.py",
         ROOT / "viewer" / "document_bridge.py",
+        ROOT / "viewer" / "addon_bridge.py",
         ROOT / "viewer" / "resize_cache.py",
         Path(__file__),
     ]
@@ -92,6 +95,11 @@ def method_receipt() -> dict:
         except importlib.metadata.PackageNotFoundError:
             packages[name] = "not-installed-as-distribution"
     visual, critic, policy = _visual_identity()
+    fit_planner = {
+        "kind": "trained_pairwise_fit_policy",
+        "uses_vision": False,
+        **fit_policy_identity(),
+    }
     receipt = {
         "id": METHOD_ID,
         "protocol": "scene-benchmark-v1",
@@ -99,16 +107,22 @@ def method_receipt() -> dict:
         "runtime": {"python": platform.python_version(), "packages": packages},
         "analyzer": visual,
         "critic": {"enabled": critic},
+        "fit_planner": fit_planner,
         "options": {
             "layout": "configured-visual-pipeline"
             if visual["enabled"]
+            else "trained-fit-policy"
+            if fit_planner["enabled"]
             else "current-engine-defaults",
             "native_renderer": True,
             "renderer_workers": 1,
             "execution_cache": "resource-bound-successes-v1",
             "request_policy": policy,
         },
-        "fingerprint_scope": "engine+renderer+viewer resize implementation and runtime versions",
+        "fingerprint_scope": (
+            "engine+renderer+viewer resize implementation, fit-policy artifact/configuration, "
+            "optional visual-model identity, and runtime versions"
+        ),
         "restart_after_code_changes": True,
     }
     return {**receipt, "digest": _digest(receipt)}

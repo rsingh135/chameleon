@@ -25,9 +25,13 @@ source identity, method identity, structural checks and per-job failures remain
 part of the evidence. Always resize directly from each original, never from a
 previously resized output.
 
-Read configured analyzer/critic and request-policy fields from the receipt.
-Models are disabled by default; enabling an optional local provider is an
-explicit operator configuration, not a consequence of running a regression.
+The receipt records the default trained geometry fit planner separately from
+the optional visual analyzer and critic. Its exact artifact bytes and policy
+configuration are part of the method digest; replacing the artifact requires
+restarting a running server and a new comparison. Geometry fit ranking does not
+inspect pixels or establish aesthetic quality. Optional visual providers require
+explicit operator configuration; the request-policy fields describe their
+runtime budget.
 This tooling does not start training, download models or deploy cloud resources.
 
 For a deterministic CLI inspection using bundled sample resources:

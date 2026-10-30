@@ -3,6 +3,7 @@
 import base64
 import http.client
 import json
+import os
 import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
@@ -421,3 +422,111 @@ def test_real_native_replay_keeps_pixels_isolated_between_same_named_asset_packa
         assert result["report"]["violations"] == []
     assert red["output_png"] != blue["output_png"]
     assert replay["output_png"] == red["output_png"]
+
+
+@pytest.fixture
+def fit_policy_artifact(tmp_path, monkeypatch):
+    from engine import fit_policy
+
+    artifact = {
+        "schema_version": 1,
+        "kind": "trained_pairwise_fit_policy",
+        "feature_version": fit_policy.FEATURE_VERSION,
+        "feature_names": list(fit_policy.FEATURE_NAMES),
+        "weights": [0.0] * len(fit_policy.FEATURE_NAMES),
+        "means": [0.0] * len(fit_policy.FEATURE_NAMES),
+        "scales": [1.0] * len(fit_policy.FEATURE_NAMES),
+        "label_kind": fit_policy.LABEL_KIND,
+        "dataset_digest": "test-dataset",
+        "families": {"train": ["test-training"], "validation": ["test-validation"]},
+        "metrics": {},
+    }
+    artifact["model_digest"] = fit_policy.digest(artifact)
+    path = tmp_path / "fit-policy.json"
+    path.write_bytes(json.dumps(artifact, sort_keys=True).encode("utf-8") + b"\n")
+    monkeypatch.setattr(fit_policy, "DEFAULT_MODEL_PATH", path)
+    monkeypatch.delenv("CHAMELEON_VISUAL_PLANNER_CONFIG", raising=False)
+    # Override isolated_caches' fixed identity so these tests exercise the real
+    # artifact -> method receipt -> viewer cache binding without running a model.
+    monkeypatch.setattr(server, "_execution_identity", lambda: benchmark.method_receipt()["digest"])
+    assert fit_policy.fit_policy_identity()["enabled"] is True
+    return path
+
+
+def _replace_fit_policy_bytes_with_same_stat(path):
+    before = path.stat()
+    original = path.read_bytes()
+    # Both documents are the same valid JSON and have the same semantic model
+    # digest; exact artifact bytes must still invalidate the execution identity.
+    ending = b" " if original.endswith(b"\n") else b"\n"
+    path.write_bytes(original[:-1] + ending)
+    os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+    after = path.stat()
+    assert after.st_size == before.st_size and after.st_mtime_ns == before.st_mtime_ns
+
+
+def test_fit_policy_byte_replacement_recomputes_instead_of_replaying_old_result(
+    payload, resources, backend, fit_policy_artifact
+):
+    from engine import fit_policy
+
+    first = server.perform_resize(payload, resources=resources)
+    repeated = server.perform_resize(payload, resources=resources)
+    assert first["cache"]["result_hit"] is False
+    assert repeated["cache"]["result_hit"] is True
+    assert backend.calls["resize"] == 1
+    old_identity = fit_policy.fit_policy_identity()
+    old_receipt = benchmark.method_receipt()
+
+    _replace_fit_policy_bytes_with_same_stat(fit_policy_artifact)
+    new_identity = fit_policy.fit_policy_identity()
+    assert old_identity["model_digest"] == new_identity["model_digest"]
+    assert old_identity["model_sha256"] != new_identity["model_sha256"]
+    assert benchmark.method_receipt()["digest"] != old_receipt["digest"]
+
+    replaced = server.perform_resize(payload, resources=resources)
+    assert replaced["cache"]["result_hit"] is False
+    assert backend.calls["resize"] == 2
+    assert server.perform_resize(payload, resources=resources)["cache"]["result_hit"] is True
+    assert backend.calls["resize"] == 2
+
+
+def test_fit_policy_replacement_during_processing_cannot_admit_a_cached_success(
+    payload, resources, backend, fit_policy_artifact, monkeypatch
+):
+    processor = server.resize_with_state
+
+    def replace_during_processing(source, target):
+        result = processor(source, target)
+        _replace_fit_policy_bytes_with_same_stat(fit_policy_artifact)
+        return result
+
+    monkeypatch.setattr(server, "resize_with_state", replace_during_processing)
+    with pytest.raises(RuntimeError, match="changed.*Restart"):
+        server.perform_resize(payload, resources=resources)
+    assert server._SOURCE_PNG_CACHE.info()["entries"] == 0
+    assert server._RESIZE_RESULT_CACHE.info()["entries"] == 0
+
+    monkeypatch.setattr(server, "resize_with_state", processor)
+    assert server.perform_resize(payload, resources=resources)["cache"]["result_hit"] is False
+    assert server.perform_resize(payload, resources=resources)["cache"]["result_hit"] is True
+    assert backend.calls["resize"] == 2
+
+
+def test_fit_policy_replacement_after_cache_lookup_rejects_the_old_success(
+    payload, resources, backend, fit_policy_artifact, monkeypatch
+):
+    server.perform_resize(payload, resources=resources)
+    result_cache = server._RESIZE_RESULT_CACHE
+    cache_get = result_cache.get
+
+    def replace_after_lookup(key):
+        result = cache_get(key)
+        if result is not None:
+            _replace_fit_policy_bytes_with_same_stat(fit_policy_artifact)
+        return result
+
+    monkeypatch.setattr(result_cache, "get", replace_after_lookup)
+    with pytest.raises(RuntimeError, match="changed.*Restart"):
+        server.perform_resize(payload, resources=resources)
+    assert backend.calls["resize"] == 1

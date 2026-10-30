@@ -1,9 +1,12 @@
 # Train scene understanding separately from layout comparison
 
-October 30, 2026. This extends [the design-critic plan](VISION_DESIGN_TRAINING_PLAN.md)
-with the missing first-load scene task. It is a proposed training sequence,
-grounded in the current code and primary sources. It does not claim that a
-useful scene model has been trained or enabled.
+October 30, 2026. This covers the first-load source-scene task separately from
+the three-image design critic. The proposed dense vision-language fine-tuning
+sequence remains below. A smaller, offline CLIP role-head pilot now implements
+the source-data, local inference, training and crop-veto seams; see
+[the executable pilot](LOCAL_SCENE_MODEL_PILOT.md) for measured results and limits.
+Experimental training does not establish semantic quality or enable the model
+by default.
 
 ## What the challenge requires
 
@@ -43,12 +46,16 @@ source JSON + original assets/fonts + native source render
 | Component | Current status | Remaining work |
 | --- | --- | --- |
 | `engine.scene.analyze_scene` | Source geometry and local-pixel evidence for narrow background/support roles; source and asset digests | Semantic understanding of people, products, focal regions and ambiguous artwork |
-| [Local harness](LOCAL_SCENE_HARNESS.md) | Source render/profile; optional local-program or response-file proposals; strict ID/hash/region checks; proposals remain sidecars | A tested VLM provider and reviewed scene labels; model output cannot grant crop permission |
-| Relationship/resize engine | Source-owned units, candidate generation, hard contract and candidate snapshot interface | Use separately admitted intent evidence only after validation; improve missing candidate topologies |
+| [Local harness](LOCAL_SCENE_HARNESS.md) | Source render/profile, strict ID/hash/region checks, default review mode and explicit crop-veto mode | Dense VLM provider, human labels and measured semantic quality; model output cannot grant crop permission |
+| Relationship/resize engine | Source-owned units, hard contract, candidate snapshots and source-bound product/logo crop vetoes | Richer reviewed intent and missing candidate topologies |
+| [CPU scene-role pilot](LOCAL_SCENE_MODEL_PILOT.md) | Offline full-view CLIP provider, agent-reviewed labels, actual head training, stable cross-process loading and byte-identical resume/control | Held-out role accuracy remains 9/23; no default promotion or unseen-product evidence |
 | Preference framework | Collection, annotation, CPU baseline and bounded three-image LoRA/checkpoint path | Accepted human corpus, source sensitivity, held-out design benefit |
 | Existing synthetic adapter | Runtime/save/reload/resume exercised; four validation responses collapsed to B, with 2/4 weak preferences correct | No promotion. JSON compliance was the observed improvement, not design judgment. |
 
-The accepted real-source training manifest currently has no accepted sources.
+The source-role pilot has 34 agent-reviewed records, 11 training and 23 validation,
+with no independent held-out product positive. The separate preference-model
+draft still has no accepted human training corpus. These are different tasks;
+agent role annotations are not human design-preference judgments.
 The ten personal reserve posters must remain outside training, tuning and
 model selection. The eight already-reviewed development posters are useful
 regressions; repeated work on them is not an unseen-family evaluation.

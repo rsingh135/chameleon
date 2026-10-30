@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "backend": "openai_clip",
+  "checkpoint_path": "~/.cache/clip/ViT-B-32.pt",
+  "checkpoint_sha256": "40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af",
+  "processor_digest": "d506737341b6c2c8694341fac6d9c96f7900f3ee2bad53450daa2077301862b7",
+  "device": "cpu",
+  "threads": 4,
+  "max_images": 16
+}

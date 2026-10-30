@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "mode": "off",
+  "input": "native source render plus exact selected asset",
+  "target": "semantic role and optional protected regions; IDs and hashes attached by code",
+  "dense_lora": {
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
+    "base_model_path": null,
+    "base_revision": null,
+    "local_files_only": true,
+    "rank": 8,
+    "alpha": 16,
+    "dropout": 0,
+    "target_modules": "language_model q_proj/v_proj only",
+    "image_side": 448,
+    "max_tokens": 4096,
+    "max_steps": 30,
+    "max_minutes": 15,
+    "learning_rate": 0.0001
+  },
+  "cpu_role_head": {
+    "backbone": "local frozen CLIP ViT-B/32",
+    "checkpoint_path": null,
+    "checkpoint_sha256": null,
+    "feature_schema": "clip-two-view-letterbox-l2-source-asset-v2",
+    "feature_layout": "l2(source_512)||l2(asset_512)",
+    "max_steps": 200,
+    "max_seconds": 120,
+    "learning_rate": 0.1,
+    "l2": 0.001
+  },
+  "quality_validated": false,
+  "notes": "No download or compute starts from this file. Real reviewed labels, exact local weights, explicit execution and separate admission are required."
+}

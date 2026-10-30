@@ -356,6 +356,85 @@ def test_native_svg_group_frame_repair_keeps_strict_cell_and_group_limits():
         assert element == before
 
 
+@pytest.mark.parametrize("height,floor", [(1080, 13.7), (1920, 16.8)])
+def test_native_integer_advances_fit_proven_panels_without_changing_fonts_or_insets(
+    monkeypatch, height, floor
+):
+    import math
+
+    from engine.layout.source_guides import _panel_states
+    from engine.layout.text import get_measurer
+
+    package = ROOT / "fixtures/open_posters/prepared/opensuse_cheatsheet"
+    source = json.loads((package / "source.json").read_text(encoding="utf-8"))
+    original = deepcopy(source)
+    target = {"width": 1080, "height": height}
+    with using_resources(package / "resources/assets", package / "resources/fonts"):
+        # Native backends can quantize individual hinted advances. Exercise
+        # that real measurement boundary rather than granting wider tolerances
+        # to the fit, group, enclosure or collision checks.
+        measurer = get_measurer()
+        widths = measurer._widths
+        monkeypatch.setattr(
+            measurer, "_widths", lambda *args: tuple(math.floor(w + 0.5) for w in widths(*args))
+        )
+        states = _panel_states(source, target, layout_context(source))
+        assert states
+        state = max(
+            states,
+            key=lambda s: min(e["font_size"] for e in s.design["elements"] if e["type"] == "text"),
+        )
+        design = state.design
+        assert min(e["font_size"] for e in design["elements"] if e["type"] == "text") >= floor
+        assert check_contract(source, design, target, build_context(source)) == []
+        assert analyze_source_containers(source, design)["warnings"] == []
+        assert source == original
+
+
+def test_native_panel_frame_correction_cannot_overlap_an_originally_separate_label():
+    from engine.layout.geometry import Box, bounds, union
+    from engine.layout.model import Unit
+    from engine.layout.source_guides import _Band, _Panel, _panel_dimensions, _panel_place
+    from engine.layout.text import get_measurer
+
+    package = ROOT / "fixtures/open_posters/prepared/opensuse_trifold_front"
+    with using_resources(package / "resources/assets", package / "resources/fonts"):
+        label = dict(
+            _text("label", "Service status", 30, 18, group_id="authored-line"),
+            x=20,
+            text_align="left",
+            font_family="OpenSans-Regular",
+            svg_font_family="Open Sans",
+            max_lines=1,
+        )
+        advance = get_measurer().measure(label, label["font_size"], float("inf")).width
+        label["width"] = advance / 1.02
+        neighbor = dict(label, id="neighbor", x=20 + label["width"] + 0.1, content="Next")
+        root = dict(
+            id="panel",
+            type="shape",
+            x=0,
+            y=0,
+            width=500,
+            height=200,
+            shape_type="rectangle",
+            fill_color="#ffffff",
+        )
+        row = _Band((label, neighbor), union([label, neighbor]), union([label, neighbor]))
+        panel = _Panel(
+            Unit([root], bounds(root)),
+            (Unit([label, neighbor], row.box),),
+            (row,),
+            frozenset(),
+            True,
+            False,
+        )
+        before = deepcopy(panel)
+        _, height = _panel_dimensions(panel)
+        assert _panel_place(panel, Box(0, 0, 500, height), 1) is None
+        assert panel == before
+
+
 def test_vector_provenance_allows_pair_rows_but_unmarked_photo_does_not():
     source = _simple()
     for i, y in enumerate([320, 450, 580]):

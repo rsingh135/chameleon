@@ -281,7 +281,22 @@ def _panel_place(panel, cell, scale):
                 element["width"] = (right - left) * cell.width
                 exceptions.append("container-frame:" + element["id"] + ": source section")
             elif element["type"] == "text" and not _text_fits(element):
-                if _tracking_frame(element, row_inner, allow_svg_group=True) is None:
+                # A line's source-specific trailing blank space is not an
+                # additional clipping plate. A tiny native advance correction
+                # may use that empty space inside the proven parent insets;
+                # placement and the glyph anchor remain source-derived.
+                correction_cell = inner if _native_svg_line(element) else row_inner
+                if _tracking_frame(element, correction_cell, allow_svg_group=True) is None:
+                    return None
+                # Extra parent whitespace cannot authorize overlapping a
+                # neighboring label whose authored frame was separate.
+                if any(
+                    sibling["type"] == "text"
+                    and sibling["id"] != element["id"]
+                    and intersection(bounds(original), bounds(old_sibling)) <= _EPS
+                    and intersection(bounds(element), bounds(sibling)) > _EPS
+                    for sibling, old_sibling in zip(moved, row.elements, strict=True)
+                ):
                     return None
                 exceptions.append("tracking-frame:" + element["id"])
         result.extend(moved)
@@ -1072,6 +1087,18 @@ def _text_fits(element):
     )
 
 
+def _native_svg_line(element):
+    return (
+        bool(element.get("svg_font_family"))
+        and element.get("max_lines") == 1
+        and "\n" not in element.get("content", "")
+        and not element.get("rotation", 0)
+        and element.get("text_align", "left") in {"left", "center", "right", "end"}
+        and (element.get("native_text_effects") or {}).get("gradient") is None
+        and get_measurer().native_document
+    )
+
+
 def _tracking_frame(element, cell, *, allow_svg_group=False):
     """Widen a frame about its authored text anchor; never change its font.
 
@@ -1083,17 +1110,10 @@ def _tracking_frame(element, cell, *, allow_svg_group=False):
     if _text_fits(element):
         return False
     grouped = bool(element.get("group_id"))
+    native_line = allow_svg_group and _native_svg_line(element)
     if element.get("rotation", 0):
         return None
-    if grouped and (
-        not allow_svg_group
-        or not get_measurer().native_document
-        or not element.get("svg_font_family")
-        or element.get("max_lines") != 1
-        or "\n" in element.get("content", "")
-        or element.get("text_align", "left") not in {"left", "center", "right", "end"}
-        or (element.get("native_text_effects") or {}).get("gradient") is not None
-    ):
+    if grouped and not native_line:
         return None
     left, right = cell.x, cell.x + cell.width
     align = element.get("text_align", "left")
@@ -1106,7 +1126,7 @@ def _tracking_frame(element, cell, *, allow_svg_group=False):
     else:
         anchor = element["x"]
         maximum = right - anchor
-    if grouped:
+    if native_line:
         # Width and alignment-origin changes remain below the unchanged 5%
         # source-group guard. Do not grow a frame to hide a genuine reflow or
         # squeeze unrelated text into its neighbor's row/panel.
@@ -1116,7 +1136,7 @@ def _tracking_frame(element, cell, *, allow_svg_group=False):
     # Tracking is frozen by the document contract. Its advances can therefore
     # require more than the similarity-scaled frame, especially when shrinking.
     original_width = element["width"]
-    if grouped:
+    if native_line:
         measured = get_measurer().measure(element, element["font_size"], math.inf)
         preferred = max(original_width, measured.width + 0.02)
         if preferred > maximum or measured.wrapped != element.get("content", ""):

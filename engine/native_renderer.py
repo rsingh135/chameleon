@@ -15,6 +15,8 @@ from cr_renderer.color_utils import parse_color
 from cr_renderer.renderer import _decode_class_label, _get_scale_size
 from cr_renderer.schema import OutlineTextEffect, TextElement
 
+from engine.native_typography import native_font
+
 
 def make_native_text_blob(element, span, font_manager):
     """Build a vendor-compatible blob using the original fractional font size."""
@@ -25,8 +27,7 @@ def make_native_text_blob(element, span, font_manager):
         style = "bolditalic" if span.style.italic else "bold"
     elif span.style.italic:
         style = "italic"
-    data = font_manager.lookup(element.font, weight, style)
-    font = skia.Font(skia.Typeface.MakeFromData(data), float(element.fontSize))
+    font = native_font(font_manager, element.font, weight, style, element.fontSize)
     glyphs = font.textToGlyphs(content)
     positions = [x + element.letterSpacing * index for index, x in enumerate(font.getXPos(glyphs))]
     builder = skia.TextBlobBuilder()

@@ -16,6 +16,8 @@ import skia
 from cr_renderer import text_utils
 from cr_renderer.color_utils import parse_color
 
+from engine.native_typography import native_font
+
 
 def _finite(value, name):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
@@ -127,11 +129,7 @@ def _face(font_manager, family, size, bold=False, italic=False):
     style = (
         "bolditalic" if bold and italic else "bold" if bold else "italic" if italic else "regular"
     )
-    data = font_manager.lookup(family, "bold" if bold else "regular", style)
-    typeface = skia.Typeface.MakeFromData(data)
-    if typeface is None:
-        raise ValueError(f"invalid native text face {family}")
-    return skia.Font(typeface, float(size))
+    return native_font(font_manager, family, "bold" if bold else "regular", style, size)
 
 
 def draw_native_text(canvas, font_manager, element, descriptor):

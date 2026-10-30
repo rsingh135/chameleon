@@ -10,7 +10,13 @@ import pytest
 from engine.eval.render import render_image
 from engine.eval.text import TextMeasurer as EvalMeasurer
 from engine.layout.text import TextMeasurer as LayoutMeasurer
-from engine.native_typography import character_advances, effective_tracking, rewrap_example
+from engine.native_typography import (
+    character_advances,
+    effective_tracking,
+    native_char_widths,
+    native_font,
+    rewrap_example,
+)
 from engine.resources import (
     DEFAULT_FONTS_DIR,
     load_font_manager,
@@ -42,7 +48,7 @@ def native_fonts(tmp_path):
 def _tracked(native_fonts):
     manager = load_font_manager(native_fonts)
     size, tracking = 32, 20
-    widths = char_widths(manager, "ExactSans", "regular", "regular", size, "A A A")
+    widths = native_char_widths(manager, "ExactSans", "regular", "regular", size, "A A A")
     return dict(
         id="tracked",
         type="text",
@@ -65,7 +71,7 @@ def test_native_measurers_wrap_using_positive_tracking(native_fonts):
     evaluated = EvalMeasurer(native_fonts).layout(element)
     assert layout.wrapped == "A A\nA"
     assert evaluated.lines == ("A A", "A")
-    single = char_widths(
+    single = native_char_widths(
         load_font_manager(native_fonts), "ExactSans", "regular", "regular", 32, "A"
     )[0]
     assert evaluated.line_widths == pytest.approx((layout.width, single))
@@ -122,8 +128,8 @@ def test_rewrap_changes_only_text_lines_and_retains_source_run_indices(native_fo
 def test_exact_effect_run_face_and_ordinary_style_faces_change_native_measurement(native_fonts):
     manager = load_font_manager(native_fonts)
     element = dict(_tracked(native_fonts), content="WW WW", letter_spacing=3, font_size=40)
-    base = char_widths(manager, "ExactSans", "regular", "regular", 40, element["content"])
-    italic = char_widths(manager, "ExactItalic", "regular", "regular", 40, "WW")
+    base = native_char_widths(manager, "ExactSans", "regular", "regular", 40, element["content"])
+    italic = native_char_widths(manager, "ExactItalic", "regular", "regular", 40, "WW")
     styled_width = sum(base[:3]) + sum(italic) + 4 * 3
     base_width = sum(base) + 4 * 3
     assert abs(styled_width - base_width) > 1
@@ -142,14 +148,14 @@ def test_exact_effect_run_face_and_ordinary_style_faces_change_native_measuremen
     # An ordinary bold style run is measured with its exact bold face too.
     element.pop("native_text_effects")
     element["style_runs"] = [{"start": 3, "end": 5, "font_weight": "bold"}]
-    bold = char_widths(manager, "ExactSans", "bold", "bold", 40, "WW")
+    bold = native_char_widths(manager, "ExactSans", "bold", "bold", 40, "WW")
     assert character_advances(element, manager)[3:] == pytest.approx(bold)
 
 
 @pytest.mark.parametrize("tracking", [-10, -100])
 def test_signed_negative_tracking_is_not_clamped_or_nonfinite(native_fonts, tracking):
     element = dict(_tracked(native_fonts), letter_spacing=tracking, width=60)
-    advances = char_widths(
+    advances = native_char_widths(
         load_font_manager(native_fonts), "ExactSans", "regular", "regular", 32, "A A A"
     )
     expected = max(0, sum(advances) + tracking * 4)
@@ -164,7 +170,7 @@ def test_signed_negative_tracking_is_not_clamped_or_nonfinite(native_fonts, trac
 def test_final_glyph_has_no_extra_tracking_and_long_words_are_not_split(native_fonts):
     element = dict(_tracked(native_fonts), content="A", width=1)
     evaluated = EvalMeasurer(native_fonts).layout(element)
-    expected = char_widths(
+    expected = native_char_widths(
         load_font_manager(native_fonts), "ExactSans", "regular", "regular", 32, "A"
     )[0]
     assert evaluated.lines == ("A",)
@@ -189,15 +195,15 @@ def test_native_em_tracking_preserves_source_pixels_and_scales_with_type(native_
     )
     assert render_image(design, fonts_dir=native_fonts).tobytes() == source_pixels
     full_glyph_widths = [
-        sum(char_widths(manager, "ExactSans", "regular", "regular", 32, line))
+        sum(native_char_widths(manager, "ExactSans", "regular", "regular", 32, line))
         for line in pixel.lines
     ]
     half_glyph_widths = [
-        sum(char_widths(manager, "ExactSans", "regular", "regular", 16, line))
+        sum(native_char_widths(manager, "ExactSans", "regular", "regular", 16, line))
         for line in pixel.lines
     ]
-    # Fit the same authored line at the actual half-size hinted advance rather
-    # than assuming that different platform font rasterizers halve every glyph.
+    # Tracking and exact outline advances follow the same document-local scale;
+    # the renderer uses these advances too, independent of raster hinting.
     half_width = half_glyph_widths[0] + 10 * (len(pixel.lines[0]) - 1) + 0.01
     half = EvalMeasurer(native_fonts).layout(element, font_size=16, width=half_width)
     assert half.lines == pixel.lines
@@ -234,3 +240,67 @@ def test_native_rendered_lines_match_measurers_and_default_path_is_unchanged(nat
     brand_design = {**design, "elements": [brand]}
     example, _ = convert_chameleon_to_crello(brand_design, manager)
     assert native_render_example(example, brand_design, DEFAULT_FONTS_DIR) is example
+
+
+@pytest.mark.parametrize(
+    "family,weight,style",
+    [
+        ("ExactSans", "regular", "regular"),
+        ("ExactSans", "bold", "bold"),
+        ("ExactItalic", "regular", "regular"),
+    ],
+)
+def test_native_outline_metrics_preserve_per_glyph_uniform_scale(
+    native_fonts, family, weight, style
+):
+    manager = load_font_manager(native_fonts)
+    size = 12.686631719469556
+    font = native_font(manager, family, weight, style, size)
+    assert font.isLinearMetrics()
+    text = "Following source glyphs 123"
+    full = native_char_widths(manager, family, weight, style, size, text)
+    half = native_char_widths(manager, family, weight, style, size / 2, text)
+    assert half == pytest.approx([advance / 2 for advance in full], rel=0, abs=1e-6)
+    assert any(abs(advance - round(advance)) > 0.01 for advance in full)
+
+
+def test_actual_svg_single_lines_and_wide_panel_reading_agree_with_native_metrics():
+    from engine.layout.reading_order import analyze_reading_order, infer_reading_order
+    from engine.layout.source_guides import generate_source_guides
+
+    folder = ROOT / "fixtures/open_posters/prepared/opensuse_trifold_front"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        measured = LayoutMeasurer(folder / "resources/fonts")
+        evaluated = EvalMeasurer(folder / "resources/fonts")
+        authored = [
+            e
+            for e in source["elements"]
+            if e["type"] == "text"
+            and e.get("svg_font_family")
+            and e.get("max_lines") == 1
+            and "\n" not in e["content"]
+        ]
+        assert authored
+        for element in authored:
+            layout = measured.measure(element, element["font_size"], element["width"])
+            evaluation = evaluated.layout(element)
+            assert layout.lines == 1, element["id"]
+            assert evaluation.lines == (element["content"],), element["id"]
+            assert evaluation.max_line_width == pytest.approx(layout.width)
+        profile = infer_reading_order(source)
+        states = [
+            state
+            for state in generate_source_guides(source, {"width": 1600, "height": 900})
+            if state.topology == "source-panel-columns"
+        ]
+        assert states
+        for state in states:
+            result = analyze_reading_order({}, state.design, profile)
+            assert result["high_confidence_inversions"] == 0, (
+                state.name,
+                result["inversion_pairs"],
+            )
+            assert result["container_detachments"] == [], state.name
+    assert source == before

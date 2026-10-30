@@ -148,8 +148,11 @@ def test_em_tracking_preserves_source_pixels_and_scales_with_current_glyphs():
     element.height /= 2
     draw_native_text(half_untracked, manager, element, {"version": 1})
     draw_native_text(half, manager, element, {"version": 1, "tracking_em": 0.3})
-    # Real glyph advances are hinted separately at each size/platform. Subtract
-    # the measured untracked positions before asserting authored tracking scale.
+    # Native outline advances and authored tracking share one scale, while the
+    # glyphs remain live rasterized text. Check both components independently.
+    assert half_untracked.xs == pytest.approx(
+        [value / 2 for value in full_untracked.xs], rel=0, abs=1e-5
+    )
     full_tracking = [a - b for a, b in zip(full.xs, full_untracked.xs, strict=True)]
     half_tracking = [a - b for a, b in zip(half.xs, half_untracked.xs, strict=True)]
     assert full_tracking == pytest.approx([index * 0.3 * full_size for index in range(4)])

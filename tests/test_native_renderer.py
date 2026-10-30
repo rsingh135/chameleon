@@ -15,6 +15,7 @@ from PIL import Image
 
 from engine.eval.render import render_image
 from engine.native_renderer import NativeDocumentRenderer, make_native_text_blob, render_native_text
+from engine.native_typography import native_char_widths
 from engine.resources import (
     DEFAULT_ASSETS_DIR,
     DEFAULT_FONTS_DIR,
@@ -95,6 +96,12 @@ def test_native_blob_keeps_fractional_metrics_and_vendor_function_identity(nativ
     vendor = vendor_fn(element, span, manager)
     assert native.metrics.fAscent != vendor.metrics.fAscent
     assert native.metrics.fAscent / vendor.metrics.fAscent == pytest.approx(12.9 / 12, rel=1e-5)
+    expected = sum(
+        native_char_widths(
+            manager, "ExactDocumentFace", "regular", "regular", element.fontSize, element.text
+        )
+    )
+    assert native.width == pytest.approx(expected, rel=0, abs=1e-6)
     assert text_utils.make_text_blob is vendor_fn
 
 

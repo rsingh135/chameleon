@@ -8,6 +8,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
+from engine.native_typography import native_char_widths
 from engine.resources import load_font_manager, using_resources
 from renderer.converter.wrap import char_widths
 
@@ -83,7 +84,8 @@ def test_sparse_source_vector_has_physical_attachment_without_product_semantics(
 
 
 @pytest.mark.parametrize("scale", [0.5, 1.8])
-def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
+@pytest.mark.parametrize("native_document", [False, True], ids=["brand", "native"])
+def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale, native_document):
     assets, source = scene
     original = deepcopy(source)
     candidate = deepcopy(source)
@@ -94,7 +96,31 @@ def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
         element["x"] += 73
         element["y"] += 44
     before = deepcopy(candidate)
-    graph = build_relationship_graph(source, assets)
+    if native_document:
+        fonts = assets / "fonts"
+        fonts.mkdir()
+        (fonts / "face.ttf").write_bytes(
+            (ROOT / "brand_kit/fonts/SolsticeSans-Regular.ttf").read_bytes()
+        )
+        (fonts / "font-manifest.json").write_text(
+            json.dumps(
+                {
+                    "fonts": [
+                        {
+                            "font_family": "Solstice Sans",
+                            "weight": "regular",
+                            "style": "normal",
+                            "file": "face.ttf",
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+        with using_resources(fonts_dir=fonts):
+            graph = build_relationship_graph(source, assets)
+    else:
+        graph = build_relationship_graph(source, assets)
     report = analyze_relationships(graph, candidate)
     assert source == original
     assert candidate == before
@@ -113,9 +139,10 @@ def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
     assert relation["normalized_gap_error"] == 0
     heading = source["elements"][1]
     manager = load_font_manager(graph.fonts_dir)
+    measure_widths = native_char_widths if native_document else char_widths
     advances = [
         sum(
-            char_widths(
+            measure_widths(
                 manager,
                 heading["font_family"],
                 "regular",
@@ -137,8 +164,8 @@ def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
     assert advances[1] > candidate["elements"][0]["width"]
     assert advances[0] <= heading["width"]
     assert advances[1] <= candidate["elements"][1]["width"]
-    # Exact frames/point sizes above do not imply linear hinted glyph advances.
-    # Only that measured denominator changes the normalized center offset.
+    # The brand retains its hinted advances; native outlines use linear metrics.
+    # Only the actual measured denominator can change the normalized ink offset.
     expected = abs(offset / advances[0] - offset * scale / advances[1])
     assert relation["normalized_alignment_error"] == pytest.approx(
         expected,

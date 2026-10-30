@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from engine.native_typography import layout_native_text, uses_native_typography
+from engine.native_typography import layout_native_text, native_char_widths, uses_native_typography
 from engine.resources import DEFAULT_FONTS_DIR as DEFAULT_FONTS_DIR
 from engine.resources import get_resources, load_font_manager
 from renderer.converter.convert import _normalize_weight, _weight_style_to_font_style
@@ -75,7 +75,8 @@ class TextMeasurer:
         if hit is None:
             if len(self._width_cache) > 8192:
                 self._width_cache.clear()
-            hit = tuple(char_widths(self._font_manager, family, weight, style, size, text))
+            measure = native_char_widths if self.native_document else char_widths
+            hit = tuple(measure(self._font_manager, family, weight, style, size, text))
             self._width_cache[key] = hit
         return hit
 

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from engine.native_typography import layout_native_text, uses_native_typography
+from engine.native_typography import layout_native_text, native_char_widths, uses_native_typography
 from engine.resources import DEFAULT_FONTS_DIR, get_resources, load_font_manager
 
 FONTS_DIR = DEFAULT_FONTS_DIR
@@ -48,6 +48,8 @@ class TextMeasurer:
         self, family: str, weight: str, style: str, size: float, content: str
     ) -> tuple:
         if self._manager is not None:
+            if self.native_document:
+                return native_char_widths(self._manager, family, weight, style, size, content)
             return tuple(self._char_widths(self._manager, family, weight, style, size, content))
         return tuple(
             size * (1.0 if unicodedata.east_asian_width(c) in {"F", "W"} else 0.65)

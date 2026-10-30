@@ -11,10 +11,36 @@ from dataclasses import dataclass
 from itertools import accumulate
 from pathlib import Path
 
+import skia
+
 from renderer.converter.convert import _is_italic, _normalize_weight
-from renderer.converter.wrap import char_widths
 
 _BOLD = {"bold", "semibold", "extrabold", "black"}
+
+
+def native_font(font_manager, family, weight, style, size):
+    """Use unrounded outline advances for document-local measure and paint.
+
+    Hinted advances can round each glyph independently on some platforms. That
+    changes authored line breaks and relative spacing when a native design is
+    uniformly scaled. Linear metrics retain outline-font geometry; raster
+    antialiasing and the vendor's bundled-brand font policy remain unchanged.
+    """
+    data = font_manager.lookup(family, weight, style)
+    typeface = skia.Typeface.MakeFromData(data)
+    if typeface is None:
+        raise ValueError(f"Invalid native text face {family!r}.")
+    font = skia.Font(typeface, float(size))
+    font.setLinearMetrics(True)
+    return font
+
+
+def native_char_widths(font_manager, family, weight, style, size, text):
+    """Measure the same exact-face outline advances used by native painters."""
+    if not text:
+        return ()
+    font = native_font(font_manager, family, weight, style, size)
+    return tuple(font.getWidths(font.textToGlyphs(text)))
 
 
 def uses_native_typography(fonts_dir: str | Path) -> bool:
@@ -69,7 +95,7 @@ def character_advances(element, font_manager, size=None, width_lookup=None):
             faces[index] = (run["font_family"], "regular", "regular")
 
     lookup = width_lookup or (
-        lambda family, weight, style, size, text: char_widths(
+        lambda family, weight, style, size, text: native_char_widths(
             font_manager, family, weight, style, size, text
         )
     )

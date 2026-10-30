@@ -214,8 +214,11 @@ def compute_metrics(
         m["raw_line_growth"] = float(sum(growth) / len(growth))
         m["text_lines_stable"] = _clamp(1.0 - max(0.0, (m["raw_line_growth"] - 1.0)) / 2.0)
 
-        # Hierarchy: font-size ordering between text pairs preserved.
+        # Hierarchy: font-size ordering between text pairs preserved. A pair
+        # whose source sizes differ by 1.5x or more and comes out inverted is
+        # a visible design error (legal line larger than the headline).
         kept = tot = 0
+        major_inversions = 0
         for a, b in combinations(texts, 2):
             sa, sb = context.by_id[a]["font_size"], context.by_id[b]["font_size"]
             if sa == sb:
@@ -224,7 +227,10 @@ def compute_metrics(
             ca, cb = cand_by_id[a]["font_size"], cand_by_id[b]["font_size"]
             if (sa > sb) == (ca > cb) and ca != cb:
                 kept += 1
+            elif max(sa, sb) / min(sa, sb) >= 1.5 and (sa > sb) != (ca > cb):
+                major_inversions += 1
         m["hierarchy"] = kept / tot if tot else 1.0
+        m["raw_hierarchy_inversions"] = float(major_inversions)
     else:
         m["text_size"] = m["text_lines_stable"] = m["hierarchy"] = 1.0
 
@@ -283,7 +289,14 @@ def compute_metrics(
             dx = s.cx / scanvas.width - c.cx / ccanvas.width
             dy = s.cy / scanvas.height - c.cy / ccanvas.height
             drift.append(_clamp(1.0 - math.hypot(dx, dy) / 0.35))
-        m["position_affinity"] = sum(drift) / len(drift)
+        affinity = sum(drift) / len(drift)
+        # When the canvas shape changes a lot, elements *must* move; blend the
+        # metric toward neutral so a strip relayout is not punished for it.
+        aspect_change = abs(
+            math.log((ccanvas.width / ccanvas.height) / (scanvas.width / scanvas.height))
+        )
+        relax = _clamp(aspect_change / math.log(6.0))
+        m["position_affinity"] = affinity * (1 - relax) + relax
     else:
         m["position_affinity"] = 1.0
 

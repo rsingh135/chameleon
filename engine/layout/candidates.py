@@ -491,4 +491,7 @@ def generate_candidates(source: dict, target_canvas: dict) -> list[dict]:
             for sidebar in (False, True):
                 candidates.append(_split(source, context, target_canvas, media_share, sidebar, 1.1))
     candidates.extend(generate_style_candidates(source, target_canvas, context))
+    from .strip import generate_strip_candidates
+
+    candidates.extend(generate_strip_candidates(source, target_canvas, context))
     return candidates

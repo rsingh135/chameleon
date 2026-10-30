@@ -1035,15 +1035,15 @@
       "visual_reviews": {
         "landscape": {
           "status": "approved",
-          "reviewer": "Codex source/result render review",
-          "notes": "The source photo, fade and dark header labels stay together on the left. The one-line white title, time, correctly wrapped description and intact calendar row form a coherent right-hand panel with readable hierarchy; all seven dates and the 21 pill remain visible and aligned. This retains the source caption/date proportions more faithfully than the earlier oversized two-line title.",
-          "evidence_digest": "1c11e3c014e7da436e8bc2ace3be83aa13df3de1744f53bbc725f4647ed16bdb"
+          "reviewer": "Codex independent source/result render review",
+          "notes": "Compared the original author thumbnail, unchanged converted source and this exact selected PNG. All three upper header labels remain on the light photo field and visibly smaller than the body and dates, retaining the source ranks. The headline dominates the lower caption, the time remains between title and body, and the complete 18–24 calendar row preserves the 21 pill and original 32:30 date/body ratio. White/beige copy remains readable over a continuous smooth fade; no hard gradient bar or clipped copy is visible. The central head retains its top and the caption avoids its face. The wide result uses a tighter crop of the already prepared portrait photo; the lost original lateral photo content is a disclosed import limitation, not recovered or claimed here.",
+          "evidence_digest": "c2dcf483077673a534fd7f6ae332839fe58385c0d6babb0928dcd3973c58f902"
         },
         "square": {
           "status": "approved",
-          "reviewer": "Codex source/result render review",
-          "notes": "The actual selected square now forms one coherent lower caption/calendar composition across the central source photo and dark side field. The 96.6 px headline, 25.875 px body and 27.6 px calendar restore readable message prominence and retain the original 32:30 calendar/body ratio. Photo, fade and header ownership remain intact; faces stay uncovered. All seven dates and the 21 pill are visible and aligned, with no clipped copy or detached labels.",
-          "evidence_digest": "bcfe3259276df3f9a965b082810f3324a096f174368177f7ac4b78c7d46bd43f"
+          "reviewer": "Codex independent source/result render review",
+          "notes": "Compared the original author thumbnail, unchanged converted source and this exact selected PNG. The upper labels retain their source order, dark-on-light contrast and supporting rank beneath the body/date sizes. The headline, time, description and seven-date calendar form a coherent lower composition on a smooth dark fade. The 21 pill remains centered on its date, all dates stay aligned, and the source 32:30 date/body ratio is exact. The photo fills the square without pillarboxes; the central head has clear upper space and its face stays above the headline. The side subjects inherit the prepared portrait photo crop; no claim is made to recover the full original photograph.",
+          "evidence_digest": "edd47d3b62e7e0da69fa1c85a825d6c8fa69a37a55c670392c83cdf92cbdcd45"
         },
         "story": {
           "status": "approved",

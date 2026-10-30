@@ -115,7 +115,27 @@
         "license_id": "LicenseRef-Doory-AAL",
         "license_path": "licenses/doory-LICENSE"
       },
-      "page_index": 0
+      "page_index": 0,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The source photo and orange surround remain one coherent region; the offer, discount badge, contact details and CTA stay legible on the navy support. The full-width arrangement fills landscape naturally and retains the original red/navy hierarchy.",
+          "evidence_digest": "d2de265089a24324003e2490b53afa8bd84d2426be02f7062145902f20239b87"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The original square hierarchy and photo/offer connection are retained. WEEKEND, FASHION/BIG SALE, discount badge, contact block and CTA keep clear spacing, contrast and relative prominence.",
+          "evidence_digest": "b2850ccd287e7929be1f0a7e503bf16a17c21c715ee5e838bb8693639aec488f"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The brand and offer lead into a photo region and a complete navy offer/action section. This is a meaningful vertical stack; badge and CTA lettering stay inside their supports and the source photo crop remains recognizable.",
+          "evidence_digest": "f8e14a94e3fab31324ac38541b1874f01981774e6ee25f9e671ecce48bfa1979"
+        }
+      }
     },
     {
       "id": "doory_bold-youtube-thumbnail",
@@ -295,7 +315,27 @@
         "license_id": "LicenseRef-Doory-AAL",
         "license_path": "licenses/doory-LICENSE"
       },
-      "page_index": 0
+      "page_index": 0,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The actual columns-5 winner now uses the landscape canvas coherently: small sprig, family line, paired names and flanked and remain one left-hand identity group; invitation copy, complete ruled date/time row and venue form the right-hand information group. Source hierarchy, script/serif contrast and readable fine text remain recognizable. No enlarged ornament, broken rule, reordered date or clipped name is visible.",
+          "evidence_digest": "b91cc7daf5c3e127d96c2ea3e98c8f246fdee7214de2071280dd854830f206cd"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The small sprig supports the family/name header; the flanking rules remain with and. Names, invitation copy, complete date/time row, venue script and address keep a coherent formal hierarchy and readable spacing.",
+          "evidence_digest": "2b6021f0e893f0acf853bee73ec0bef18a320802d3826e6d63f90fc16acaf3f5"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The centered invitation keeps the sprig, paired names, flanked and, complete date/time row and venue information in the original order. Generous vertical whitespace suits the source formal invitation style; no ornament inflation, detached rule or clipped copy is visible.",
+          "evidence_digest": "dd0897b96c94717b278a87fdf4379ada0cc844555269ef11788948011950230e"
+        }
+      }
     },
     {
       "id": "doory_clean-business-card",
@@ -553,7 +593,27 @@
           ],
           "max_log_error": 0.05
         }
-      ]
+      ],
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The script Grand/opening block leads on the left and the explanatory copy, three-part event row and website form a coherent information block on the right. The cafe header remains a page header; rules and event columns stay intact and readable.",
+          "evidence_digest": "291f9678d7716e7f75822bfbdd55379b97004bf3b3ac21de7406d423f7ef393f"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Grand remains the dominant script headline. Opening, the ruled please-join-us line, correctly wrapped body copy and the complete time/date/address row retain the original type hierarchy and grouping.",
+          "evidence_digest": "fe3b2b18d41b8dd3687aeff70e8808b25e5d3f14cb5382d0d92784d4f2241496"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The taller layout distributes the original vertical sections while retaining their order and script/serif hierarchy. The time/date/address row remains one intact three-part event block with its two dividing rules; the website stays at the foot.",
+          "evidence_digest": "8ff4a461e7d9f03319dc5163a2131819bf212e3666e47aac94fcd17ca1e1b8cc"
+        }
+      }
     },
     {
       "id": "doory_modern-pitch-deck",
@@ -858,7 +918,27 @@
         "license_id": "LicenseRef-Doory-AAL",
         "license_path": "licenses/doory-LICENSE"
       },
-      "page_index": 0
+      "page_index": 0,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The act/outline-title composition and venue/guest information form two balanced columns. The orange/yellow venue plate supports all four lines and every tracked PAPER TIGERS glyph fits inside the lilac plate; colors and title prominence remain recognizable.",
+          "evidence_digest": "94cc6daf00f73521f0222208539bf6cafe04bac89f611a09fb92d9c2e4ca7f78"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The outlined titles, gradient main act, complete venue plate, guest caption and PAPER TIGERS plate retain their source hierarchy. Both plate lettering groups remain fully visible with coherent margins; no detached guest letters remain.",
+          "evidence_digest": "6ef369add6ff02f2d3bf160ab9f528e961a83b867927790f09d86f4818a2194b"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The tall centered concert stack preserves both outlined title rows, main-act prominence, all venue/date lines, guest caption and tracked guest name. PAPER TIGERS remains entirely on its lilac support, with clear separation between colored blocks.",
+          "evidence_digest": "ebb4d578b93730c70073b02827adeaeac1293ed4d14bfd5133997e20171e6948"
+        }
+      }
     },
     {
       "id": "doory_rooftop-event-story",
@@ -951,7 +1031,27 @@
         "license_id": "LicenseRef-Doory-AAL",
         "license_path": "licenses/doory-LICENSE"
       },
-      "page_index": 0
+      "page_index": 0,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The source photo, fade and dark header labels stay together on the left. The one-line white title, time, correctly wrapped description and intact calendar row form a coherent right-hand panel with readable hierarchy; all seven dates and the 21 pill remain visible and aligned. This retains the source caption/date proportions more faithfully than the earlier oversized two-line title.",
+          "evidence_digest": "1c11e3c014e7da436e8bc2ace3be83aa13df3de1744f53bbc725f4647ed16bdb"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The actual selected square now forms one coherent lower caption/calendar composition across the central source photo and dark side field. The 96.6 px headline, 25.875 px body and 27.6 px calendar restore readable message prominence and retain the original 32:30 calendar/body ratio. Photo, fade and header ownership remain intact; faces stay uncovered. All seven dates and the 21 pill are visible and aligned, with no clipped copy or detached labels.",
+          "evidence_digest": "bcfe3259276df3f9a965b082810f3324a096f174368177f7ac4b78c7d46bd43f"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The original photo-led story composition remains recognizable: dark header labels stay on the light photo area, the fade supports the white title/time/body, and the complete calendar row with the 21 pill remains aligned and readable. No photo-caption detachment is visible.",
+          "evidence_digest": "e07874b522eab26971e0b93cecb0c981b084fff24f1eb3118202e0628c805dd7"
+        }
+      }
     },
     {
       "id": "doory_serif-quote-card",
@@ -1144,7 +1244,27 @@
       "prepared_path": "prepared/opensuse_trifold_front",
       "curation_status": "source_license_and_font_screened; importer acceptance pending",
       "engine_evaluated": false,
-      "source_modified": false
+      "source_modified": false,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Fresh native output preserves the three source panel order, QR/label relationships, MicroOS/logo hierarchy and the meaning of color-backed sections. Supporting rounded plates remain clear of preceding text frames. No visible shape distortion or new overflow.",
+          "evidence_digest": "acbc0a9d44bd73df1ef539fafcf51a44316113cd96536e701e0a414fb56aa936"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Fresh native output preserves all three readable source panels, complete copy groups and source color sections. The conservative gap repair creates clear separation before ReadNews and Commands without changing source typography or artwork. Limitations: Compact panel margins remain; minimum live type13.05px is just above the existing12.96px floor.",
+          "evidence_digest": "aedbd9dc8f581223e7debcf05422967d3ddfe3a898845e1e7bdf42d9e82aef16"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Fresh native full-pool selection stacks Communication and MicroOS panels left, with the original front panel right. This meaningfully adapts the tall canvas while retaining source order, readable type, intact artwork and text support. No frame collision waiver is used. Limitations: The right front panel has shorter original copy and retains source top affiliation, leaving lower-right whitespace. Its typography is not independently inflated to fill that space.",
+          "evidence_digest": "a12bafaafee3ccdb8b4d74794705e8a9e63fa0bddfef5e551db6df1c1f54ce9a"
+        }
+      }
     },
     {
       "id": "opensuse_booth_poster",
@@ -1214,7 +1334,27 @@
       "prepared_path": "prepared/opensuse_booth_poster",
       "curation_status": "source_license_and_font_screened; importer acceptance pending",
       "engine_evaluated": false,
-      "source_modified": false
+      "source_modified": false,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Logo/title/URL occupy the leading column; all five original icon-description pairs remain attached, readable and source ordered. Colors and icon silhouettes remain recognizable. Limitations: MicroOS icon-to-copy spacing is tight, as in the source.",
+          "evidence_digest": "c8f70e50071fbb7ec6bc17a474ee13ae5fd7bebc85053ac10b5bd5d6351cf447"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Two-column hierarchy remains coherent; flavor descriptions are readable and each retains its correct source icon. Limitations: Some upper/lower negative space remains; minimum live type is18.07px.",
+          "evidence_digest": "693131ce45f83e77e0d1f1882e2eabd8fbf122873937e6d7af03cff4a488bc14"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "Source vertical brand/title/URL order is retained above all five connected flavor rows; body type is comfortably readable.",
+          "evidence_digest": "288dfa94ebad1acc4b2d2335c7e2586727e2438d29a3d37cfe6faa4ba7465489"
+        }
+      }
     },
     {
       "id": "opensuse_cheatsheet",
@@ -1286,7 +1426,27 @@
       "prepared_path": "prepared/opensuse_cheatsheet",
       "curation_status": "source_license_and_font_screened; importer acceptance pending",
       "engine_evaluated": false,
-      "source_modified": false
+      "source_modified": false,
+      "visual_reviews": {
+        "landscape": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The source technical cards now form a four-column source-ordered layout with connected descriptions/commands and intact green header support. No visible overflow or missing elements. Limitations: Minimum live type11.45px is small for screen reading but remains above the existing10.8px landscape floor and close to the dense original reference sheet.; Some dark negative space remains beside shorter card columns. Thin dark insets above some green headerplates are a minor container-spacing difference from the source.",
+          "evidence_digest": "ae3e19d40ed6ea57b09ba2b949f000d9353b3c66ebd4c28a5237b2c911931258"
+        },
+        "square": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The actual three-column selected grid keeps all seven original cards intact, readable and in source container order. Commands retain their own headings; no lost text or supporting-plate overflow. Limitations: Dense reference-sheet typography remains; minimum live type13.72px.; Thin dark insets above some green headerplates are a minor container-spacing difference from the source.",
+          "evidence_digest": "8bfcf1f68567439480b57ff5ae4490f2e4f963bec7033abd765c57138c895d92"
+        },
+        "story": {
+          "status": "approved",
+          "reviewer": "Codex source/result render review",
+          "notes": "The actual two-column selected grid uses the tall canvas, with source cards and internal label/command order preserved. Body type is readable and no longer reduced to a tiny horizontal strip. Limitations: The original alternating left/right text alignments are intentionally retained inside individual cards.; Thin dark insets above some green headerplates remain a minor source-spacing difference.",
+          "evidence_digest": "d7b8d4cfb0b1a7122b168e873d55beb769a1a476ccdb8f032d27a1ee75d4d9a2"
+        }
+      }
     },
     {
       "id": "blaketyro_uml_arrows",

@@ -22,6 +22,118 @@ ROOT = Path(__file__).resolve().parents[1]
 MUTABLE = {"x", "y", "width", "height", "font_size", "corner_radius", "stroke_width"}
 
 
+def _panel_failure_details(source, target):
+    """Failure-only observation of real proposal declines; never alter policy."""
+    import linecache
+    import platform
+    import sys
+    from collections import Counter
+
+    import engine.layout.source_guides as guides
+    from engine.layout.text import get_measurer
+
+    counts, failures, seen = Counter(), [], set()
+    observed = {"_panel_place", "_state", "_valid", "_tracking_frame", "_text_fits"}
+
+    def trace(frame, event, result):
+        name = frame.f_code.co_name
+        if frame.f_code.co_filename != guides.__file__ or name not in observed:
+            return None
+        if event != "return" or result is not None and result is not False:
+            return trace
+        counts[name] += 1
+        local = frame.f_locals
+        element = local.get("element")
+        eid = element.get("id") if isinstance(element, dict) else None
+        key = (name, eid, frame.f_lineno)
+        if key in seen or len(failures) >= 12:
+            return trace
+        seen.add(key)
+        record = {
+            "function": name,
+            "line": frame.f_lineno,
+            "guard": linecache.getline(guides.__file__, frame.f_lineno).strip(),
+        }
+        for field in ("scale", "content", "free", "minimum", "width"):
+            if isinstance(local.get(field), (int, float)):
+                record[field] = local[field]
+        for field in ("cell", "inner", "row_inner"):
+            box = local.get(field)
+            if box is not None:
+                record[field] = {k: getattr(box, k) for k in ("x", "y", "width", "height")}
+        if isinstance(element, dict):
+            record["element"] = {
+                k: element.get(k)
+                for k in (
+                    "id",
+                    "type",
+                    "font_family",
+                    "font_size",
+                    "x",
+                    "y",
+                    "width",
+                    "height",
+                    "max_lines",
+                    "group_id",
+                    "line_height",
+                    "letter_spacing",
+                )
+            }
+            record["copy"] = str(element.get("content", ""))[:100]
+            measured = local.get("measured")
+            if measured is not None and hasattr(measured, "wrapped"):
+                record["measured"] = {
+                    "width": measured.width,
+                    "height": measured.height,
+                    "lines": measured.lines,
+                    "wrapped": measured.wrapped[:140],
+                }
+        panel = local.get("panel")
+        if panel is not None:
+            record["panel"] = panel.container.elements[0]["id"]
+            cell = local.get("cell")
+            if cell is not None:
+                bad = []
+                for child in local.get("result", []):
+                    box = guides.bounds(child)
+                    if (
+                        box.x < cell.x - guides._EPS
+                        or box.y < cell.y - guides._EPS
+                        or box.x + box.width > cell.x + cell.width + guides._EPS
+                        or box.y + box.height > cell.y + cell.height + guides._EPS
+                    ):
+                        bad.append({"id": child["id"], "bounds": vars(box)})
+                record["bad_bounds"] = bad[:3]
+        failures.append(record)
+        return trace
+
+    measurer = get_measurer()
+    details = {
+        "platform": platform.platform(),
+        "python": sys.version.split()[0],
+        "backend": measurer.backend,
+        "native_document": measurer.native_document,
+    }
+    try:
+        import skia
+
+        details["skia"] = skia.__version__
+    except ImportError:
+        details["skia"] = None
+    previous = sys.gettrace()
+    try:
+        sys.settrace(trace)
+        states = generate_source_guides(source, target)
+    finally:
+        sys.settrace(previous)
+    details.update(
+        observed_states=[state.name for state in states],
+        decline_counts=dict(counts),
+        first_declines=failures,
+    )
+    return json.dumps(details, indent=2)
+
+
 def _text(eid, content, y, font=20, **extra):
     return dict(
         id=eid,
@@ -361,7 +473,7 @@ def test_real_source_panels_reflow_at_one_readable_foreground_scale(
         states = generate_source_guides(source, target)
         assert len(states) <= MAX_STATES
         panels = [s for s in states if s.topology == "source-panel-columns"]
-        assert panels
+        assert panels, _panel_failure_details(source, target)
         state = max(
             panels,
             key=lambda s: min(e["font_size"] for e in s.design["elements"] if e["type"] == "text"),

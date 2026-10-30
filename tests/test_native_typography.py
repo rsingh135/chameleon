@@ -257,11 +257,31 @@ def test_native_outline_metrics_preserve_per_glyph_uniform_scale(
     size = 12.686631719469556
     font = native_font(manager, family, weight, style, size)
     assert font.isLinearMetrics()
+    from io import BytesIO
+
+    from fontTools.ttLib import TTFont
+
     text = "Following source glyphs 123"
-    full = native_char_widths(manager, family, weight, style, size, text)
-    half = native_char_widths(manager, family, weight, style, size / 2, text)
-    assert half == pytest.approx([advance / 2 for advance in full], rel=0, abs=1e-6)
-    assert any(abs(advance - round(advance)) > 0.01 for advance in full)
+    with TTFont(BytesIO(manager.lookup(family, weight, style))) as face:
+        cmap = face.getBestCmap()
+        units = face["head"].unitsPerEm
+        advances_em = [face["hmtx"][cmap[ord(char)]][0] / units for char in text]
+    anchor = max(range(len(text)), key=advances_em.__getitem__)
+    quantum = 1 / 65536
+    for current_size in (size, size / 2):
+        widths = native_char_widths(manager, family, weight, style, current_size, text)
+        effective_size = widths[anchor] / advances_em[anchor]
+        # FreeType quantizes the requested size to 26.6 and linear advances to
+        # 16.16 (freetype.org/freetype2/docs/reference/ft2-sizing_and_scaling.html
+        # and ft2-glyph_retrieval.html). This permits ONE shared ppem adjustment,
+        # never independently hinted/integer-rounded glyph widths.
+        assert abs(effective_size - current_size) <= 1 / 64 + quantum / advances_em[anchor]
+        for measured, advance_em in zip(widths, advances_em, strict=True):
+            # One 16.16 quantum for this advance plus the anchor's propagated
+            # quantum; the largest-advance anchor bounds the total to two.
+            bound = quantum * (1 + advance_em / advances_em[anchor])
+            assert measured == pytest.approx(advance_em * effective_size, rel=0, abs=bound)
+        assert any(abs(advance - round(advance)) > 0.01 for advance in widths)
 
 
 def test_actual_svg_single_lines_and_wide_panel_reading_agree_with_native_metrics():

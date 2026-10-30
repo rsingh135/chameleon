@@ -8,6 +8,7 @@ from cr_renderer import text_utils
 from cr_renderer.schema import TextElement
 
 from engine.native_text_effects import draw_native_text, validate_descriptor
+from engine.native_typography import native_char_widths
 from engine.resources import load_font_manager
 
 
@@ -148,11 +149,15 @@ def test_em_tracking_preserves_source_pixels_and_scales_with_current_glyphs():
     element.height /= 2
     draw_native_text(half_untracked, manager, element, {"version": 1})
     draw_native_text(half, manager, element, {"version": 1, "tracking_em": 0.3})
-    # Native outline advances and authored tracking share one scale, while the
-    # glyphs remain live rasterized text. Check both components independently.
-    assert half_untracked.xs == pytest.approx(
-        [value / 2 for value in full_untracked.xs], rel=0, abs=1e-5
-    )
+    # Paint must use the same native outline metrics as measurement at EACH
+    # size: FreeType's ppem quantization need not halve the untracked advances
+    # exactly. Authored tracking still follows the requested scale exactly.
+    for painted, size in ((full_untracked, full_size), (half_untracked, full_size / 2)):
+        advances = native_char_widths(
+            manager, element.font, "regular", "regular", size, element.text
+        )
+        positions = [sum(advances[:index]) for index in range(len(element.text))]
+        assert painted.xs == pytest.approx(positions, rel=0, abs=1e-6)
     full_tracking = [a - b for a, b in zip(full.xs, full_untracked.xs, strict=True)]
     half_tracking = [a - b for a, b in zip(half.xs, half_untracked.xs, strict=True)]
     assert full_tracking == pytest.approx([index * 0.3 * full_size for index in range(4)])

@@ -29,7 +29,7 @@
     if (persist) remember('setupOpen', open);
     if (!focus) return;
     if (open) {
-      const control = target || $('sample');
+      const control = target || $('preset');
       (control.matches(':disabled') ? $('closeSettings') : control).focus();
     } else if (focusWasInside) {
       const opener = lastSetupToggle.getClientRects().length ? lastSetupToggle : $('settingsToggle');
@@ -84,9 +84,12 @@
   for (const button of document.querySelectorAll('[data-workspace-action]')) {
     button.addEventListener('click', () => {
       const action = button.dataset.workspaceAction;
-      if (action === 'source' || action === 'canvas') {
+      if (action === 'source') {
+        const picker = $('sample');
+        (picker.matches(':disabled') ? button : picker).focus({preventScroll: true});
+      } else if (action === 'canvas') {
         lastSetupToggle = $('setupRailToggle');
-        setSetupOpen(true, {focus: true, persist: true, target: $(action === 'source' ? 'sample' : 'preset')});
+        setSetupOpen(true, {focus: true, persist: true, target: $('preset')});
       } else if (action === 'compare') {
         const compare = document.querySelector('.view-switch button[data-view="compare"]');
         compare.click();

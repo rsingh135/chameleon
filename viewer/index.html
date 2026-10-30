@@ -37,8 +37,6 @@
         <legend>Design and canvas</legend>
         <section class="control-section" aria-labelledby="sourceHeading">
           <h2 id="sourceHeading">Source</h2>
-          <label for="sample">Source design</label>
-          <select id="sample" disabled><option>Loading samples…</option></select>
           <div id="sourceSummary" class="field-help">Loading bundled designs</div>
           <p id="posterCredit" class="field-help" hidden></p>
           <details id="importPanel" class="import-panel">
@@ -76,7 +74,10 @@
     <div class="studio-content">
       <div class="canvas-area">
         <div class="canvas-toolbar">
-
+          <div id="designPicker" class="design-picker">
+            <label for="sample">Source design</label>
+            <select id="sample" disabled><option>Loading samples…</option></select>
+          </div>
           <div class="view-switch" role="group" aria-label="Preview view">
             <button type="button" data-view="compare" aria-pressed="false">Compare</button>
             <button type="button" data-view="source" aria-pressed="false">Original</button>

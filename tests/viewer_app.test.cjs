@@ -98,7 +98,8 @@ function application({meta = metadata(), posters = [], workspace = false, storag
   });
   if (workspace) {
     elements.controls.append(elements.settings, elements.closeSettings);
-    elements.settings.append(...['sample', 'preset', 'run', 'width', 'height'].map(id => elements[id]));
+    elements.settings.append(...['preset', 'run', 'width', 'height'].map(id => elements[id]));
+    elements.designPicker.append(elements.sample);
     elements.inspection.append(new Element('', 'DETAILS'));
   }
   class Image {
@@ -524,12 +525,12 @@ test('rapid canvas changes and duplicate submits publish only the last requested
   assert.deepEqual(exported.canvas, {width: 200, height: 100});
 });
 
-test('workspace shortcuts focus the panel close control while the target fieldset is disabled', async () => {
+test('the canvas shortcut focuses the panel close control while the target fieldset is disabled', async () => {
   const app = application({workspace: true}); await app.flush();
   app.imageLoads = false;
   const resizing = app.elements.resizeForm.fire('submit'); await app.flush();
   app.elements.setupRailToggle.focus();
-  await app.actions.find(button => button.dataset.workspaceAction === 'source').fire('click');
+  await app.actions.find(button => button.dataset.workspaceAction === 'canvas').fire('click');
   assert.equal(app.document.activeElement, app.elements.closeSettings);
   await app.timeout(); await resizing;
 });
@@ -544,7 +545,8 @@ test('workspace supports blocked storage, Escape focus return, and history view 
   assert.equal(app.elements.settingsToggle.getAttribute('aria-expanded'), 'false');
   await app.elements.settingsToggle.fire('click');
   assert.equal(app.elements.controls.hidden, false);
-  assert.equal(app.document.activeElement, app.elements.sample);
+  assert.equal(app.document.activeElement, app.elements.preset);
+  assert.equal(app.elements.controls.contains(app.document.activeElement), true);
   const count = app.requests.length;
   app.context.location.search = '?view=source';
   await app.windowEvent('popstate'); await app.flush();
@@ -616,6 +618,135 @@ test('retry after a failed poster load fetches the selected poster instead of re
   assert.equal(app.requests.at(-1).url, '/api/document/resize');
   const exported = JSON.parse(await app.blobs.get(app.elements.downloadJson.href).text());
   assert.equal(exported.poster_id, 'new');
+});
+
+test('the visible design picker preserves target and Compare when Setup is folded', async () => {
+  const app = application({workspace: true, posters: [
+    {id: 'new', title: 'New poster', split: 'reviewed', ready: true, bundle_url: '/api/poster-new'},
+  ]});
+  await app.flush();
+  await app.views.find(button => button.dataset.view === 'compare').fire('click');
+  await app.elements.closeSettings.fire('click');
+  assert.equal(app.elements.workspace.dataset.setupOpen, 'false');
+  assert.equal(app.elements.controls.contains(app.elements.sample), false);
+  assert.equal(app.elements.designPicker.contains(app.elements.sample), true);
+  app.elements.width.value = '240'; app.elements.height.value = '160';
+  await app.elements.width.fire('input');
+  await app.select('a');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 240, height: 160});
+  app.posterHandler = () => ({...sample('new').task, assets: [], fonts: [], document: {snapshot_id: 'new'}});
+  await app.select('poster:new'); await app.flush();
+  assert.equal(app.elements.taskName.textContent, 'New poster');
+  assert.equal(app.elements.previews.dataset.view, 'compare');
+  assert.equal(app.elements.workspace.dataset.setupOpen, 'false');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 240, height: 160});
+  assert.equal(app.requests.at(-1).payload.poster_id, 'new');
+  assert.match(app.elements.downloadPng.download, /^new_240x160/);
+  await app.select('b');
+  assert.equal(app.elements.taskName.textContent, 'Sample b');
+  assert.equal(app.elements.previews.dataset.view, 'compare');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 240, height: 160});
+  assert.match(app.elements.downloadPng.download, /^b_240x160/);
+});
+
+test('the standalone picker stays disabled until its pending resize settles', async () => {
+  const app = application({workspace: true}); await app.flush();
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const resizing = app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.equal(app.elements.sample.disabled, true);
+  pending.resolve(rendered(app.requests.at(-1).payload));
+  await resizing; await app.flush();
+  assert.equal(app.elements.sample.disabled, false);
+});
+
+test('late startup metadata cannot unlock the standalone picker during an imported resize', async () => {
+  const boot = deferred();
+  const app = application({meta: boot.promise, workspace: true});
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  await app.file('owned.json', sample('owned').task); await app.flush();
+  assert.equal(app.elements.sample.disabled, true);
+  boot.resolve(metadata()); await app.flush();
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'true');
+  assert.equal(app.elements.sample.disabled, true);
+  pending.resolve(rendered(app.requests.at(-1).payload)); await app.flush();
+  assert.equal(app.elements.sample.disabled, false);
+  assert.equal(app.elements.taskName.textContent, 'owned.json');
+  assert.match(app.elements.downloadJson.download, /^owned_/);
+});
+
+test('the Source shortcut focuses the visible picker while leaving folded Setup folded', async () => {
+  const app = application({workspace: true}); await app.flush();
+  await app.elements.closeSettings.fire('click');
+  await app.actions.find(button => button.dataset.workspaceAction === 'source').fire('click');
+  assert.equal(app.elements.controls.hidden, true);
+  assert.equal(app.elements.workspace.dataset.setupOpen, 'false');
+  assert.equal(app.document.activeElement, app.elements.sample);
+});
+
+test('the Source shortcut retains reachable focus when its picker is busy', async () => {
+  const app = application({workspace: true}); await app.flush();
+  await app.elements.closeSettings.fire('click');
+  app.imageLoads = false;
+  const resizing = app.elements.resizeForm.fire('submit'); await app.flush();
+  const sourceShortcut = app.actions.find(button => button.dataset.workspaceAction === 'source');
+  sourceShortcut.focus(); await sourceShortcut.fire('click');
+  assert.equal(app.elements.controls.hidden, true);
+  assert.equal(app.elements.sample.disabled, true);
+  assert.equal(app.document.activeElement, sourceShortcut);
+  await app.timeout(); await resizing;
+});
+
+test('retrying a failed picker poster keeps the current custom target', async () => {
+  const app = application({posters: [
+    {id: 'new', title: 'New poster', split: 'reviewed', ready: true, bundle_url: '/api/poster-new'},
+  ]});
+  await app.flush();
+  app.elements.width.value = '320'; app.elements.height.value = '180';
+  await app.elements.width.fire('input');
+  app.posterHandler = () => { throw new TypeError('Failed to fetch'); };
+  await app.select('poster:new');
+  app.posterHandler = () => ({...sample('new').task, assets: [], fonts: [], document: {snapshot_id: 'new'}});
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 320, height: 180});
+  assert.match(app.elements.downloadJson.download, /^new_320x180/);
+});
+
+test('source picker URL tracks the successful source and preserves comparison query context', async () => {
+  const app = application({workspace: true, search: '?poster=first&view=compare&width=800&height=500', posters: [
+    {id: 'first', title: 'First poster', split: 'reviewed', ready: true, bundle_url: '/api/poster-first'},
+    {id: 'second', title: 'Second poster', split: 'reviewed', ready: true, bundle_url: '/api/poster-second'},
+  ]});
+  app.posterHandler = url => ({...sample(url.endsWith('first') ? 'first' : 'second').task,
+    assets: [], fonts: [], document: {snapshot_id: url}});
+  await app.flush();
+  await app.select('poster:second');
+  let query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('poster'), 'second');
+  assert.equal(query.get('sample'), null);
+  assert.equal(query.get('view'), 'compare');
+  assert.equal(query.get('width'), '800');
+  assert.equal(query.get('height'), '500');
+  await app.select('a');
+  query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('poster'), null);
+  assert.equal(query.get('sample'), 'a');
+  assert.equal(query.get('view'), 'compare');
+  await app.file('owned.json', sample('owned').task); await app.flush();
+  query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('poster'), null);
+  assert.equal(query.get('sample'), null);
+  assert.equal(query.get('view'), 'compare');
+});
+
+test('refreshing a selected bundled design restores its exact source rather than the default sample', async () => {
+  const meta = metadata(); meta.samples[0].task.source.elements[1].id = 'only-in-a';
+  const app = application({meta, workspace: true, search: '?sample=a&view=compare'});
+  await app.flush();
+  assert.equal(app.elements.sample.value, 'a');
+  assert.equal(app.elements.taskName.textContent, 'Sample a');
+  assert.equal(app.elements.previews.dataset.view, 'compare');
+  assert.equal(app.requests.at(-1).payload.source.elements[1].id, 'only-in-a');
+  assert.match(app.elements.downloadPng.download, /^a_/);
 });
 
 test('rapid portable/plain source switches keep each export bound to the newest exact resource bundle', async () => {

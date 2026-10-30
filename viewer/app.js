@@ -46,6 +46,7 @@
   function setBusy(value) {
     state.busy = value;
     $('settings').disabled = value;
+    $('sample').disabled = value || (!state.samples.length && !state.posters.length && !state.imported);
     $('previews').setAttribute('aria-busy', String(value));
     $('runLabel').textContent = value ? 'Resizing design…' : state.task ? 'Resize design' : 'Retry connection';
     $('run').setAttribute('aria-busy', String(value));
@@ -110,10 +111,12 @@
     }
     return {...value, report};
   }
-  function setTask(task, label) {
+  function setTask(task, label, {preserveTarget = false} = {}) {
     validateDesign(task?.source || task);
     if (['assets', 'fonts', 'document'].some(key => key in task) && !hasResources(task)) throw new Error('A portable bundle needs its document, assets array and fonts array.');
     const next = structuredClone(task.source ? task : {source: task});
+    const currentTarget = {width: Number($('width').value), height: Number($('height').value)};
+    if (preserveTarget && validateCanvas(currentTarget)) next.target_canvas = currentTarget;
     next.target_canvas ||= {width: Number($('width').value) || next.source.canvas.width, height: Number($('height').value) || next.source.canvas.height};
     if (!validateCanvas(next.target_canvas)) throw new Error('The target canvas must be 1–8192 px per side and at most 20 million pixels.');
     cancelRequest();
@@ -171,15 +174,23 @@
     const match = state.targets.find(t => t.width === Number($('width').value) && t.height === Number($('height').value));
     $('preset').value = match ? match.id : 'custom';
   }
+  function syncSourceURL(kind, id) {
+    const url = new URL(location.href);
+    url.searchParams.delete('poster');
+    url.searchParams.delete('sample');
+    if (kind && id) url.searchParams.set(kind, id);
+    history.replaceState(null, '', url);
+  }
   function importTask(task, label) {
     setTask(task, label);
     state.loadVersion++;
     state.imported = {task: structuredClone(state.task), label};
     if (![...$('sample').options].some(option => option.value === 'imported')) $('sample').add(new Option('Imported design', 'imported'));
     $('sample').value = 'imported';
+    syncSourceURL();
     resize();
   }
-  async function loadPoster(id) {
+  async function loadPoster(id, {preserveTarget = true} = {}) {
     const poster = state.posters.find(item => item.id === id);
     if (!poster?.ready) { errorMessage(new Error('This poster needs import support. See the poster library for its notes.')); return; }
     const loadVersion = ++state.loadVersion;
@@ -195,7 +206,7 @@
       bundle.attribution ||= {text: poster.attribution_text || poster.author, author: poster.author,
         source_url: poster.source_url, license_id: poster.license_id, license_url: poster.license_url,
         original_sha256: poster.original_sha256, source_note: poster.source_note};
-      setTask(bundle, poster.title); loaded = true;
+      setTask(bundle, poster.title, {preserveTarget}); syncSourceURL('poster', id); loaded = true;
     } catch (error) {
       if (loadVersion === state.loadVersion && state.controller === controller) {
         errorMessage(error.name === 'AbortError' ? new Error('Poster loading exceeded 60 seconds. Try again.') : error);
@@ -410,7 +421,11 @@
   $('sample').addEventListener('change', () => {
     if ($('sample').value.startsWith('poster:')) { loadPoster($('sample').value.slice(7)); return; }
     const item = $('sample').value === 'imported' ? state.imported : state.samples.find(sample => sample.id === $('sample').value);
-    if (item) { state.loadVersion++; setTask(item.task, item.label); resize(); }
+    if (item) {
+      state.loadVersion++; setTask(item.task, item.label, {preserveTarget: true});
+      syncSourceURL($('sample').value === 'imported' ? null : 'sample', $('sample').value);
+      resize();
+    }
   });
   $('preset').addEventListener('change', () => {
     const target = state.targets.find(item => item.id === $('preset').value);
@@ -476,15 +491,20 @@
         $('sample').append(group);
       }
       $('preset').replaceChildren(new Option('Custom dimensions', 'custom'), ...state.targets.map(item => new Option(`${item.label} · ${item.width} × ${item.height}`, item.id)));
-      $('sample').disabled = $('preset').disabled = $('run').disabled = false;
+      $('sample').disabled = state.busy;
+      $('preset').disabled = $('run').disabled = false;
       if (state.task) { syncPreset(); return; }
       if (!state.samples.length) throw new Error('No bundled samples were found. Import a task JSON to start.');
-      const requestedPoster = new URLSearchParams(location.search).get('poster');
+      const query = new URLSearchParams(location.search);
+      const requestedPoster = query.get('poster');
       if (loadVersion === state.loadVersion && state.posters.some(item => item.id === requestedPoster && item.ready)) {
-        $('sample').value = `poster:${requestedPoster}`; await loadPoster(requestedPoster); return;
+        $('sample').value = `poster:${requestedPoster}`; await loadPoster(requestedPoster, {preserveTarget: false}); return;
       }
-      const sample = state.samples[Math.min(1, state.samples.length - 1)];
-      $('sample').value = sample.id; setTask(sample.task, sample.label); await resize();
+      const requestedSample = query.get('sample');
+      const sample = state.samples.find(item => item.id === requestedSample) || state.samples[Math.min(1, state.samples.length - 1)];
+      $('sample').value = sample.id; setTask(sample.task, sample.label);
+      if (requestedPoster || requestedSample) syncSourceURL('sample', sample.id);
+      await resize();
     } catch (error) {
       if (loadVersion !== state.loadVersion && state.task) return;
       errorMessage(error);

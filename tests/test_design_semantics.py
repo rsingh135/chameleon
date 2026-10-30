@@ -508,3 +508,26 @@ def test_invalid_native_element_types_are_rejected_as_validation_errors(source, 
     source["elements"][0]["type"] = value
     with pytest.raises(ValueError):
         semantics.describe_design(source)
+
+
+def test_primary_and_supporting_text_use_ink_evidence_with_resource_context(source, monkeypatch):
+    measured = {}
+
+    def ink(element, assets, fonts):
+        assert (assets, fonts) == ("source-assets", "source-fonts")
+        box = [element["x"] + 1, element["y"] + 2, element["width"] - 3, element["height"] - 4]
+        measured[element["id"]] = box
+        return {"box": box, "provenance": "native_alpha", "confidence": 1, "raster_scale": 1}
+
+    monkeypatch.setattr(semantics, "_ink", ink)
+    original = deepcopy(source)
+    described = semantics.describe_design(
+        source, assets_dir="source-assets", fonts_dir="source-fonts"
+    )
+    expected = {e["id"] for e in source["elements"] if e["type"] in {"text", "image"}}
+    assert set(measured) == expected
+    for row in described["elements"]:
+        if row["element_id"] in expected:
+            assert row["visible_box"] == measured[row["element_id"]]
+            assert row["visible_box_provenance"] == "native_alpha"
+    assert source == original

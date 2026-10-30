@@ -221,9 +221,13 @@ def describe_design(source, *, assets_dir=None, fonts_dir=None):
             else []
         )
         footer = purpose in {"footer_destination", "footer_legal"}
+        measure_content = (assets_dir is not None or fonts_dir is not None) and element["type"] in {
+            "text",
+            "image",
+        }
         measured = (
             _ink(element, assets_dir, fonts_dir)
-            if corner or footer
+            if corner or footer or measure_content
             else {
                 "box": _box(element),
                 "provenance": "frame",

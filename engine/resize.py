@@ -393,6 +393,7 @@ def _resize_cached(
     assets_dir: str,
     fonts_dir: str,
     scene_proposal_json: str = "",
+    scene_digest: str = "",
 ) -> dict:
     with using_resources(assets_dir, fonts_dir):
         return _resize_in_context(
@@ -546,9 +547,10 @@ def resize_with_state(
 ) -> dict:
     """Return a fresh design and the exact declared state used during selection."""
     with using_resources(assets_dir, fonts_dir) as resources:
+        profile = analyze_scene(source)
         if scene_proposal is not None:
             # Rebind current asset bytes even on a result-cache hit.
-            scene_proposal = validate_model_response(scene_proposal, analyze_scene(source))
+            scene_proposal = validate_model_response(scene_proposal, profile)
         return deepcopy(
             _resize_cached(
                 json.dumps(source, sort_keys=True),
@@ -559,6 +561,7 @@ def resize_with_state(
                 json.dumps(scene_proposal, sort_keys=True, allow_nan=False)
                 if scene_proposal is not None
                 else "",
+                profile["scene_digest"],
             )
         )
 

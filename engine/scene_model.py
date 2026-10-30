@@ -125,6 +125,12 @@ def constrain_candidates(source, candidates, response, profile):
     }
     originals = {e["id"]: e for e in source["elements"]}
 
+    def visible_interval(element, canvas, position, extent):
+        return (
+            max(0.0, min(1.0, -element[position] / element[extent])),
+            max(0.0, min(1.0, (canvas[extent] - element[position]) / element[extent])),
+        )
+
     def retained(candidate):
         images = {e["id"]: e for e in candidate["elements"]}
         for identity in protected:
@@ -144,6 +150,11 @@ def constrain_candidates(source, candidates, response, profile):
                 abs_tol=1e-6,
             ):
                 return False
+            for position, extent in (("x", "width"), ("y", "height")):
+                old_start, old_end = visible_interval(before, source["canvas"], position, extent)
+                new_start, new_end = visible_interval(after, candidate["canvas"], position, extent)
+                if new_start > old_start + 1e-6 or new_end < old_end - 1e-6:
+                    return False
         return True
 
     remaining = [candidate for candidate in candidates if retained(candidate)]

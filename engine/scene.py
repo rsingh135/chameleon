@@ -13,6 +13,7 @@ import json
 import math
 from copy import deepcopy
 from functools import lru_cache
+from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageStat
@@ -51,12 +52,16 @@ def _inside(inner, outer):
 
 
 @lru_cache(maxsize=128)
-def _pixels(path, modified_ns, byte_size):
+def _pixels(path, modified_ns, byte_size, asset_sha256):
     del modified_ns
     if not 0 < byte_size <= 32_000_000:
         return None
     try:
-        with Image.open(path) as image:
+        with Path(path).open("rb") as stream:
+            raw = stream.read(32_000_001)
+        if len(raw) != byte_size or hashlib.sha256(raw).hexdigest() != asset_sha256:
+            raise ValueError("Scene asset bytes changed during analysis")
+        with Image.open(BytesIO(raw)) as image:
             if image.width * image.height > 32_000_000:
                 return None
             rgba = image.convert("RGBA")
@@ -94,7 +99,7 @@ def _pixels(path, modified_ns, byte_size):
                 if first is not None and 0.2 <= first / band.height <= 0.7:
                     content_top = first / band.height
             return {
-                "asset_sha256": hashlib.sha256(Path(path).read_bytes()).hexdigest(),
+                "asset_sha256": asset_sha256,
                 "image_size": [rgba.width, rgba.height],
                 "opaque": alpha.getextrema()[0] >= 250,
                 "lower_fade": lower_fade,
@@ -112,10 +117,17 @@ def _resource_key(source, root):
     ):
         path = (root / asset).resolve()
         if not asset or not path.is_relative_to(root) or not path.is_file():
-            resources.append((asset, 0, 0))
+            resources.append((asset, 0, 0, ""))
             continue
         stat = path.stat()
-        resources.append((asset, stat.st_mtime_ns, stat.st_size))
+        digest = ""
+        if 0 < stat.st_size <= 32_000_000:
+            with path.open("rb") as stream:
+                raw = stream.read(32_000_001)
+            if len(raw) != stat.st_size:
+                raise ValueError("Scene asset bytes changed during hashing")
+            digest = hashlib.sha256(raw).hexdigest()
+        resources.append((asset, stat.st_mtime_ns, stat.st_size, digest))
     return tuple(resources)
 
 
@@ -124,9 +136,9 @@ def _analyze(source_json, assets_dir, resource_key, native):
     source = json.loads(source_json)
     by_id = {e["id"]: e for e in source["elements"]}
     metadata = {}
-    for asset, modified, size in resource_key:
+    for asset, modified, size, digest in resource_key:
         if size:
-            metadata[asset] = _pixels(str(Path(assets_dir) / asset), modified, size)
+            metadata[asset] = _pixels(str(Path(assets_dir) / asset), modified, size, digest)
     images = []
     for e in source["elements"]:
         if e.get("type") != "image":

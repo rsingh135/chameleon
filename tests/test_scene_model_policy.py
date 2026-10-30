@@ -9,6 +9,7 @@ from engine.scene_model import constrain_candidates
 
 def case(role="product", confidence=0.95):
     source = {
+        "canvas": {"width": 100, "height": 200},
         "elements": [
             {
                 "id": "photo",
@@ -19,7 +20,7 @@ def case(role="product", confidence=0.95):
                 "height": 200,
                 "fit": "fill",
             }
-        ]
+        ],
     }
     profile = {
         "source_digest": "a" * 64,

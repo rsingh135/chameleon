@@ -86,6 +86,10 @@ The public resize API rejects invalid/stale supplied proposals explicitly.
 
 The protection retains each product/logo's authored crop, image proportions,
 and image position while allowing uniform scaling and cluster translation.
+Each target must retain the source-visible normalized interval on both axes,
+so translating an authored off-canvas product cannot hide or exchange its
+visible edge. Source analysis and result-cache identity use actual image-byte
+hashes, including when a replacement preserves the file length and timestamp.
 Protected-region suggestions remain review evidence: the current classifier
 does not measure object boxes. Confidence is a pilot score, not a calibrated
 probability or proof of semantic correctness. See the local scene-model pilot

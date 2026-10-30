@@ -8,7 +8,8 @@ import pytest
 from PIL import Image, ImageDraw
 
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
-from engine.resources import using_resources
+from engine.resources import load_font_manager, using_resources
+from renderer.converter.wrap import char_widths
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -84,6 +85,7 @@ def test_sparse_source_vector_has_physical_attachment_without_product_semantics(
 @pytest.mark.parametrize("scale", [0.5, 1.8])
 def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
     assets, source = scene
+    original = deepcopy(source)
     candidate = deepcopy(source)
     for element in candidate["elements"]:
         for key in ("x", "y", "width", "height", "font_size"):
@@ -91,12 +93,58 @@ def test_complete_ornament_heading_block_can_translate_and_scale(scene, scale):
                 element[key] *= scale
         element["x"] += 73
         element["y"] += 44
-    report = analyze_relationships(build_relationship_graph(source, assets), candidate)
+    before = deepcopy(candidate)
+    graph = build_relationship_graph(source, assets)
+    report = analyze_relationships(graph, candidate)
+    assert source == original
+    assert candidate == before
+    for source_element, element in zip(source["elements"], candidate["elements"], strict=True):
+        for key in ("width", "height", "font_size"):
+            if key in source_element:
+                assert element[key] / source_element[key] == pytest.approx(scale, rel=0, abs=1e-12)
+        for key in ("x", "y"):
+            assert element[key] - candidate["elements"][0][key] == pytest.approx(
+                (source_element[key] - source["elements"][0][key]) * scale, rel=0, abs=1e-12
+            )
     assert not [w for w in report["warnings"] if w["code"] == "ornament_attachment"]
     relation = next(r for r in report["relations"] if r["code"] == "ornament_attachment")
     assert relation["relative_scale_ratio"] == 1
+    assert relation["relative_width_scale"] == relation["relative_height_scale"] == 1
     assert relation["normalized_gap_error"] == 0
-    assert relation["normalized_alignment_error"] == 0
+    heading = source["elements"][1]
+    manager = load_font_manager(graph.fonts_dir)
+    advances = [
+        sum(
+            char_widths(
+                manager,
+                heading["font_family"],
+                "regular",
+                "regular",
+                heading["font_size"] * factor,
+                heading["content"],
+            )
+        )
+        for factor in (1, scale)
+    ]
+    with Image.open(assets / "vector.png") as image:
+        alpha = image.getchannel("A").getbbox()
+        ink_center = source["elements"][0]["x"] + (
+            (alpha[0] + alpha[2]) / 2 / image.width * source["elements"][0]["width"]
+        )
+    offset = heading["x"] + heading["width"] / 2 - ink_center
+    assert offset == -0.5  # The source ink is deliberately asymmetrically padded.
+    assert advances[0] > source["elements"][0]["width"]
+    assert advances[1] > candidate["elements"][0]["width"]
+    assert advances[0] <= heading["width"]
+    assert advances[1] <= candidate["elements"][1]["width"]
+    # Exact frames/point sizes above do not imply linear hinted glyph advances.
+    # Only that measured denominator changes the normalized center offset.
+    expected = abs(offset / advances[0] - offset * scale / advances[1])
+    assert relation["normalized_alignment_error"] == pytest.approx(
+        expected,
+        rel=0,
+        abs=0.5e-6 + 1e-12,  # Half the published six-decimal quantum.
+    )
 
 
 @pytest.mark.parametrize("change", ["inflate", "detach", "misalign", "reverse"])

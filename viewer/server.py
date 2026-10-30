@@ -595,10 +595,23 @@ class ViewerHandler(BaseHTTPRequestHandler):
             return
         try:
             path = (root / relative).resolve()
-            path.relative_to(root.resolve())
+            resolved_relative = path.relative_to(root.resolve()).as_posix().casefold()
         except (ValueError, OSError):
             self._json(HTTPStatus.NOT_FOUND, {"error": "File not found."}, head=head)
             return
+        if root == VIEWER_DIR:
+            if resolved_relative in {"benchmark", "benchmark.html"}:
+                self._send(
+                    HTTPStatus.SEE_OTHER,
+                    b"",
+                    "text/plain; charset=utf-8",
+                    head=head,
+                    extra_headers={"Location": "/"},
+                )
+                return
+            if resolved_relative in {"benchmark.js", "benchmark.css"}:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "File not found."}, head=head)
+                return
         allowed = {".ttf", ".woff", ".woff2"} if root == FONTS_DIR else _STATIC_SUFFIXES
         if not path.is_file() or path.suffix.lower() not in allowed:
             self._json(HTTPStatus.NOT_FOUND, {"error": "File not found."}, head=head)

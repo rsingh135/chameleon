@@ -38,6 +38,8 @@ _OWNERSHIP = {
     "peer_order",
     "campaign_ownership",
     "overlay_attachment",
+    "ornament_attachment",
+    "caption_hierarchy",
     "row_attachment",
 }
 
@@ -309,6 +311,8 @@ def _measure(source, design, target, state, context, graph, definitions, target_
     invariants = evaluate_invariants(source, design, definitions, target_name)
     rules = analyze_rules(source, design)
     reading_order = analyze_reading_order(source, design) if membership else None
+    proportions = analyze_proportions(source, design, graph) if membership else None
+    containers = (proportions or {}).get("containers", {})
     occlusion = conservative_occlusion(source, design) if membership else None
     raw_collisions = result["metrics"].get("raw_collisions", math.inf)
     visible_collisions, photo_visible = (
@@ -335,6 +339,10 @@ def _measure(source, design, target, state, context, graph, definitions, target_
             "diagnostics": occlusion,
         },
         "ownership": {"passed": membership and not ownership, "warnings": ownership},
+        "containers": {
+            "passed": membership and not containers.get("warnings", []),
+            "diagnostics": containers,
+        },
         "dividers": {"passed": not rules["distorted_rules"], **rules},
         "reading_order": {
             "passed": reading_order is not None
@@ -349,7 +357,7 @@ def _measure(source, design, target, state, context, graph, definitions, target_
         and invariants["passed"] is not False,
         "evaluation": {"total": result["total"], "metrics": result["metrics"]},
         "relationships": relationships,
-        "proportions": analyze_proportions(source, design, graph) if membership else None,
+        "proportions": proportions,
         "style": analyze_style(source, design, relationship_graph=graph) if membership else None,
     }
 

@@ -132,8 +132,24 @@ def _readability(candidate: dict, context, metrics: dict) -> float:
     )
 
 
+def _evaluation_snapshot(result):
+    return {
+        "total": result["total"],
+        "metrics": result["metrics"],
+        "violations": [
+            {"code": violation.code, "message": str(violation)}
+            for violation in result["violations"]
+        ],
+    }
+
+
 def _select_candidate(
-    source: dict, target: dict, candidates: list[dict], state_axes: dict | None = None
+    source: dict,
+    target: dict,
+    candidates: list[dict],
+    state_axes: dict | None = None,
+    *,
+    snapshot: dict | None = None,
 ) -> dict:
     """Exclude disqualified layouts, then rank source-aware quality metrics.
 
@@ -141,6 +157,8 @@ def _select_candidate(
     installations can still exercise the layout engine without that optional
     dependency, using the existing conservative typography ranking.
     """
+    if snapshot is not None:
+        snapshot["candidates"] = []
     layout_context = build_context(source)
     try:
         from engine.eval import build_context as build_eval_context
@@ -152,7 +170,9 @@ def _select_candidate(
         )
         from engine.eval.proportions import analyze_proportions
         from engine.eval.style import analyze_style
-    except ImportError:
+    except ImportError as exc:
+        if snapshot is not None:
+            raise RuntimeError("Candidate snapshots require the full evaluator.") from exc
         if _safe_identity(source, target):
             return source
         if not candidates:
@@ -170,6 +190,19 @@ def _select_candidate(
     if _safe_identity(source, target):
         identity = score(source, source, context, target_canvas=target)
         if not identity["violations"]:
+            if snapshot is not None:
+                snapshot["candidates"].append(
+                    {
+                        "design": source,
+                        "contract_valid": True,
+                        "admitted": True,
+                        "diagnostics": {
+                            "evaluation": _evaluation_snapshot(identity),
+                            "identity": True,
+                        },
+                        "selection": {"safety": [], "fidelity": 1.0, "typography": []},
+                    }
+                )
             return source
 
     valid = []
@@ -185,6 +218,16 @@ def _select_candidate(
         result = score(source, candidate, context, target_canvas=target)
         if result["violations"]:
             violations.update(v.code for v in result["violations"])
+            if snapshot is not None:
+                snapshot["candidates"].append(
+                    {
+                        "design": candidate,
+                        "contract_valid": False,
+                        "admitted": False,
+                        "diagnostics": {"evaluation": _evaluation_snapshot(result)},
+                        "selection": {"safety": [], "fidelity": None, "typography": []},
+                    }
+                )
             continue
         style = analyze_style(source, candidate, resources.assets_dir, relationship_graph=graph)
         axes = (state_axes or {}).get(json.dumps(candidate, sort_keys=True), {})
@@ -226,10 +269,26 @@ def _select_candidate(
                 "campaign_ownership",
                 "row_attachment",
                 "overlay_attachment",
+                "ornament_attachment",
+                "caption_hierarchy",
             }
             for w in relationships["warnings"]
         )
-        detached = sum(w["confidence"] >= 0.8 for w in relationships["warnings"])
+        essential += sum(
+            warning["code"]
+            in {"source_container_detached", "source_container_unsupported_deformation"}
+            for warning in proportions.get("warnings", [])
+        )
+        action_ids = {
+            eid for unit in graph.units if unit.role == "action" for eid in unit.element_ids
+        }
+        # Copy may continue into another column; an action retains its binding
+        # to the message even when the larger composition changes orientation.
+        detached = sum(
+            w["confidence"] >= 0.8
+            and (w["code"] != "shared_axis" or bool(action_ids.intersection(w["element_ids"])))
+            for w in relationships["warnings"]
+        )
         collisions, photo_visible = collision_safety(
             item.occlusion, metrics.get("raw_collisions", 0.0)
         )
@@ -251,12 +310,21 @@ def _select_candidate(
     feasible = [item for item in valid if safety(item) == safest]
 
     def fidelity(item):
+        reading = item.reading_order
+        # Ambiguous placement must not silently erase supported source order.
+        # This stays soft: some aspect changes genuinely leave a pair unclear.
+        order_retained = (
+            reading["score"] * reading["comparison_coverage"] if reading["active"] else 1.0
+        )
         return (
             item.style["score"]
             + item.relationships["score"]
             + item.proportions["score"]
-            + item.proportions["metrics"].get("composition_span_retention", 1.0)
-        ) / 4
+            # Retaining authored occupancy matters more than preserving the
+            # old global alignment axis when a composition changes orientation.
+            + 3 * item.proportions["metrics"].get("composition_span_retention", 1.0)
+            + order_retained
+        ) / 7
 
     # Small changes to inferred gaps must not dominate typography or visual
     # hierarchy. Keep a near-best fidelity set before comparing source scale.
@@ -279,9 +347,37 @@ def _select_candidate(
             )
             for element in texts
         )
-        return -drift / max(1, len(texts)), item.evaluation["total"], fidelity(item)
+        # Equivalent similarity transforms differ at machine precision. Match
+        # the diagnostic precision before comparing meaningful composition.
+        return -round(drift / max(1, len(texts)), 6), item.evaluation["total"], fidelity(item)
 
-    return max(finalists, key=typography_preference).design
+    selected = max(finalists, key=typography_preference)
+    if snapshot is not None:
+        finalist_objects = {id(item) for item in finalists}
+        for item in valid:
+            snapshot["candidates"].append(
+                {
+                    "design": item.design,
+                    "contract_valid": True,
+                    "admitted": id(item) in finalist_objects,
+                    "diagnostics": {
+                        "evaluation": _evaluation_snapshot(item.evaluation),
+                        "style": item.style,
+                        "relationships": item.relationships,
+                        "proportions": item.proportions,
+                        "focal": item.focal,
+                        "rules": item.rules,
+                        "reading_order": item.reading_order,
+                        "occlusion": item.occlusion,
+                    },
+                    "selection": {
+                        "safety": list(safety(item)),
+                        "fidelity": fidelity(item),
+                        "typography": list(typography_preference(item)),
+                    },
+                }
+            )
+    return selected.design
 
 
 @lru_cache(maxsize=64)
@@ -292,10 +388,9 @@ def _resize_cached(
         return _resize_in_context(source_json, width, height)
 
 
-def _resize_in_context(source_json: str, width: int, height: int) -> dict:
-    source = json.loads(source_json)
-    target_canvas = {"width": width, "height": height}
+def _candidate_pool(source, target_canvas, *, capture_origins=False):
     candidates = generate_candidates(source, target_canvas)
+    legacy_count = len(candidates)
     graph = build_relationship_graph(source)
     states = (
         *generate_composition_states(source, target_canvas, graph),
@@ -306,18 +401,109 @@ def _resize_in_context(source_json: str, width: int, height: int) -> dict:
     candidates.extend(state.design for state in states)
     by_design = {json.dumps(state.design, sort_keys=True): state for state in states}
     axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}
+    origins = {}
+    if capture_origins:
+        for index, candidate in enumerate(candidates[:legacy_count]):
+            key = json.dumps(candidate, sort_keys=True)
+            origins.setdefault(key, []).append(
+                {
+                    "name": "candidate",
+                    "topology": "legacy",
+                    "index": index,
+                    "cluster_axes": {},
+                    "sizing_exceptions": [],
+                }
+            )
+        for state in states:
+            key = json.dumps(state.design, sort_keys=True)
+            origins.setdefault(key, []).append(
+                {
+                    "name": state.name,
+                    "topology": state.topology,
+                    "cluster_axes": dict(state.cluster_axes),
+                    "sizing_exceptions": list(getattr(state, "exceptions", ())),
+                }
+            )
+    return candidates, by_design, axes, origins
+
+
+def _state_metadata(design, source, source_json, by_design):
+    state = by_design.get(json.dumps(design, sort_keys=True))
+    return {
+        "name": state.name if state else "source" if design == source else "candidate",
+        "topology": state.topology if state else "source" if design == source else "legacy",
+        "source_digest": hashlib.sha256(source_json.encode()).hexdigest(),
+        "cluster_axes": dict(state.cluster_axes) if state else {},
+        "sizing_exceptions": list(getattr(state, "exceptions", ())),
+    }
+
+
+def _resize_in_context(source_json: str, width: int, height: int) -> dict:
+    source = json.loads(source_json)
+    target_canvas = {"width": width, "height": height}
+    candidates, by_design, axes, _ = _candidate_pool(source, target_canvas)
     selected = _select_candidate(source, target_canvas, candidates, axes)
-    state = by_design.get(json.dumps(selected, sort_keys=True))
     return {
         "design": selected,
-        "state": {
-            "name": state.name if state else "source" if selected == source else "candidate",
-            "topology": state.topology if state else "source" if selected == source else "legacy",
-            "source_digest": hashlib.sha256(source_json.encode()).hexdigest(),
-            "cluster_axes": dict(state.cluster_axes) if state else {},
-            "sizing_exceptions": list(getattr(state, "exceptions", ())),
-        },
+        "state": _state_metadata(selected, source, source_json, by_design),
     }
+
+
+def _candidate_id(design):
+    canonical = json.dumps(
+        design, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False
+    )
+    return "candidate-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def collect_candidate_snapshot(
+    source: dict[str, Any],
+    target_canvas: dict[str, Any],
+    *,
+    assets_dir: str | Path | None = None,
+    fonts_dir: str | Path | None = None,
+) -> dict:
+    """Capture actual selector decisions without changing selection or its cache.
+
+    Broader contract-valid proposals can be inspected in shadow experiments.
+    Only admitted finalists share the baseline's safety tier and fidelity window.
+    No model, experiment package, result-cache access or selection override is used.
+    """
+    source_json = json.dumps(source, sort_keys=True, allow_nan=False)
+    original = json.loads(source_json)
+    target = {"width": target_canvas["width"], "height": target_canvas["height"]}
+    json.dumps(target, allow_nan=False)
+    with using_resources(assets_dir, fonts_dir):
+        candidates, by_design, axes, origins = _candidate_pool(
+            original, target, capture_origins=True
+        )
+        trace = {}
+        selected = _select_candidate(original, target, candidates, axes, snapshot=trace)
+        records = {_candidate_id(row["design"]): row for row in trace["candidates"]}
+        ordered = {}
+        for design in [*candidates, selected]:
+            candidate_id = _candidate_id(design)
+            if candidate_id not in records or candidate_id in ordered:
+                continue
+            row = records[candidate_id]
+            key = json.dumps(row["design"], sort_keys=True)
+            state = _state_metadata(row["design"], original, source_json, by_design)
+            ordered[candidate_id] = {
+                "candidate_id": candidate_id,
+                **row,
+                "state": state,
+                "provenance": origins.get(key) or [state],
+            }
+        result = {
+            "schema_version": 1,
+            "source_digest": hashlib.sha256(source_json.encode()).hexdigest(),
+            "target_canvas": target,
+            "baseline_candidate_id": _candidate_id(selected),
+            "admitted_finalist_ids": [key for key, row in ordered.items() if row["admitted"]],
+            "candidates": list(ordered.values()),
+        }
+        json.dumps(result, allow_nan=False)
+        return deepcopy(result)
 
 
 def resize_with_state(

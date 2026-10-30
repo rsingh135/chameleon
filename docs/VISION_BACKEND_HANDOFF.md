@@ -1,6 +1,7 @@
 # Backend handoff for an optional visual critic
 
-Status: integration guidance only. This document does not enable a critic,
+Status: the read-only candidate snapshot interface is implemented; the critic
+integration below remains guidance only. This document does not enable a critic,
 change the engine, start a model server, download weights, or authorize compute.
 The deterministic resize engine remains authoritative. Backend layout fixes are
 still being validated; do not treat every current experiment as an approved
@@ -8,17 +9,77 @@ training example.
 
 ## Recommended seam
 
+### Candidate snapshot interface
+
+```python
+collect_candidate_snapshot(source, target_canvas, *, assets_dir=None, fonts_dir=None)
+```
+
+The optional resource arguments use the existing `using_resources` mechanism;
+omitting them retains the caller's active document resource context. The result
+is an independent plain dictionary with this versioned interface:
+
+```json
+{
+  "schema_version": 1,
+  "source_digest": "source JSON SHA-256",
+  "target_canvas": {"width": 1080, "height": 1080},
+  "baseline_candidate_id": "candidate-<full SHA-256>",
+  "admitted_finalist_ids": ["candidate-<full SHA-256>"],
+  "candidates": [{
+    "candidate_id": "candidate-<full SHA-256>",
+    "design": {},
+    "state": {},
+    "provenance": [],
+    "contract_valid": true,
+    "admitted": true,
+    "diagnostics": {},
+    "selection": {"safety": [], "fidelity": 1.0, "typography": []}
+  }]
+}
+```
+
+IDs hash the exact candidate design serialized with
+`json.dumps(design, sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+allow_nan=False).encode("utf-8")`. The source, target, proposals, and complete
+snapshot must be finite JSON; collection rejects invalid data rather than
+rewriting it or returning a partial artifact. `state` uses the same chosen
+provenance/axes as ordinary resizing;
+`provenance` retains all proposal origins for deduplicated identical designs.
+Diagnostics include the evaluator result and source-aware assessments. Rejected
+proposals remain explicitly marked and must not be rendered or labeled as safe
+merely because they occur in this snapshot. The initial choosing policy may use
+only `admitted_finalist_ids`; a shadow collector may retain broader
+`contract_valid` candidates for inspected comparisons.
+
+The snapshot uses the same generation, assessment, safety tier, fidelity window,
+and baseline preference as the ordinary engine. It does not call or invalidate
+the ordinary resize result cache. A valid identity baseline stays unchanged.
+If the engine cannot produce a valid baseline, collection raises the same
+layout failure rather than inventing one. Collection requires evaluator support;
+the ordinary lightweight development fallback remains separate.
+
+Local seam validation: 31 snapshot and default-selection tests pass. They cover
+baseline/state parity, unchanged result-cache statistics, deterministic IDs,
+deduplicated origins, rejected proposals, identity behavior, independent copies,
+resource-context restoration, missing evaluator behavior, and finite JSON across
+inputs, proposals, and diagnostics. These tests do not validate a model verdict.
+
+The collection tool must additionally record exact resource hashes, engine and
+renderer revision, render settings and experiment/model versions as described
+below; a design hash alone does not establish resource equality.
+
 `engine/resize.py::_select_candidate` currently evaluates proposals, rejects
 contract failures, finds the best safety tier, retains a near-best source
 fidelity set, and applies its deterministic typography preference. The critic
 belongs **after those admission decisions**, using the existing winner as its
 baseline. The valid identity-return path should remain immediate.
 
-Before implementing a critic, extract a reusable assessment/shortlist function
-from this selector. Return the authoritative safety tier, admission status,
-diagnostics, declared topology, and exact candidate objects. Do not reproduce
-the safety tuple in the model integration: it is changing as the source-layout
-tests improve. No engine refactor for that seam has been made for the critic.
+The collector captures the selector's authoritative assessments, safety tier,
+admission status, diagnostics, declared topology, and exact candidate objects.
+Use that interface rather than reproducing the safety tuple in model code: the
+policy continues to evolve with source-layout regressions. Snapshot collection
+is independent of any critic-enabled selection.
 
 The model must select a candidate ID from an allowlist. It must never return
 geometry, replacement copy, new fonts, assets, or instructions to execute.

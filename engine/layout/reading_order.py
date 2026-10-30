@@ -1,6 +1,8 @@
 """Source-first spatial reading evidence, without copy or role heuristics.
 
-Occupied text rectangles support recursive whitespace cuts. A vertical gutter
+Proven source containers establish the outer order of repeated cards; each
+card's immutable text members are ordered inside that card. Other occupied text
+rectangles support recursive whitespace cuts. A vertical gutter
 with vertically overlapping text on both sides reads as columns; a full-width
 heading/footer can instead split above/below that column block. Competing cuts
 and overlapping/rotated/cropped text are reported as uncertain. These geometric
@@ -10,13 +12,14 @@ conventions are evidence about reading order, not a claim to infer semantics.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from statistics import median
 
 from engine.resources import get_resources, using_resources
 
 from .appearance import visible_box
-from .geometry import Box
+from .geometry import Box, bounds, intersection
+from .source_containers import SourceContainerProfile, infer_source_containers
 
 MAX_TEXT_LEAVES = 256
 MAX_REPORTED_PAIRS = 32
@@ -46,6 +49,7 @@ class ReadingOrderProfile:
     row_groups: tuple[tuple[str, ...], ...]
     assets_dir: str
     fonts_dir: str
+    containers: SourceContainerProfile | None = None
 
 
 @dataclass(frozen=True)
@@ -235,12 +239,147 @@ def _infer(leaves):
     return walk(tuple(range(len(leaves))))
 
 
+def _container_spatial_order(boxes):
+    """Read complete frames by source-style x lanes, then y within each lane."""
+    lanes = []
+    for index in sorted(range(len(boxes)), key=lambda i: boxes[i].x):
+        if (
+            lanes
+            and abs(boxes[index].x - boxes[lanes[-1][0]].x)
+            < min(boxes[index].width, boxes[lanes[-1][0]].width) * 0.2
+        ):
+            lanes[-1].append(index)
+        else:
+            lanes.append([index])
+    lanes = [sorted(lane, key=lambda i: boxes[i].y) for lane in lanes]
+    sequence = tuple(index for lane in lanes for index in lane)
+    lane_of = {index: number for number, lane in enumerate(lanes) for index in lane}
+    relations, ambiguous = [], []
+    for position, first in enumerate(sequence):
+        for second in sequence[position + 1 :]:
+            a, b = boxes[first], boxes[second]
+            clear = (
+                a.y + a.height <= b.y + 1e-6
+                if lane_of[first] == lane_of[second]
+                else a.x + a.width <= b.x + 1e-6
+            )
+            if clear:
+                relations.append(
+                    (first, second, "whole source-owned containers, lane then vertical order")
+                )
+            else:
+                ambiguous.append((first, second))
+    return _Order(sequence, tuple(relations), tuple(ambiguous), ())
+
+
+def _hierarchical_order(design, leaves, containers):
+    """Use immutable source ownership, never rediscover target card membership."""
+    by_id = {element["id"]: element for element in design["elements"]}
+    frame_ids = {container.frame_id for container in containers.containers}
+    if sum(element["id"] in frame_ids for element in design["elements"]) != len(frame_ids):
+        raise ValueError("Reading-order source container frames must occur exactly once.")
+    groups, boxes, claimed = [], [], set()
+    for container in containers.containers:
+        if container.frame_id not in by_id:
+            raise ValueError("Reading-order source container frame is missing from candidate.")
+        members = tuple(
+            index for index, leaf in enumerate(leaves) if leaf.element_id in container.member_ids
+        )
+        if claimed.intersection(members):
+            raise ValueError("Reading-order source containers have ambiguous text ownership.")
+        claimed.update(members)
+        groups.append(members)
+        boxes.append(bounds(by_id[container.frame_id]))
+    count = len(groups)
+    if count < 2:
+        return _infer(leaves)
+    groups.extend((index,) for index in range(len(leaves)) if index not in claimed)
+    boxes.extend(leaves[group[0]].box for group in groups[count:])
+    outer = _infer(tuple(ReadingLeaf(str(index), box) for index, box in enumerate(boxes)))
+    parents = _container_spatial_order(boxes[:count])
+    parent_iter = iter(parents.sequence)
+    block_sequence = tuple(
+        next(parent_iter) if index < count else index for index in outer.sequence
+    )
+    positions = {index: position for position, index in enumerate(block_sequence)}
+    inner = [_infer(tuple(leaves[index] for index in group)) for group in groups]
+    sequence = tuple(
+        groups[block][index] for block in block_sequence for index in inner[block].sequence
+    )
+    relations, ambiguous, rows = [], [], []
+    for group, order in zip(groups, inner, strict=True):
+        relations.extend((group[a], group[b], evidence) for a, b, evidence in order.relations)
+        ambiguous.extend((group[a], group[b]) for a, b in order.ambiguous)
+        rows.extend(tuple(group[index] for index in row) for row in order.rows)
+    outer_relations = list(parents.relations) + [
+        relation for relation in outer.relations if relation[0] >= count or relation[1] >= count
+    ]
+    outer_ambiguous = list(parents.ambiguous) + [
+        pair for pair in outer.ambiguous if pair[0] >= count or pair[1] >= count
+    ]
+    for a, b, evidence in outer_relations:
+        if positions[a] > positions[b]:
+            # Competing loose-text and container flow evidence stays uncertain.
+            outer_ambiguous.append((a, b))
+            continue
+        relations.extend((first, second, evidence) for first in groups[a] for second in groups[b])
+    ambiguous.extend(
+        (first, second) for a, b in outer_ambiguous for first in groups[a] for second in groups[b]
+    )
+    rows.extend(
+        tuple(groups[node][0] for node in row)
+        for row in outer.rows
+        if len(row) > 1 and all(node >= count for node in row)
+    )
+    return _Order(sequence, tuple(relations), tuple(ambiguous), tuple(rows))
+
+
+def _container_detachments(design, leaves, profile):
+    if profile.containers is None:
+        return []
+    originals = {leaf.element_id: leaf.box for leaf in profile.leaves}
+    changed = {leaf.element_id: leaf.box for leaf in leaves}
+    by_id = {element["id"]: element for element in design["elements"]}
+    result = []
+    for container in profile.containers.containers:
+        frame = bounds(by_id[container.frame_id])
+        for eid in container.member_ids:
+            if eid not in originals or eid not in changed:
+                continue
+            before, after = originals[eid], changed[eid]
+            source_coverage = intersection(before, container.box) / max(
+                before.width * before.height, 1e-9
+            )
+            coverage = intersection(after, frame) / max(after.width * after.height, 1e-9)
+            if coverage < min(0.9, source_coverage - 0.02):
+                result.append(
+                    {
+                        "frame_id": container.frame_id,
+                        "element_id": eid,
+                        "source_coverage": source_coverage,
+                        "candidate_coverage": coverage,
+                    }
+                )
+    return result
+
+
 def infer_reading_order(source: dict) -> ReadingOrderProfile:
-    """Freeze source-only occupied geometry under the current document resources."""
+    """Freeze occupied geometry and proven container ownership from the source."""
     resources = get_resources()
     elements = _text_elements(source)
     leaves, excluded = _leaves(source)
-    order = _infer(leaves)
+    # The same text budget also bounds hierarchy discovery and font work.
+    containers = (
+        infer_source_containers(source) if leaves and len(elements) <= MAX_TEXT_LEAVES else None
+    )
+    eligible = {leaf.element_id for leaf in leaves}
+    records = tuple(
+        container
+        for container in (containers.containers if containers is not None else ())
+        if eligible.intersection(container.member_ids)
+    )
+    containers = replace(containers, containers=records) if len(records) >= 2 else None
+    order = _hierarchical_order(source, leaves, containers) if containers else _infer(leaves)
 
     def eid(index):
         return leaves[index].element_id
@@ -255,6 +394,7 @@ def infer_reading_order(source: dict) -> ReadingOrderProfile:
         tuple(tuple(map(eid, row)) for row in order.rows if len(row) > 1),
         str(resources.assets_dir),
         str(resources.fonts_dir),
+        containers,
     )
 
 
@@ -273,7 +413,13 @@ def analyze_reading_order(
         raise ValueError("Reading-order comparison requires the same text leaf membership.")
     with using_resources(profile.assets_dir, profile.fonts_dir):
         leaves, excluded = _leaves(candidate, {leaf.element_id for leaf in profile.leaves})
-        order = _infer(leaves)
+        order = (
+            _hierarchical_order(candidate, leaves, profile.containers)
+            if profile.containers
+            else _infer(leaves)
+        )
+
+    detachments = _container_detachments(candidate, leaves, profile)
 
     def eid(index):
         return leaves[index].element_id
@@ -304,6 +450,8 @@ def analyze_reading_order(
     warnings = ["source_reading_order_inversion"] if inversions else []
     if uncertain or profile.excluded or excluded:
         warnings.append("reading_order_uncertain")
+    if detachments:
+        warnings.append("source_container_detachment")
     return {
         "active": bool(compared),
         "score": 1 - len(inversions) / max(1, len(compared)),
@@ -316,6 +464,19 @@ def analyze_reading_order(
         "source_sequence": list(profile.sequence),
         "candidate_sequence": list(candidate_sequence),
         "source_row_groups": [list(row) for row in profile.row_groups],
+        "container_order_active": bool(profile.containers),
+        "container_detachments": detachments[:MAX_REPORTED_PAIRS],
+        "source_containers": [
+            {
+                "frame_id": container.frame_id,
+                "member_ids": list(container.member_ids),
+                "confidence": container.confidence,
+                "provenance": list(container.provenance),
+            }
+            for container in profile.containers.containers
+        ]
+        if profile.containers
+        else [],
         "ambiguity_count": len(uncertain),
         "ambiguous_pairs": [list(pair) for pair in uncertain[:MAX_REPORTED_PAIRS]],
         "excluded_elements": [

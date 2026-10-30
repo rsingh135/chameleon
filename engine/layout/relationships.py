@@ -9,14 +9,18 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 from pathlib import Path
+from statistics import median
 
 from engine.resources import get_resources, using_resources
 
 from .appearance import unit_visible_box
-from .geometry import Box, bounds, union
-from .model import build_context
+from .geometry import Box, bounds, intersection, union
+from .model import Unit, build_context
 from .overlays import SourceOverlay, infer_source_overlays
+from .reading_order import ReadingOrderProfile, analyze_reading_order, infer_reading_order
+from .source_containers import infer_source_containers
 
 _CODES = (
     "reading_order",
@@ -30,6 +34,8 @@ _CODES = (
     "campaign_ownership",
     "row_attachment",
     "overlay_attachment",
+    "ornament_attachment",
+    "caption_hierarchy",
 )
 
 
@@ -99,6 +105,7 @@ class SourceRelationshipGraph:
     ambiguities: tuple[RelationshipAmbiguity, ...] = ()
     fonts_dir: str | None = None
     overlays: tuple[SourceOverlay, ...] = ()
+    reading_profile: ReadingOrderProfile | None = None
 
 
 def _primary(box: Box, axis: str) -> tuple[float, float]:
@@ -181,6 +188,208 @@ def _peer_neighbors(first: Box, second: Box) -> bool:
     )
 
 
+@lru_cache(maxsize=128)
+def _vector_paint(path, modified_ns, size_bytes):
+    """Source ink evidence; missing or unknown bytes never erase a product."""
+    del modified_ns, size_bytes
+    from PIL import Image, ImageStat
+
+    try:
+        with Image.open(path) as image:
+            if image.width * image.height > 32_000_000:
+                return None
+            rgba = image.convert("RGBA")
+            alpha = rgba.getchannel("A")
+            if alpha.getbbox() is None:
+                return None
+            mask = alpha.point(lambda value: 255 if value >= 64 else 0)
+            if mask.getbbox() is None:
+                mask = alpha.point(lambda value: 255 if value else 0)
+            colors = ImageStat.Stat(rgba.convert("RGB"), mask).extrema
+            density = ImageStat.Stat(alpha).sum[0] / (255 * rgba.width * rgba.height)
+            return density, tuple(low for low, _ in colors), tuple(high for _, high in colors)
+    except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
+        return None
+
+
+def _small_sparse_vector(unit, originals, width, height, assets):
+    """Decline product semantics for tiny, sparse, monochrome vector support.
+
+    Keep the literal foreground unit/group. Do not discard vectors globally or
+    override a declared product/hero role. Grouped strokes are measured together.
+    """
+    area = unit.box.width * unit.box.height
+    if not 0 < area <= width * height * 0.02:
+        return False
+    elements = [originals[eid] for eid in unit.element_ids]
+    if any(element.get("role") in {"product", "hero"} for element in elements):
+        return False
+    if any(
+        element.get("source_art", {}).get("kind") != "svg-nontext" or element.get("fit") != "fill"
+        for element in elements
+    ):
+        return False
+    root = Path(assets).resolve()
+    mass, lows, highs = 0.0, [], []
+    for element in elements:
+        path = (root / element.get("asset_id", "")).resolve()
+        if not path.is_relative_to(root) or not path.is_file():
+            return False
+        try:
+            stat = path.stat()
+            paint = _vector_paint(str(path), stat.st_mtime_ns, stat.st_size)
+        except OSError:
+            return False
+        if paint is None:
+            return False
+        density, low, high = paint
+        # Sum is an upper bound where grouped strokes overlap: hiding one
+        # stroke behind another cannot manufacture sparse evidence.
+        mass += density * element["width"] * element["height"]
+        lows.append(low)
+        highs.append(high)
+    color_span = max(
+        max(high[index] for high in highs) - min(low[index] for low in lows) for index in range(3)
+    )
+    return mass / area <= 0.25 and color_span <= 8
+
+
+@lru_cache(maxsize=64)
+def _opaque_image_extent(path: str, modified_ns: int, size_bytes: int):
+    """Bounded local-pixel proof; provenance alone cannot prove opaque support."""
+    del modified_ns, size_bytes  # Immutable stat information remains in the cache key.
+    from PIL import Image
+
+    try:
+        with Image.open(path) as image:
+            if image.width * image.height > 32_000_000:
+                return None
+            if image.convert("RGBA").getchannel("A").getextrema()[0] < 250:
+                return None
+            return image.width, image.height
+    except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
+        return None
+
+
+def _source_image_underlays(source, context, overlays, assets):
+    """Recognize a narrow physical support role, without guessing photo content.
+
+    A known imported photograph filling the canvas beneath a proven fade and
+    multiple live copy units is not an independent product beside that copy.
+    Unknown raster art, vector art, cutouts and non-full-bleed images retain
+    their foreground roles. The image still remains an atomic graph unit and
+    its source overlay attachment is checked independently.
+    """
+    canvas = Box(0, 0, context.width, context.height)
+    directory = Path(assets)
+    result = set()
+    overlay_by_underlay = {}
+    for overlay in overlays:
+        overlay_by_underlay.setdefault(overlay.underlay_id, []).append(overlay.overlay_id)
+    by_id = {element["id"]: element for element in source["elements"]}
+    candidates = [
+        *context.units,
+        *(
+            Unit([element], bounds(element))
+            for element in context.backgrounds
+            if element["type"] == "image"
+        ),
+    ]
+    for unit in candidates:
+        if len(unit.elements) != 1:
+            continue
+        element = unit.elements[0]
+        if (
+            element["type"] != "image"
+            or element.get("source_art", {}).get("kind") != "masked-photo"
+            or element["id"] not in overlay_by_underlay
+            or element.get("rotation", 0) != 0
+            or element.get("opacity", 1) < 0.995
+            or intersection(unit.box, canvas) < canvas.width * canvas.height - 1e-6
+        ):
+            continue
+        value = element.get("asset_id")
+        if not isinstance(value, str) or not value:
+            continue
+        path = (directory / value).resolve()
+        if not path.is_relative_to(directory) or not path.is_file():
+            continue
+        stat = path.stat()
+        if stat.st_size > 32_000_000:
+            continue
+        extent = _opaque_image_extent(str(path), stat.st_mtime_ns, stat.st_size)
+        if extent is None:
+            continue
+        image_width, image_height = extent
+        sx, sy = unit.box.width / image_width, unit.box.height / image_height
+        fit = element.get("fit", "contain")
+        if fit != "fill":
+            sx = sy = (max if fit == "cover" else min)(sx, sy)
+        painted = Box(
+            unit.box.x + (unit.box.width - image_width * sx) / 2,
+            unit.box.y + (unit.box.height - image_height * sy) / 2,
+            image_width * sx,
+            image_height * sy,
+        )
+        if intersection(painted, canvas) < canvas.width * canvas.height - 1e-6:
+            continue
+        supported = []
+        for other in context.units:
+            texts = [
+                member
+                for member in other.elements
+                if member["type"] == "text"
+                and str(member.get("content", "")).strip()
+                and member.get("opacity", 1) > 0
+                and member.get("z_index", 0) > element.get("z_index", 0)
+            ]
+            if texts and all(
+                any(
+                    intersection(bounds(text), bounds(by_id[overlay_id]))
+                    >= text["width"] * text["height"] * 0.98
+                    and text.get("z_index", 0) > by_id[overlay_id].get("z_index", 0)
+                    for overlay_id in overlay_by_underlay[element["id"]]
+                )
+                for text in texts
+            ):
+                supported.append(other)
+        if len(supported) >= 2 and any(other.role == "headline" for other in supported):
+            result.add(element["id"])
+    return result
+
+
+def _source_caption_units(context, overlay, originals):
+    """A physical source fade supplies a caption cohort, not copy semantics."""
+    frame = originals[overlay.overlay_id]
+    supported = []
+    for index, unit in enumerate(context.units):
+        texts = [
+            element
+            for element in unit.text
+            if str(element.get("content", "")).strip() and element.get("opacity", 1) > 0
+        ]
+        if texts and all(
+            element.get("z_index", 0) > frame.get("z_index", 0)
+            and intersection(bounds(element), bounds(frame))
+            >= element["width"] * element["height"] * 0.98
+            for element in texts
+        ):
+            supported.append((index, max(element["font_size"] for element in texts)))
+    supporting_sizes = [
+        size for index, size in supported if context.units[index].role != "headline"
+    ]
+    typical = median(supporting_sizes) if supporting_sizes else 0
+    return tuple(
+        index
+        for index, size in supported
+        if not (
+            context.units[index].role == "legal"
+            and context.units[index].box.y >= context.height * 0.85
+            and size <= typical * 0.65
+        )
+    )
+
+
 def build_relationship_graph(
     source: dict, assets_dir: str | Path | None = None
 ) -> SourceRelationshipGraph:
@@ -194,16 +403,23 @@ def build_relationship_graph(
     ids = tuple(element["id"] for element in source["elements"])
     if len(ids) != len(set(ids)):
         raise ValueError("Source relationship graph requires unique element IDs")
+    original_elements = {element["id"]: element for element in source["elements"]}
     context = build_context(source)
     resources = get_resources()
     assets = str(Path(assets_dir).resolve() if assets_dir is not None else resources.assets_dir)
     overlays = infer_source_overlays(source, assets)
     overlay_ids = {overlay.overlay_id for overlay in overlays}
+    underlay_ids = _source_image_underlays(source, context, overlays, assets)
+    with using_resources(assets_dir=assets):
+        container_profile = infer_source_containers(source, context=context)
+    container_frame_ids = {
+        eid for container in container_profile.containers for eid in container.frame_ids
+    }
     units = tuple(
         RelationshipUnit(
             index,
             tuple(element["id"] for element in unit.elements),
-            unit.role,
+            "image_underlay" if unit.elements[0]["id"] in underlay_ids else unit.role,
             unit_visible_box(unit.elements, assets),
             unit.box,
             tuple(
@@ -244,6 +460,39 @@ def build_relationship_graph(
                 provenance,
                 target_cluster_id,
             )
+        )
+
+    for overlay in overlays:
+        if overlay.underlay_id not in underlay_ids:
+            continue
+        members = _source_caption_units(context, overlay, original_elements)
+        if len(members) < 2:
+            continue
+        cluster_id = f"caption:{sum(cluster.kind == 'caption' for cluster in clusters)}"
+        provenance = (
+            "source live text shares one proven full-bleed photo fade",
+            "original font ratios are caption prominence evidence",
+            "small bottom legal text excluded by supporting-caption font rank",
+        )
+        clusters.append(
+            RelationshipCluster(
+                cluster_id,
+                "caption",
+                members,
+                tuple(eid for index in members for eid in units[index].element_ids),
+                0.95,
+                provenance,
+            )
+        )
+        connect(
+            "caption_hierarchy",
+            members[0],
+            members[-1],
+            cluster_id,
+            "vertical",
+            "center",
+            0.95,
+            provenance,
         )
 
     # Explicit source groups remain atomic even when their parent topology changes.
@@ -342,6 +591,17 @@ def build_relationship_graph(
         if all(member.element_type == "image" for member in unit.members)
         and unit.box.width * unit.box.height > 0
         and not set(unit.element_ids).issubset(overlay_ids)
+        and unit.role != "image_underlay"
+        # A pixel-proven repeated text-panel frame supplies enclosure, not a
+        # standalone product. Keep its literal unit and all container checks;
+        # unknown art and explicitly declared products retain their semantics.
+        and not (
+            set(unit.element_ids).issubset(container_frame_ids)
+            and not any(
+                original_elements[eid].get("role") in {"product", "hero", "logo"}
+                for eid in unit.element_ids
+            )
+        )
     ]
     largest = max((unit.frame_box.width * unit.frame_box.height for unit in images), default=0)
     logos = [
@@ -358,11 +618,61 @@ def build_relationship_graph(
     largest_product = max(
         (unit.frame_box.width * unit.frame_box.height for unit in other_images), default=0
     )
+    ornaments = [
+        unit
+        for unit in other_images
+        if _small_sparse_vector(unit, original_elements, context.width, context.height, assets)
+    ]
+    ornament_indices = {unit.index for unit in ornaments}
     products = [
         unit
         for unit in other_images
         if unit.frame_box.width * unit.frame_box.height >= largest_product * 0.25
+        and unit.index not in ornament_indices
     ]
+    for ornament in ornaments:
+        choices = []
+        for heading in (unit for unit in units if unit.role == "headline"):
+            relation = _connection(ornament.box, heading.box, context.width, context.height)
+            if relation:
+                axis, anchor = relation
+                gap, offset = _pair(ornament.box, heading.box, axis, anchor)
+                # A matching axis across a large empty page is not enough
+                # evidence for a high-confidence physical attachment.
+                if gap > 1.25:
+                    continue
+                choices.append((max(0.0, gap) + abs(offset) * 4, heading.index, axis, anchor))
+        choices.sort()
+        if not choices or (len(choices) > 1 and not _separated(choices[0][0], choices[1][0])):
+            continue
+        _, heading_index, axis, anchor = choices[0]
+        cluster_id = f"ornament:{sum(cluster.kind == 'ornament' for cluster in clusters)}"
+        provenance = (
+            "tiny sparse monochrome source vector pixels",
+            "nearest separated aligned forward source headline",
+            "physical source attachment and relative prominence; no product semantics",
+        )
+        members = (ornament.index, heading_index)
+        clusters.append(
+            RelationshipCluster(
+                cluster_id,
+                "ornament",
+                members,
+                tuple(eid for index in members for eid in units[index].element_ids),
+                0.9,
+                provenance,
+            )
+        )
+        connect(
+            "ornament_attachment",
+            ornament.index,
+            heading_index,
+            cluster_id,
+            axis,
+            anchor,
+            0.9,
+            provenance,
+        )
     claimed_products = set()
     for logo in logos:
         hypotheses = []
@@ -669,6 +979,7 @@ def build_relationship_graph(
         tuple(ambiguities),
         str(resources.fonts_dir),
         overlays,
+        infer_reading_order(source),
     )
 
 
@@ -714,6 +1025,16 @@ def analyze_relationships(
         if cluster.kind == "campaign" and cluster.primary_unit is not None
     ]
     warnings, relations = [], []
+    # The frozen two-dimensional source profile is the reading-order authority.
+    # A local source vertical edge may legitimately cross a column boundary.
+    global_order = (
+        analyze_reading_order({}, candidate, graph.reading_profile)
+        if graph.reading_profile is not None
+        else None
+    )
+    inverted_pairs = {
+        (pair["before"], pair["after"]) for pair in (global_order or {}).get("inversion_pairs", [])
+    }
     for edge in graph.edges:
         first, second = graph.units[edge.source_unit], graph.units[edge.target_unit]
         flow = state.get(
@@ -778,9 +1099,17 @@ def analyze_relationships(
             lost = error > 0.1
             message = "Members of an explicit source group lost their internal geometry."
         elif edge.code == "reading_order":
-            before, _ = _primary(a, axis)
-            after, _ = _primary(b, axis)
-            fidelity = 1.0 if after >= before - 0.5 else 0.0
+            if global_order is not None:
+                reversed_edge = any(
+                    (before, after) in inverted_pairs
+                    for before in first.element_ids
+                    for after in second.element_ids
+                )
+                fidelity = 0.0 if reversed_edge else 1.0
+            else:
+                before, _ = _primary(a, axis)
+                after, _ = _primary(b, axis)
+                fidelity = 1.0 if after >= before - 0.5 else 0.0
             lost = fidelity == 0
             message = "Related content no longer follows its source reading order."
         elif edge.code == "message_attachment":
@@ -805,6 +1134,57 @@ def analyze_relationships(
                 "The inferred brand/product association no longer stays together; "
                 "review this source hypothesis."
             )
+        elif edge.code == "ornament_attachment":
+            ornament_scale = math.sqrt(
+                max(a.width * a.height, 1e-12) / max(first.box.width * first.box.height, 1e-12)
+            )
+            heading_scales = [
+                by_id[member.element_id]["font_size"] / member.font_size
+                for member in second.members
+                if member.font_size and member.font_size > 0
+            ]
+            heading_scale = median(heading_scales)
+            relative_scale = ornament_scale / max(heading_scale, 1e-12)
+            relative_axes = (
+                a.width / max(first.box.width * heading_scale, 1e-12),
+                a.height / max(first.box.height * heading_scale, 1e-12),
+            )
+            scale_error = max(abs(math.log(max(value, 1e-12))) for value in relative_axes)
+            gap_error = abs(gap - edge.source_gap)
+            alignment_error = abs(alignment - edge.source_alignment)
+            before_start, before_size = _primary(a, axis)
+            after_start, after_size = _primary(b, axis)
+            source_start, source_size = _primary(first.box, edge.axis)
+            source_after, source_after_size = _primary(second.box, edge.axis)
+            source_direction = source_after + source_after_size / 2 - source_start - source_size / 2
+            direction = after_start + after_size / 2 - before_start - before_size / 2
+            reversed_order = source_direction * direction < -0.5
+            fidelity = (
+                math.exp(-scale_error - gap_error - alignment_error * 3)
+                if not reversed_order
+                else 0.0
+            )
+            lost = (
+                scale_error > math.log(1.15)
+                or gap_error > 0.35
+                or alignment_error > 0.18
+                or reversed_order
+            )
+            message = "A source ornament lost its heading attachment or relative size."
+        elif edge.code == "caption_hierarchy":
+            cohort = cluster_map[edge.cluster_id]
+            caption_scales = [
+                (member.element_id, by_id[member.element_id]["font_size"] / member.font_size)
+                for index in cohort.unit_indices
+                for member in graph.units[index].members
+                if member.font_size and member.font_size > 0
+            ]
+            scale_ratio = max(scale for _eid, scale in caption_scales) / max(
+                min(scale for _eid, scale in caption_scales), 1e-12
+            )
+            fidelity = 1 / max(scale_ratio, 1e-12)
+            lost = scale_ratio > 1.15 + 1e-9
+            message = "Source-supported captions lost their relative text prominence."
         elif edge.code in {"peer_order", "peer_cohesion"}:
             if flow == "wrap":
                 same_row = (
@@ -945,7 +1325,7 @@ def analyze_relationships(
         )
         source_ids = (
             cluster_map[edge.cluster_id].element_ids
-            if edge.code == "row_attachment"
+            if edge.code in {"row_attachment", "caption_hierarchy"}
             else first.element_ids
         )
         affected = tuple(dict.fromkeys(source_ids + target_ids))
@@ -961,6 +1341,21 @@ def analyze_relationships(
                 "confidence": edge.confidence,
             }
         )
+        if edge.code == "ornament_attachment":
+            relations[-1].update(
+                relative_scale_ratio=round(relative_scale, 6),
+                relative_width_scale=round(relative_axes[0], 6),
+                relative_height_scale=round(relative_axes[1], 6),
+                normalized_gap_error=round(gap_error, 6),
+                normalized_alignment_error=round(alignment_error, 6),
+            )
+        elif edge.code == "caption_hierarchy":
+            relations[-1].update(
+                font_scale_ratio=round(scale_ratio, 6),
+                font_scales=[
+                    {"element_id": eid, "scale": round(scale, 6)} for eid, scale in caption_scales
+                ],
+            )
         if lost:
             warnings.append(
                 {

@@ -90,6 +90,34 @@ def test_valid_identity_resize_preserves_composition_and_returns_a_copy(design):
     assert module.resize(design, design["canvas"]) == design
 
 
+@pytest.mark.parametrize(
+    "case,target,name",
+    [
+        ("doory_grand-opening-flyer", {"width": 1080, "height": 1920}, "bands-distributed"),
+        ("doory_botanical-celebration-invitation", {"width": 1600, "height": 900}, "columns-5"),
+        ("doory_night-bloom-concert-poster", {"width": 1600, "height": 900}, "columns-4"),
+    ],
+)
+def test_source_spacing_beats_a_compact_fit_with_equivalent_type_scales(case, target, name):
+    import json
+    from pathlib import Path
+
+    from engine.layout.source_guides import generate_source_guides
+    from engine.resources import using_resources
+
+    folder = Path(__file__).resolve().parents[1] / "fixtures/open_posters/prepared" / case
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        states = generate_source_guides(source, target)
+        compact = next(s for s in states if s.name == "source-guides/source-fit")
+        adaptive = next(s for s in states if s.name == f"source-guides/{name}")
+        axes = {
+            json.dumps(s.design, sort_keys=True): dict(s.cluster_axes) for s in (compact, adaptive)
+        }
+        chosen = module._select_candidate(source, target, [compact.design, adaptive.design], axes)
+        assert chosen == adaptive.design
+
+
 def test_identity_resize_does_not_preserve_source_text_overflow():
     source = {
         "canvas": {"width": 200, "height": 100},

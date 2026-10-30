@@ -12,6 +12,102 @@ from statistics import median
 
 from engine.layout.appearance import unit_visible_box
 from engine.layout.relationships import SourceRelationshipGraph, build_relationship_graph
+from engine.layout.source_containers import analyze_source_containers
+from engine.resources import using_resources
+
+
+def _composition_members(source, graph):
+    campaigns = {
+        eid
+        for cluster in graph.clusters
+        if cluster.kind == "campaign"
+        for eid in cluster.element_ids
+    }
+    if campaigns:
+        return campaigns, "campaign"
+    # Campaign inference is intentionally narrow. Typography-led posters and
+    # diagrams still have immutable foreground units/bands whose overall span
+    # should survive an aspect change. Select them from the SOURCE only.
+    originals = {element["id"]: element for element in source["elements"]}
+    sizes = [element["font_size"] for element in source["elements"] if element["type"] == "text"]
+    typical = median(sizes) if sizes else 0
+    overlays = {overlay.overlay_id for overlay in graph.overlays}
+    members = set()
+    for unit in graph.units:
+        # A proven full-bleed photo supplies the background for its caption.
+        # Its large frame cannot establish foreground composition retention;
+        # photo visibility and geometry have their own independent guards.
+        if unit.role == "image_underlay":
+            continue
+        elements = [originals[eid] for eid in unit.element_ids]
+        texts = [element for element in elements if element["type"] == "text"]
+        small_type = texts and max(element["font_size"] for element in texts) <= typical
+        footer = (
+            small_type
+            and len(texts) == len(elements)
+            and unit.box.y >= graph.height * 0.85
+            and unit.box.height <= graph.height * 0.1
+        )
+        corner = (
+            unit.role != "action"
+            and unit.box.width * unit.box.height <= graph.width * graph.height * 0.02
+            and (
+                unit.box.x <= graph.width * 0.05
+                or unit.box.x + unit.box.width >= graph.width * 0.95
+            )
+            and (
+                unit.box.y <= graph.height * 0.05
+                or unit.box.y + unit.box.height >= graph.height * 0.95
+            )
+        )
+        # A small corner support or genuine fine footer cannot make an otherwise
+        # compressed central composition appear to occupy the full canvas.
+        if footer or corner:
+            continue
+        members.update(eid for eid in unit.element_ids if eid not in overlays)
+    return members, "foreground-bands" if members else "unavailable"
+
+
+def _composition_span(source, candidate, graph, originals, outputs):
+    primary_ids, kind = _composition_members(source, graph)
+    diagnostic = {
+        "active": False,
+        "kind": kind,
+        "element_ids": sorted(primary_ids),
+        "source_fraction": [],
+        "candidate_fraction": [],
+    }
+    if not primary_ids:
+        return 1.0, diagnostic
+    # Graphs can be analyzed after their resource context has ended. Exact
+    # document faces must still determine occupied line extents here.
+    with using_resources(assets_dir=graph.assets_dir, fonts_dir=graph.fonts_dir):
+        before = unit_visible_box([originals[eid] for eid in primary_ids], graph.assets_dir)
+        after = unit_visible_box([outputs[eid] for eid in primary_ids], graph.assets_dir)
+    if min(before.width, before.height) <= 0:
+        return 1.0, diagnostic
+    source_fraction = [before.width / graph.width, before.height / graph.height]
+    candidate_fraction = [
+        after.width / candidate["canvas"]["width"],
+        after.height / candidate["canvas"]["height"],
+    ]
+    diagnostic.update(
+        active=True, source_fraction=source_fraction, candidate_fraction=candidate_fraction
+    )
+    ratios = [
+        after / before for after, before in zip(candidate_fraction, source_fraction, strict=True)
+    ]
+    # A typography/diagram composition can exchange width for height when its
+    # source bands become columns. Retain its authored visual weight without
+    # imposing the old orientation. Product campaigns retain both-axis guards.
+    area_retention = max(0.0, min(1.0, ratios[0] * ratios[1]))
+    axis_retention = max(0.0, min(1.0, *ratios))
+    diagnostic.update(
+        basis="occupied-area" if kind == "foreground-bands" else "occupied-axes",
+        area_retention=area_retention,
+        axis_retention=axis_retention,
+    )
+    return (area_retention if kind == "foreground-bands" else axis_retention), diagnostic
 
 
 def _spread(scales: list[float]) -> tuple[float, float]:
@@ -74,12 +170,16 @@ def analyze_proportions(
         or len(originals) != len(source["elements"])
     ):
         return {"score": 0.0, "warnings": [], "metrics": {}, "clusters": []}
-    warnings, rows = [], []
+    with using_resources(assets_dir=graph.assets_dir, fonts_dir=graph.fonts_dir):
+        containers = analyze_source_containers(source, candidate)
+    adaptive_frames = set(containers["accepted_frame_ids"])
+    warnings, rows = list(containers["warnings"]), []
     rigid_errors = []
     for unit in graph.units:
-        if len(unit.element_ids) < 2 and originals[unit.element_ids[0]]["type"] == "text":
+        member_ids = [eid for eid in unit.element_ids if eid not in adaptive_frames]
+        if not member_ids or (len(member_ids) < 2 and originals[member_ids[0]]["type"] == "text"):
             continue
-        members = [originals[eid] for eid in unit.element_ids]
+        members = [originals[eid] for eid in member_ids]
         dimension_error, residual = _rigid_error(members, outputs)
         error = max(dimension_error, residual)
         rigid_errors.append(error)
@@ -145,24 +245,9 @@ def analyze_proportions(
         )
     rigid = max(rigid_errors, default=0.0)
     campaign = sum(campaign_errors) / max(1, len(campaign_errors))
-    primary_ids = {
-        eid
-        for cluster in graph.clusters
-        if cluster.kind == "campaign"
-        for eid in cluster.element_ids
-    }
-    span_retention = 1.0
-    if primary_ids:
-        before = unit_visible_box([originals[eid] for eid in primary_ids], graph.assets_dir)
-        after = unit_visible_box([outputs[eid] for eid in primary_ids], graph.assets_dir)
-        # Retain the source composition's designed span, not arbitrary maximum
-        # coverage. Source corner promotions, legal copy and decorations do not
-        # hide an undersized central composition by widening this envelope.
-        span_retention = min(
-            1.0,
-            after.width / candidate["canvas"]["width"] / max(before.width / graph.width, 1e-9),
-            after.height / candidate["canvas"]["height"] / max(before.height / graph.height, 1e-9),
-        )
+    span_retention, span_diagnostic = _composition_span(
+        source, candidate, graph, originals, outputs
+    )
     # Equal exact scales score one. The exponential is only a ranking utility;
     # retain raw deformation values so callers can assess the actual tradeoff.
     return {
@@ -174,6 +259,13 @@ def analyze_proportions(
             "sibling_product_scale_rms_log": round(sibling_rms, 6),
             "sibling_product_scale_ratio": round(sibling_ratio, 6),
             "composition_span_retention": round(span_retention, 6),
+            "adaptive_frame_count": len(adaptive_frames),
+            "source_container_detached_count": containers["metrics"]["detached_count"],
+            "source_container_unsupported_deformation_count": containers["metrics"][
+                "unsupported_deformation_count"
+            ],
         },
         "clusters": rows,
+        "composition_span": span_diagnostic,
+        "containers": containers,
     }

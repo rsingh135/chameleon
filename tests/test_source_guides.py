@@ -2,12 +2,19 @@
 
 import json
 from copy import deepcopy
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
 
 from engine.eval import build_context, check_contract
 from engine.layout.model import build_context as layout_context
+from engine.layout.reading_order import analyze_reading_order
+from engine.layout.source_containers import (
+    _native_frame,
+    analyze_source_containers,
+    infer_source_containers,
+)
 from engine.layout.source_guides import MAX_STATES, _owned_units, generate_source_guides
 from engine.resources import using_resources
 
@@ -260,7 +267,46 @@ def test_photo_dependent_dark_headers_and_fade_keep_original_bright_support(targ
             for unit in ordinary:
                 for old in unit.text:
                     new = elements[old["id"]]
-                    assert new["x"] + new["width"] < frame["x"]
+                    assert (
+                        new["x"] + new["width"] < frame["x"]
+                        or new["x"] > frame["x"] + frame["width"]
+                    )
+
+
+@pytest.mark.parametrize("width,height", [(1600, 900), (1080, 1080)])
+def test_photo_caption_source_order_guides_fullheight_media_and_live_copy_wrap(width, height):
+    folder = ROOT / "fixtures/open_posters/prepared/doory_rooftop-event-story"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    target = {"width": width, "height": height}
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        state = next(
+            s
+            for s in generate_source_guides(source, target)
+            if s.name == "source-guides/media-columns-leading-fullheight"
+        )
+        design = state.design
+        assert check_contract(source, design, target, build_context(source)) == []
+        order = analyze_reading_order(source, design)
+        assert order["high_confidence_inversions"] == 0
+        assert order["comparison_coverage"] == 1
+        assert min(e["font_size"] for e in design["elements"] if e["type"] == "text") >= (
+            min(width, height) * 0.012
+        )
+        original_photo = next(
+            e for e in source["elements"] if e.get("source_art", {}).get("kind") == "masked-photo"
+        )
+        photo = next(e for e in design["elements"] if e["id"] == original_photo["id"])
+        assert photo["x"] == photo["y"] == 0
+        assert photo["height"] == height
+        assert photo["width"] / original_photo["width"] == pytest.approx(
+            photo["height"] / original_photo["height"]
+        )
+        for old, new in zip(source["elements"], design["elements"], strict=True):
+            assert {k: v for k, v in old.items() if k not in MUTABLE} == {
+                k: v for k, v in new.items() if k not in MUTABLE
+            }
+    assert source == before
 
 
 def test_story_distributes_source_whitespace_without_detaching_event_internals():
@@ -283,3 +329,274 @@ def test_story_distributes_source_whitespace_without_detaching_event_internals()
         if old["type"] == "text"
     ]
     assert max(scales) == pytest.approx(min(scales))
+
+
+@pytest.mark.parametrize(
+    "ident,count,square_floor,story_floor",
+    [
+        ("opensuse_trifold_front", 3, 12.96, 16.0),
+        ("opensuse_cheatsheet", 7, 13.7, 16.8),
+    ],
+)
+@pytest.mark.parametrize("height", [1080, 1920])
+def test_real_source_panels_reflow_at_one_readable_foreground_scale(
+    ident, count, square_floor, story_floor, height
+):
+    folder = ROOT / "fixtures/open_posters/prepared" / ident
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    target = {"width": 1080, "height": height}
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        profile = infer_source_containers(source)
+        assert len(profile.containers) == count
+        assert profile.source_digest
+        with pytest.raises(FrozenInstanceError):
+            profile.containers[0].confidence = 0
+        claimed = [eid for c in profile.containers for eid in (c.frame_id, *c.member_ids)]
+        assert len(claimed) == len(set(claimed))
+        backgrounds = {e["id"] for e in layout_context(source).backgrounds}
+        assert set(claimed) | set(profile.loose_ids) | backgrounds == {
+            e["id"] for e in source["elements"]
+        }
+        states = generate_source_guides(source, target)
+        assert len(states) <= MAX_STATES
+        panels = [s for s in states if s.topology == "source-panel-columns"]
+        assert panels
+        state = max(
+            panels,
+            key=lambda s: min(e["font_size"] for e in s.design["elements"] if e["type"] == "text"),
+        )
+        design = state.design
+        assert check_contract(source, design, target, build_context(source)) == []
+        assert analyze_source_containers(source, design, profile)["accepted"]
+        assert min(e["font_size"] for e in design["elements"] if e["type"] == "text") >= (
+            square_floor if height == 1080 else story_floor
+        )
+        frame_ids = {eid for c in profile.containers for eid in c.frame_ids}
+        common_scale = next(
+            e["font_size"] for e in design["elements"] if e["type"] == "text"
+        ) / next(e["font_size"] for e in source["elements"] if e["type"] == "text")
+        scales = []
+        for old, new in zip(source["elements"], design["elements"], strict=True):
+            assert {k: v for k, v in old.items() if k not in MUTABLE} == {
+                k: v for k, v in new.items() if k not in MUTABLE
+            }
+            if old["type"] == "text":
+                scales.append(new["font_size"] / old["font_size"])
+            if old["id"] not in frame_ids | backgrounds:
+                assert new["height"] / old["height"] == pytest.approx(common_scale)
+                if old["type"] != "text":
+                    assert new["width"] / old["width"] == pytest.approx(
+                        new["height"] / old["height"]
+                    )
+        assert max(scales) == pytest.approx(min(scales))
+    assert source == before
+
+
+@pytest.mark.parametrize("fill", ["#fff0", "#ffffff00", "rgba(1,2,3,0.5)", "url(#paint)"])
+def test_adaptive_native_frame_requires_proven_opaque_paint(fill):
+    frame = dict(type="shape", shape_type="rectangle", fill_color=fill)
+    assert not _native_frame(frame)
+    frame["fill_color"] = "#ffffff"
+    assert _native_frame(frame)
+    frame["fill_color"] = "rgba(115,186,37,1)"
+    assert _native_frame(frame)
+
+
+def test_vector_container_proof_rejects_internal_art_and_unknown_photos(tmp_path):
+    from PIL import Image, ImageDraw
+
+    from engine.layout.source_containers import _flat_vector_container
+
+    image = Image.new("RGBA", (100, 180), "#003342")
+    ImageDraw.Draw(image).rectangle((0, 0, 99, 179), outline="#66bf2e")
+    path = tmp_path / "plate.png"
+    image.save(path)
+    element = dict(
+        type="image", asset_id="plate.png", fit="fill", source_art={"kind": "svg-nontext"}
+    )
+    with using_resources(tmp_path):
+        assert _flat_vector_container(element)
+        ImageDraw.Draw(image).rectangle((40, 80, 60, 100), fill="#ffffff")
+        image.save(path)
+        assert not _flat_vector_container(element)
+        element.pop("source_art")
+        assert not _flat_vector_container(element)
+
+
+def test_synthetic_columns_keep_venue_and_guest_together_in_real_concert_poster():
+    folder = ROOT / "fixtures/open_posters/prepared/doory_night-bloom-concert-poster"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        states = generate_source_guides(source, {"width": 1600, "height": 900})
+    names = {state.name for state in states}
+    assert "source-guides/columns-5" not in names
+    assert "source-guides/columns-4" in names
+
+
+@pytest.mark.parametrize(
+    "ident,kept,rejected",
+    [
+        ("doory_grand-opening-flyer", "columns-4", ("columns-2", "columns-3", "columns-5")),
+        ("doory_botanical-celebration-invitation", "columns-5", ("columns-3", "columns-4")),
+    ],
+)
+def test_close_primary_title_bands_stay_attached_in_synthetic_columns(ident, kept, rejected):
+    folder = ROOT / "fixtures/open_posters/prepared" / ident
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        names = {
+            state.name for state in generate_source_guides(source, {"width": 1600, "height": 900})
+        }
+    assert "source-guides/" + kept in names
+    assert all("source-guides/" + name not in names for name in rejected)
+
+
+def test_ornament_only_column_is_not_substantive_copy():
+    from engine.layout.geometry import Box
+    from engine.layout.source_guides import _balanced_columns, _Band
+
+    text = _Band((dict(type="text", content="Details"),), Box(0, 0, 200, 100), Box(0, 0, 200, 100))
+    art = _Band((dict(type="shape"),), Box(0, 0, 200, 100), Box(0, 0, 200, 100))
+    assert not _balanced_columns([[text], [art]])
+    tail = _Band((dict(type="text", content="Tail"),), Box(0, 0, 200, 20), Box(0, 0, 200, 20))
+    assert not _balanced_columns([[text], [tail]])
+    assert _balanced_columns([[text], [text]])
+
+
+def test_full_candidate_pool_selects_connected_concert_venue_and_guest(tmp_path):
+    from engine.eval.render import render_image
+    from engine.resize import resize_with_state
+
+    folder = ROOT / "fixtures/open_posters/prepared/doory_night-bloom-concert-poster"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    target = {"width": 1600, "height": 900}
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        selected = resize_with_state(source, target)
+        design = selected["design"]
+        venue = next(e for e in design["elements"] if e.get("content") == "RIVERSIDE PARK")
+        guest = next(e for e in design["elements"] if e.get("content") == "with very special guest")
+        artist = next(e for e in design["elements"] if e.get("content") == "PAPER TIGERS")
+        venue_center = venue["x"] + venue["width"] / 2
+        for element in (guest, artist):
+            assert abs(element["x"] + element["width"] / 2 - venue_center) < target["width"] * 0.08
+            assert element["y"] > venue["y"] + venue["height"]
+        assert check_contract(source, design, target, build_context(source)) == []
+        native = render_image(design)
+        assert native.size == (1600, 900)
+        native.save(tmp_path / "selected-concert-landscape.png")
+    assert source == before
+
+
+def test_native_invitation_columns_use_visible_type_width_instead_of_empty_frames():
+    folder = ROOT / "fixtures/open_posters/prepared/doory_botanical-celebration-invitation"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    originals = {e["id"]: e for e in source["elements"]}
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        state = next(
+            s
+            for s in generate_source_guides(source, {"width": 1600, "height": 900})
+            if s.name == "source-guides/columns-5"
+        )
+    scales = [
+        e["font_size"] / originals[e["id"]]["font_size"]
+        for e in state.design["elements"]
+        if e["type"] == "text"
+    ]
+    assert min(scales) > 1.75
+    assert max(scales) == pytest.approx(min(scales))
+
+
+def test_normalized_native_frames_keep_exact_source_pixels_lines_and_identity(tmp_path):
+    from engine.eval.render import render_image
+    from engine.layout.source_guides import _normalize_column_rows, _rows
+    from engine.layout.text import get_measurer
+
+    folder = ROOT / "fixtures/open_posters/prepared/doory_botanical-celebration-invitation"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        context = layout_context(source)
+        rows, signatures = _normalize_column_rows(_rows(context), context)
+        assert signatures
+        changed = {element["id"]: element for row in rows for element in row.elements}
+        normalized = {**source, "elements": [changed.get(e["id"], e) for e in source["elements"]]}
+        for old, new in zip(source["elements"], normalized["elements"], strict=True):
+            assert {k: v for k, v in old.items() if k not in {"x", "width"}} == {
+                k: v for k, v in new.items() if k not in {"x", "width"}
+            }
+            if old["id"] in signatures:
+                assert (
+                    get_measurer().measure(new, new["font_size"], new["width"]).wrapped
+                    == signatures[old["id"]]
+                )
+        original_png, normalized_png = render_image(source), render_image(normalized)
+        assert original_png.tobytes() == normalized_png.tobytes()
+        original_png.save(tmp_path / "source.png")
+        normalized_png.save(tmp_path / "normalized-source.png")
+    assert source == before
+
+
+@pytest.mark.parametrize("protection", ["group", "rotation", "justify", "gradient"])
+def test_column_frame_normalization_skips_protected_text(protection):
+    from engine.layout.source_guides import _normalize_column_rows, _rows
+
+    folder = ROOT / "fixtures/open_posters/prepared/doory_botanical-celebration-invitation"
+    original = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    element = deepcopy(next(e for e in original["elements"] if e.get("content") == "AVA"))
+    if protection == "group":
+        element["group_id"] = "authored-group"
+    elif protection == "rotation":
+        element["rotation"] = 10
+    elif protection == "justify":
+        element["text_align"] = "justify"
+    else:
+        element["native_text_effects"]["gradient"] = {
+            "x1": 0,
+            "y1": 0,
+            "x2": 1,
+            "y2": 0,
+            "stops": [{"offset": 0, "color": "#000000"}, {"offset": 1, "color": "#ffffff"}],
+        }
+    source = {"canvas": original["canvas"], "elements": [element]}
+    before = deepcopy(source)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        context = layout_context(source)
+        rows, signatures = _normalize_column_rows(_rows(context), context)
+    assert not signatures
+    assert rows[0].elements[0] == element
+    assert source == before
+
+
+def test_column_frame_normalization_preserves_default_legacy_context():
+    from engine.layout.source_guides import _normalize_column_rows, _rows
+    from engine.resources import DEFAULT_ASSETS_DIR, DEFAULT_FONTS_DIR
+
+    source = _simple()
+    with using_resources(DEFAULT_ASSETS_DIR, DEFAULT_FONTS_DIR):
+        context = layout_context(source)
+        original = _rows(context)
+        normalized, signatures = _normalize_column_rows(original, context)
+    assert normalized == original
+    assert not signatures
+
+
+def test_full_candidate_pool_selects_readable_connected_invitation_columns(tmp_path):
+    from engine.eval.render import render_image
+    from engine.resize import resize_with_state
+
+    folder = ROOT / "fixtures/open_posters/prepared/doory_botanical-celebration-invitation"
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        plan = resize_with_state(source, {"width": 1600, "height": 900})
+        design = plan["design"]
+        names = [e for e in design["elements"] if e.get("content") in {"AVA", "THEODORE"}]
+        venue = next(e for e in design["elements"] if e.get("content") == "The Orchard House")
+        centers = [e["x"] + e["width"] / 2 for e in names]
+        assert max(centers) - min(centers) < 10
+        assert venue["x"] + venue["width"] / 2 - max(centers) > 1600 * 0.2
+        assert min(e["font_size"] for e in design["elements"] if e["type"] == "text") > 18
+        native = render_image(design)
+        assert native.size == (1600, 900)
+        native.save(tmp_path / "selected-invitation-landscape.png")

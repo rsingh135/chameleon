@@ -34,6 +34,117 @@ def design(elements, width=700, height=700):
     return {"canvas": {"width": width, "height": height}, "elements": elements}
 
 
+def container_design():
+    """Two source-proven opaque cards, with deliberately uneven text rows."""
+    elements = [
+        {
+            "id": eid,
+            "type": "shape",
+            "shape_type": "rectangle",
+            "x": x,
+            "y": 150,
+            "width": 400,
+            "height": 700,
+            "fill_color": "#ffffff",
+            "z_index": 0,
+        }
+        for eid, x in (("frame-a", 50), ("frame-b", 550))
+    ]
+    elements.append(text("header", 100, 20, width=800))
+    for prefix, x, rows in (("a", 75, (170, 250, 400, 600)), ("b", 575, (170, 220, 340, 760))):
+        for index, y in enumerate(rows):
+            leaf = text(f"{prefix}{index}", x, y, width=350, size=22 if index == 0 else 16)
+            leaf["z_index"] = 1
+            elements.append(leaf)
+    elements.append(text("footer", 100, 930, width=800))
+    return design(elements, 1000, 1000)
+
+
+def move_owned_card(candidate, prefix, dx=0, dy=0):
+    for element in candidate["elements"]:
+        if element["id"] == f"frame-{prefix}" or element["id"] in {
+            f"{prefix}{i}" for i in range(4)
+        }:
+            element["x"] += dx
+            element["y"] += dy
+
+
+def test_source_containers_keep_heading_and_body_contiguous_across_reflow():
+    source = container_design()
+    before = deepcopy(source)
+    profile = infer_reading_order(source)
+    assert profile.containers is not None
+    assert len(profile.containers.containers) == 2
+    assert profile.sequence == ("header", "a0", "a1", "a2", "a3", "b0", "b1", "b2", "b3", "footer")
+    candidate = deepcopy(source)
+    candidate["canvas"]["height"] = 2000
+    move_owned_card(candidate, "b", dx=-500, dy=850)
+    candidate["elements"][-1]["y"] = 1930
+    # Frozen source evidence is sufficient when the graph does not pass source.
+    result = analyze_reading_order({}, candidate, profile)
+    assert result["container_order_active"]
+    assert result["candidate_sequence"] == list(profile.sequence)
+    assert result["high_confidence_inversions"] == 0
+    assert result["comparison_coverage"] == 1
+    assert result["container_detachments"] == []
+    assert source == before
+
+
+def test_reversed_whole_containers_and_internal_text_reversals_remain_errors():
+    source = container_design()
+    profile = infer_reading_order(source)
+    reversed_cards = deepcopy(source)
+    move_owned_card(reversed_cards, "a", dx=500)
+    move_owned_card(reversed_cards, "b", dx=-500)
+    assert analyze_reading_order({}, reversed_cards, profile)["high_confidence_inversions"] > 0
+    reversed_children = deepcopy(source)
+    by_id = {element["id"]: element for element in reversed_children["elements"]}
+    by_id["a0"]["y"], by_id["a2"]["y"] = by_id["a2"]["y"], by_id["a0"]["y"]
+    result = analyze_reading_order({}, reversed_children, profile)
+    assert any(
+        pair["before"] == "a0" and pair["after"] == "a2" for pair in result["inversion_pairs"]
+    )
+
+
+def test_candidate_cannot_reassign_text_to_another_source_container():
+    source = container_design()
+    profile = infer_reading_order(source)
+    candidate = deepcopy(source)
+    next(element for element in candidate["elements"] if element["id"] == "a0")["x"] = 575
+    result = analyze_reading_order({}, candidate, profile)
+    assert result["container_order_active"]
+    assert "source_container_detachment" in result["warnings"]
+    assert any(
+        item["frame_id"] == "frame-a" and item["element_id"] == "a0"
+        for item in result["container_detachments"]
+    )
+    assert "a0" in result["source_containers"][0]["member_ids"]
+    assert "a0" not in result["source_containers"][1]["member_ids"]
+
+
+def test_candidate_must_retain_source_container_frames():
+    source = container_design()
+    profile = infer_reading_order(source)
+    candidate = deepcopy(source)
+    candidate["elements"] = [
+        element for element in candidate["elements"] if element["id"] != "frame-a"
+    ]
+    with pytest.raises(ValueError, match="container frame"):
+        analyze_reading_order({}, candidate, profile)
+    candidate = deepcopy(source)
+    candidate["elements"].append(deepcopy(candidate["elements"][0]))
+    with pytest.raises(ValueError, match="exactly once"):
+        analyze_reading_order({}, candidate, profile)
+
+
+def test_unproven_card_shapes_do_not_override_plain_spatial_evidence():
+    source = container_design()
+    source["elements"] = [
+        element for element in source["elements"] if element["id"] not in {"a2", "a3", "b2", "b3"}
+    ]
+    assert infer_reading_order(source).containers is None
+
+
 def test_identity_and_source_are_immutable_and_profile_is_frozen():
     source = design([text("opaque-a", 20, 20), text("opaque-b", 20, 90), text("opaque-c", 20, 160)])
     before = deepcopy(source)
@@ -219,3 +330,46 @@ def test_actual_grand_good_column_proposals_retain_original_sequence():
             result = analyze_reading_order(source, state.design, profile)
             assert result["high_confidence_inversions"] == 0, state.name
             assert result["candidate_sequence"] == list(profile.sequence), state.name
+
+
+@pytest.mark.parametrize("case, count", [("opensuse_cheatsheet", 7), ("opensuse_trifold_front", 3)])
+def test_actual_repeated_panels_do_not_interleave_separate_card_headings_and_bodies(case, count):
+    folder = ROOT / "fixtures/open_posters/prepared" / case
+    source = json.loads((folder / "source.json").read_text(encoding="utf-8"))
+    before = deepcopy(source)
+    with using_resources(folder / "resources/assets", folder / "resources/fonts"):
+        profile = infer_reading_order(source)
+        assert profile.containers is not None
+        assert len(profile.containers.containers) == count
+        states = [
+            state
+            for state in generate_source_guides(source, {"width": 1600, "height": 900})
+            if state.topology == "source-panel-columns"
+        ]
+        assert states
+    # Exact source font paths are frozen in the profile and restored here.
+    for container in profile.containers.containers:
+        positions = [
+            index for index, eid in enumerate(profile.sequence) if eid in container.member_ids
+        ]
+        assert positions == list(range(min(positions), max(positions) + 1))
+    for state in states:
+        result = analyze_reading_order({}, state.design, profile)
+        assert result["container_order_active"]
+        assert result["high_confidence_inversions"] == 0, state.name
+        assert result["container_detachments"] == [], state.name
+        # Ambiguous ordering inside a card stays ambiguous. Whole owned cards
+        # remain contiguous and retain their source order regardless of that.
+        owners = {
+            eid: index
+            for index, container in enumerate(profile.containers.containers)
+            for eid in container.member_ids
+        }
+        ordered = [owners[eid] for eid in result["candidate_sequence"] if eid in owners]
+        blocks = [
+            value
+            for index, value in enumerate(ordered)
+            if index == 0 or ordered[index - 1] != value
+        ]
+        assert blocks == list(range(count)), state.name
+    assert source == before

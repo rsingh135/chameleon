@@ -220,6 +220,113 @@ def test_graph_is_deterministic_nonmutating_and_independent_of_sample_names():
     assert analyze_relationships(second, renamed)["warnings"] == []
 
 
+@pytest.fixture
+def full_bleed_scene(tmp_path):
+    from PIL import Image
+
+    Image.new("RGBA", (100, 160), "#885533").save(tmp_path / "photo.png")
+    fade = Image.new("RGBA", (100, 80))
+    fade.putdata([(0, 0, 0, round(255 * y / 79)) for y in range(80) for _ in range(100)])
+    fade.save(tmp_path / "fade.png")
+    return tmp_path, {
+        "canvas": {"width": 1000, "height": 1600},
+        "elements": [
+            {
+                "id": "opaque-a",
+                "type": "image",
+                "asset_id": "photo.png",
+                "source_art": {"kind": "masked-photo"},
+                "fit": "fill",
+                "x": 0,
+                "y": 0,
+                "width": 1000,
+                "height": 1600,
+                "z_index": 0,
+            },
+            {
+                "id": "opaque-b",
+                "type": "image",
+                "asset_id": "fade.png",
+                "fit": "fill",
+                "x": 0,
+                "y": 800,
+                "width": 1000,
+                "height": 800,
+                "z_index": 1,
+            },
+            {**_text("opaque-c", 100, 1200, 80), "z_index": 2},
+            {**_text("opaque-d", 100, 1320, 30), "z_index": 3},
+        ],
+    }
+
+
+def test_source_evidenced_full_bleed_photo_is_support_not_independent_product(full_bleed_scene):
+    assets, original = full_bleed_scene
+    before = deepcopy(original)
+    graph = build_relationship_graph(original, assets)
+    unit = next(unit for unit in graph.units if "opaque-a" in unit.element_ids)
+    assert unit.role == "image_underlay"
+    assert any(cluster.kind == "message" for cluster in graph.clusters)
+    assert not any(cluster.kind == "campaign" for cluster in graph.clusters)
+    assert graph.overlays[0].underlay_id == "opaque-a"
+    assert analyze_relationships(graph, original)["warnings"] == []
+    candidate = deepcopy(original)
+    candidate["elements"][1]["x"] += 120
+    assert "overlay_attachment" in {
+        warning["code"] for warning in analyze_relationships(graph, candidate)["warnings"]
+    }
+    assert original == before
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"source_art": {}},
+        {"source_art": {"kind": "svg-nontext"}},
+        {"width": 900},
+        {"opacity": 0.8},
+        {"rotation": 5},
+        {"fit": "contain", "height": 1800},
+    ],
+)
+def test_unproven_photos_and_vector_products_keep_foreground_role(full_bleed_scene, change):
+    assets, original = full_bleed_scene
+    original["elements"][0].update(change)
+    graph = build_relationship_graph(original, assets)
+    unit = next(unit for unit in graph.units if "opaque-a" in unit.element_ids)
+    assert unit.role != "image_underlay"
+
+
+def test_alpha_hole_outside_caption_region_is_not_full_bleed_support(full_bleed_scene):
+    from PIL import Image
+
+    assets, original = full_bleed_scene
+    with Image.open(assets / "photo.png") as image:
+        image.paste((0, 0, 0, 0), (10, 10, 30, 30))
+        image.save(assets / "photo.png")
+    graph = build_relationship_graph(original, assets)
+    assert graph.overlays  # The smaller caption region remains opaque.
+    unit = next(unit for unit in graph.units if "opaque-a" in unit.element_ids)
+    assert unit.role != "image_underlay"
+
+
+def test_actual_full_bleed_photo_campaign_declines_with_opaque_ids():
+    from engine.resources import using_resources
+
+    directory = ROOT / "fixtures/open_posters/prepared/doory_rooftop-event-story"
+    original = json.loads((directory / "source.json").read_text(encoding="utf-8"))
+    for index, element in enumerate(original["elements"]):
+        element["id"] = f"unrelated-{index}"
+    with using_resources(directory / "resources/assets", directory / "resources/fonts"):
+        graph = build_relationship_graph(original)
+        assert len(graph.overlays) == 1
+        underlay = graph.overlays[0].underlay_id
+        unit = next(unit for unit in graph.units if underlay in unit.element_ids)
+        assert unit.role == "image_underlay"
+        assert not [cluster for cluster in graph.clusters if cluster.kind == "campaign"]
+        assert analyze_relationships(graph, original)["warnings"] == []
+
+
 def test_analysis_requires_source_identity_and_ignores_invisible_anchors():
     original = source()
     graph = build_relationship_graph(original)

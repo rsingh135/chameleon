@@ -121,9 +121,11 @@ def _provider_identity(command, base):
     config = _read(config_path)
     if not isinstance(config, dict):
         raise ValueError("Visual provider configuration must be a JSON object")
-    if config.get("backend", "transformers") not in {"transformers", "llama_cpp"}:
+    backend = config.get("backend", "transformers")
+    if not isinstance(backend, str) or backend not in {"transformers", "llama_cpp"}:
         raise ValueError("Unsupported local visual provider backend")
-    if config.get("strategy", "generate_then_score") not in {
+    strategy = config.get("strategy", "generate_then_score")
+    if not isinstance(strategy, str) or strategy not in {
         "generate_then_score",
         "choice_logits",
     }:

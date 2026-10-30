@@ -60,6 +60,29 @@ def test_invalid_requested_model_falls_back_with_visible_failure(source, monkeyp
     assert "Missing pinned" in trace["fallback_reason"]
 
 
+def test_invalid_configuration_type_falls_back_with_visible_failure(source, monkeypatch):
+    import engine.resize as resize
+
+    def invalid(_config):
+        raise TypeError("Invalid provider configuration type")
+
+    monkeypatch.setattr(visual_config, "resolve_config", invalid)
+    monkeypatch.setattr(
+        visual_pipeline,
+        "visual_execution_identity",
+        lambda _config: {"enabled": True, "valid": False},
+    )
+    monkeypatch.setattr(
+        resize,
+        "resize_with_state",
+        lambda value, target, **kw: {"design": deepcopy(value), "state": {}},
+    )
+    result = visual_pipeline.resize_configured(source, source["canvas"])
+    trace = result["state"]["visual_model"]
+    assert trace["requested"] and not trace["model_executed"]
+    assert "Invalid provider configuration type" in trace["fallback_reason"]
+
+
 def test_configured_requests_share_phase_engine_and_do_not_cache_model_results(
     source, tmp_path, monkeypatch
 ):

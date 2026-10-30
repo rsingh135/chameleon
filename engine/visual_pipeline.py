@@ -15,6 +15,8 @@ import os
 import signal
 import subprocess
 import threading
+import time
+from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path, PureWindowsPath
 from uuid import uuid4
@@ -212,7 +214,7 @@ def resize_configured(
 
     try:
         operator, identity = resolve_config(config)
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, TypeError) as exc:
         return baseline(visual_execution_identity(config), str(exc)[:600])
     if not operator or not operator.get("enabled"):
         return baseline()
@@ -280,6 +282,110 @@ def _engine_api():
     }
 
 
+class _WindowsProviderJob:
+    """A private kernel-owned lifetime for this provider and its descendants."""
+
+    def __init__(self):
+        import ctypes
+        from ctypes import wintypes
+
+        class BasicLimits(ctypes.Structure):
+            _fields_ = [
+                ("PerProcessUserTimeLimit", ctypes.c_longlong),
+                ("PerJobUserTimeLimit", ctypes.c_longlong),
+                ("LimitFlags", wintypes.DWORD),
+                ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t),
+                ("ActiveProcessLimit", wintypes.DWORD),
+                ("Affinity", ctypes.c_size_t),
+                ("PriorityClass", wintypes.DWORD),
+                ("SchedulingClass", wintypes.DWORD),
+            ]
+
+        class IOCounters(ctypes.Structure):
+            _fields_ = [
+                (name, ctypes.c_ulonglong)
+                for name in (
+                    "ReadOperationCount",
+                    "WriteOperationCount",
+                    "OtherOperationCount",
+                    "ReadTransferCount",
+                    "WriteTransferCount",
+                    "OtherTransferCount",
+                )
+            ]
+
+        class ExtendedLimits(ctypes.Structure):
+            _fields_ = [
+                ("BasicLimitInformation", BasicLimits),
+                ("IoInfo", IOCounters),
+                ("ProcessMemoryLimit", ctypes.c_size_t),
+                ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                ("PeakJobMemoryUsed", ctypes.c_size_t),
+            ]
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+        kernel.CreateJobObjectW.restype = wintypes.HANDLE
+        kernel.SetInformationJobObject.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_int,
+            ctypes.c_void_p,
+            wintypes.DWORD,
+        ]
+        kernel.SetInformationJobObject.restype = wintypes.BOOL
+        kernel.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        kernel.AssignProcessToJobObject.restype = wintypes.BOOL
+        kernel.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        kernel.TerminateJobObject.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
+        self._kernel, self._ctypes = kernel, ctypes
+        self._handle = kernel.CreateJobObjectW(None, None)
+        if not self._handle:
+            raise ctypes.WinError(ctypes.get_last_error())
+        limits = ExtendedLimits()
+        limits.BasicLimitInformation.LimitFlags = 0x2000  # KILL_ON_JOB_CLOSE
+        if not kernel.SetInformationJobObject(
+            self._handle, 9, ctypes.byref(limits), ctypes.sizeof(limits)
+        ):
+            error = ctypes.WinError(ctypes.get_last_error())
+            self.close()
+            raise error
+
+    def assign(self, process):
+        # The Popen handle identifies this exact process even after it exits.
+        # The fixed provider reads stdin before it can spawn a model worker.
+        if not self._kernel.AssignProcessToJobObject(self._handle, int(process._handle)):
+            raise self._ctypes.WinError(self._ctypes.get_last_error())
+
+    def terminate(self):
+        if self._handle and not self._kernel.TerminateJobObject(self._handle, 1):
+            raise self._ctypes.WinError(self._ctypes.get_last_error())
+
+    def close(self):
+        if self._handle:
+            self._kernel.CloseHandle(self._handle)
+            self._handle = None
+
+
+def _wait_provider_without_reaping(process, timeout):
+    if os.name != "posix":
+        process.wait(timeout=timeout)
+        return
+    # Retaining the session leader as an unreaped child pins its PID/PGID until
+    # the private group is killed. Reaping first would permit a reused group ID.
+    deadline = time.monotonic() + timeout
+    while True:
+        if os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT):
+            return
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(process.args, timeout)
+        time.sleep(min(0.02, remaining))
+
+
 def run_provider(command, request, timeout=180):
     """Execute one operator-chosen local program with bounded output and time.
 
@@ -297,35 +403,51 @@ def run_provider(command, request, timeout=180):
     environment.update(
         HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_HUB_DISABLE_IMPLICIT_TOKEN="1"
     )
-    process = subprocess.Popen(
-        argv,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        shell=False,
-        env=environment,
-        start_new_session=os.name == "posix",
-        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
-    )
+    job = _WindowsProviderJob() if os.name == "nt" else None
+    try:
+        process = subprocess.Popen(
+            argv,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            shell=False,
+            env=environment,
+            start_new_session=os.name == "posix",
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0,
+        )
+    except BaseException:
+        if job:
+            job.close()
+        raise
+    if job:
+        try:
+            job.assign(process)
+        except OSError as exc:
+            # No request bytes have been delivered, so the fixed provider has
+            # not been allowed to start a worker outside the ownership boundary.
+            try:
+                if process.poll() is None:
+                    process.kill()
+                process.wait(timeout=5)
+            finally:
+                job.close()
+                process.stdin.close()
+                process.stdout.close()
+            raise ValueError("Could not establish owned visual-provider process lifetime") from exc
     output, failures = bytearray(), []
+    stop_lock, stopped = threading.Lock(), False
 
     def stop():
-        if process.poll() is not None:
-            return
-        if os.name == "nt":
-            # The provider owns a separate Torch worker. Terminate this owned
-            # process tree, not just the lightweight supervisor.
-            subprocess.run(
-                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-                timeout=10,
-            )
-        else:
-            os.killpg(process.pid, signal.SIGKILL)
-        if process.poll() is None:
-            process.kill()
+        nonlocal stopped
+        with stop_lock:
+            if stopped:
+                return
+            if job:
+                job.terminate()
+            else:
+                with suppress(ProcessLookupError):
+                    os.killpg(process.pid, signal.SIGKILL)
+            stopped = True
 
     def receive():
         try:
@@ -352,11 +474,15 @@ def run_provider(command, request, timeout=180):
     writer.start()
     try:
         try:
-            process.wait(timeout=timeout)
+            _wait_provider_without_reaping(process, timeout)
         except subprocess.TimeoutExpired as exc:
             stop()
             process.wait(timeout=5)
             raise ValueError("Visual provider exceeded its timeout") from exc
+        # Even a successful or crashed supervisor can leave a worker holding
+        # stdout open. Stop descendants before joining the I/O threads.
+        stop()
+        process.wait(timeout=5)
         reader.join(timeout=5)
         writer.join(timeout=5)
         if reader.is_alive() or writer.is_alive():
@@ -367,13 +493,18 @@ def run_provider(command, request, timeout=180):
             raise ValueError(f"Visual provider exited with code {process.returncode}")
         return _io._parse(bytes(output).decode("utf-8"))
     finally:
-        if process.poll() is None:
-            stop()
+        try:
+            try:
+                stop()
+            finally:
+                if job:
+                    job.close()
             process.wait(timeout=5)
-        if process.stdout:
-            process.stdout.close()
-        if process.stdin and not process.stdin.closed:
-            process.stdin.close()
+        finally:
+            if process.stdout:
+                process.stdout.close()
+            if process.stdin and not process.stdin.closed:
+                process.stdin.close()
 
 
 def _validated_result(result, menu):

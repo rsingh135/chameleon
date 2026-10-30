@@ -2,6 +2,7 @@
 
 import json
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -59,7 +60,8 @@ def test_unconfigured_and_minimal_disabled_never_load_provider(monkeypatch):
 def test_valid_config_records_manifest_pins_without_claiming_fresh_model_hash(configured):
     config, _, _ = configured
     actual, identity = module.resolve_config(config)
-    assert actual["provider_command"] == config["provider_command"]
+    assert actual["provider_command"][0] == str(Path(config["provider_command"][0]).resolve())
+    assert actual["provider_command"][1:] == config["provider_command"][1:]
     assert actual["timeout_seconds"] == 240
     assert identity["enabled"] and identity["model"]["binary_bytes_verified"] is False
     assert identity["model"]["manifest_sha256"]
@@ -134,6 +136,16 @@ def test_config_file_duplicate_keys_and_nonfinite_json_reject(tmp_path):
     "change", [{"backend": "shell"}, {"strategy": "eval"}, {"model_dir": "relative-model"}]
 )
 def test_provider_modes_and_ambiguous_relative_paths_reject(configured, change):
+    config, provider, _ = configured
+    data = json.loads(provider.read_text())
+    data.update(change)
+    provider.write_text(json.dumps(data))
+    with pytest.raises(ValueError):
+        module.resolve_config(config)
+
+
+@pytest.mark.parametrize("change", [{"backend": []}, {"strategy": {}}])
+def test_nested_provider_mode_types_raise_validation_error(configured, change):
     config, provider, _ = configured
     data = json.loads(provider.read_text())
     data.update(change)

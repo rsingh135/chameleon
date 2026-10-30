@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "kind": "trained_pairwise_fit_policy",
+  "feature_version": "fit-features-v1",
+  "label_kind": "synthetic_geometry_teacher_v1",
+  "feature_names": [
+    "source_log_aspect",
+    "target_log_aspect",
+    "aspect_change",
+    "foreground_width",
+    "foreground_height",
+    "foreground_bbox_area",
+    "foreground_area",
+    "foreground_density",
+    "center_x_error",
+    "center_y_error",
+    "edge_margin",
+    "overflow_fraction",
+    "text_fraction",
+    "text_count",
+    "image_count",
+    "column_count",
+    "column_width_use",
+    "wide_column_use",
+    "minimum_font",
+    "median_font",
+    "font_scale",
+    "font_scale_consistency",
+    "hierarchy_retention",
+    "reading_order_retention",
+    "unit_scale_consistency",
+    "unit_attachment",
+    "image_proportion_retention",
+    "text_frame_fill"
+  ],
+  "weights": [
+    0.0,
+    0.0,
+    0.0,
+    2.9425665626046316,
+    1.6818066474526598,
+    3.6156766106867515,
+    0.8168419363524958,
+    3.334375062811644,
+    -0.46246110423704945,
+    -0.6784611271786767,
+    -1.7049148484461145,
+    -1.0268183211521356e-13,
+    2.9594908351202998,
+    0.0,
+    0.0,
+    1.1530070911679342,
+    -1.45117166777545,
+    -1.4311257746155324,
+    3.6827743955222294,
+    2.8054226059617564,
+    3.6932813611275916,
+    2.773010435739975,
+    1.7844624549532744,
+    4.185407025191454,
+    0.0,
+    3.2520331748630324,
+    -3.2729962378735176e-16,
+    0.9719113856457144
+  ],
+  "means": [
+    -0.26889770681811864,
+    0.16554187523488814,
+    0.677202599403246,
+    0.907457268936693,
+    0.8957422865624453,
+    0.8117457364985514,
+    0.5414779905541699,
+    0.6819024302801044,
+    0.004880916298379394,
+    0.018191112470737437,
+    0.014962911384060548,
+    1.3297571264406183e-16,
+    0.3574063342592843,
+    0.22609523809523807,
+    0.09904761904761905,
+    0.37460317460317455,
+    1.0013755238452566,
+    0.4935515873015873,
+    1.6640640704556668,
+    2.270204848397249,
+    -0.7558463363834,
+    0.9421865758857856,
+    0.9592190111437578,
+    0.9311894454751597,
+    1.0,
+    0.9923056468689002,
+    1.0,
+    0.3245688748277084
+  ],
+  "scales": [
+    0.34454339078491,
+    0.46417266297008164,
+    0.3399713008286631,
+    0.15933907342957615,
+    0.1,
+    0.15810585292261484,
+    0.2867556769748174,
+    0.3419460587762297,
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.18406124243955763,
+    0.2510681760497402,
+    0.11126565216397162,
+    0.27389117715096045,
+    0.5962823048599477,
+    0.41441914958566195,
+    0.7750454477631037,
+    1.2421887115274186,
+    1.1119898231855203,
+    0.11545267727007233,
+    0.1,
+    0.20215320044980484,
+    0.1,
+    0.1,
+    0.1,
+    0.1446192689441465
+  ],
+  "dataset_digest": "e2d068f3fa2f432a2382bf2770d6d9a6adc964c6a2486fcd9383df1edfc2cdbc",
+  "implementation_sha256": "45f6ca68eb7d3710deb6618523e5ac87aaae5158078924443754befbdc6042de",
+  "families": {
+    "train": [
+      "core_01",
+      "doory_grand-opening-flyer",
+      "doory_night-bloom-concert-poster",
+      "doory_rooftop-event-story",
+      "opensuse_booth_poster",
+      "opensuse_trifold_front",
+      "synthetic_garden_plan",
+      "synthetic_guild_bulletin",
+      "synthetic_materials_brief"
+    ],
+    "validation": [
+      "doory_bold-sale-announcement",
+      "doory_botanical-celebration-invitation",
+      "opensuse_cheatsheet",
+      "synthetic_operations_digest"
+    ]
+  },
+  "source_digests": {
+    "train": [
+      "371ecd2370a4459203554331619786061c98b47c3de73291d2e688963d403c5a",
+      "4be4e6e23958a82258a1ffccd282a6a51f86b40d6f4e21273271bcb615c77111",
+      "6db72937154e5701c273321c90f7a71654a34d4247644690f057bf8d61c300f2",
+      "7d2f023739d3f64e88c510482b08079449638f5d6b5751390338a1a00e8cd62c",
+      "7f2121b3e1851e051d774fc16c0f13f35303591e914ef2b1e55ad983101ed58a",
+      "89d303b56f9c4f99834935cbe8da1f6d39144da1162e96e71e747d29c388f494",
+      "97e01ac821db1d8ac6d0e2184b07726bc26a18f6d157368b07afcfcdc43f8178",
+      "d8461e355cfeba9300c7fd1f8416608e55636fcf8889276c88351bd55927848c",
+      "de579c58c60e03c88e50e20cedd9e5a6ba67cbc7cb384be094db9df72b46fb77"
+    ],
+    "validation": [
+      "8ab4049ed0926060153fa8d5ea62a63d69b66119acc70ed204ea65f25688d03c",
+      "94c74e63651f3e5f551ba8afaec59aa3a99c6b838c5b3e6bdb96c14296cdd3b4",
+      "b48deb788fa73cf1702161dfaa89c5ab9a3d4e0719cc06c187d5b41bbd139ace",
+      "d4baaab6790633c7766e118c9ae5bdff83f8b064243a4c6c0774b34a659b80e1"
+    ]
+  },
+  "training": {
+    "optimizer": "pairwise_logistic_sgd",
+    "epochs": 200,
+    "learning_rate": 0.08,
+    "l2": 0.02,
+    "seed": 1729,
+    "pairs": 314,
+    "seconds": 0.5,
+    "losses": [
+      {
+        "epoch": 1,
+        "mean_pairwise_log_loss": 0.28356580088916894
+      },
+      {
+        "epoch": 200,
+        "mean_pairwise_log_loss": 0.09984347811808734
+      }
+    ]
+  },
+  "metrics": {
+    "train": {
+      "records": 105,
+      "groups": 16,
+      "comparison_pairs": 314,
+      "pairwise_accuracy": 0.9617834394904459,
+      "teacher_winner_accuracy": 0.9375,
+      "mean_teacher_regret": 0.002864415232071149
+    },
+    "validation": {
+      "records": 41,
+      "groups": 8,
+      "comparison_pairs": 102,
+      "pairwise_accuracy": 0.9313725490196079,
+      "teacher_winner_accuracy": 0.875,
+      "mean_teacher_regret": 0.013592881794247003
+    },
+    "untrained_validation": {
+      "records": 41,
+      "groups": 8,
+      "comparison_pairs": 102,
+      "pairwise_accuracy": 0.5,
+      "teacher_winner_accuracy": 0.25,
+      "mean_teacher_regret": 0.4171018680158297
+    },
+    "validation_by_source_kind": {
+      "authored_development": {
+        "records": 29,
+        "groups": 6,
+        "comparison_pairs": 72,
+        "pairwise_accuracy": 0.9027777777777778,
+        "teacher_winner_accuracy": 0.8333333333333334,
+        "mean_teacher_regret": 0.018123842392329337
+      },
+      "synthetic_column": {
+        "records": 12,
+        "groups": 2,
+        "comparison_pairs": 30,
+        "pairwise_accuracy": 1.0,
+        "teacher_winner_accuracy": 1.0,
+        "mean_teacher_regret": 0.0
+      }
+    },
+    "train_by_source_kind": {
+      "authored_development": {
+        "records": 75,
+        "groups": 11,
+        "comparison_pairs": 239,
+        "pairwise_accuracy": 0.9581589958158996,
+        "teacher_winner_accuracy": 1.0,
+        "mean_teacher_regret": 0.0
+      },
+      "synthetic_column": {
+        "records": 30,
+        "groups": 5,
+        "comparison_pairs": 75,
+        "pairwise_accuracy": 0.9733333333333334,
+        "teacher_winner_accuracy": 0.8,
+        "mean_teacher_regret": 0.009166128742627677
+      }
+    }
+  },
+  "quality_claim": "Synthetic geometry-teacher agreement; no human aesthetic validation.",
+  "vlm_fine_tuning": false,
+  "model_digest": "ec03b22d69e323651e6c1b48d54416ac157cd6ace767ea5916db63775c4fdee8"
+}

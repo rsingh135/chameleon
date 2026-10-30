@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from engine.eval import build_context, check_contract
+from engine.eval.proportions import analyze_proportions
 from engine.layout.backgrounds import generate_background_states
 from engine.layout.reading_order import analyze_reading_order
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
@@ -119,6 +120,7 @@ def test_actual_rooftop_cover_candidates_fill_without_changing_identity(rooftop,
         )
         assert support_retained(rooftop, design, profile, images[1]["id"])
         assert analyze_relationships(graph, design)["warnings"] == []
+        assert analyze_proportions(rooftop, design, graph)["warnings"] == []
         assert analyze_reading_order(rooftop, design)["high_confidence_inversions"] == 0
         texts = [e for e in design["elements"] if e["type"] == "text"]
         body = next(e for e in texts if e["content"].startswith("Live music"))

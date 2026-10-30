@@ -60,6 +60,10 @@ copy/font-size ratios, and each calendar/control unit. Background viewport
 coverage participates in source-aware selection alongside the existing hard
 contract, visibility, collision and reading-order constraints. It does not
 replace those checks or infer that a cropped subject is fully preserved.
+The proportion checker excludes these verified adaptive viewport/paint frames
+from rigid-block deformation, while retaining the photo crop, source-pixel,
+caption-support and foreground grouping checks. A changed viewport aspect is
+not reported as distortion of the pictured subject.
 
 Test two distinct changes through the same method:
 

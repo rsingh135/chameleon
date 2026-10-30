@@ -172,7 +172,23 @@ def analyze_proportions(
         return {"score": 0.0, "warnings": [], "metrics": {}, "clusters": []}
     with using_resources(assets_dir=graph.assets_dir, fonts_dir=graph.fonts_dir):
         containers = analyze_source_containers(source, candidate)
+        from engine.scene import analyze_scene, approved_cover, approved_support, support_retained
+
+        scene = analyze_scene(source)
+        background_viewports = {
+            eid
+            for eid, element in outputs.items()
+            if approved_cover(scene, element, candidate["canvas"])
+            or (
+                approved_support(scene, element, candidate["canvas"])
+                and support_retained(source, candidate, scene, eid)
+            )
+        }
     adaptive_frames = set(containers["accepted_frame_ids"])
+    # A verified photo crop viewport and native gradient rectangle are adaptive
+    # frames. Their width/height ratio is not deformation of a pictured object.
+    # Source identity, photo pixels and caption support have separate checks.
+    adaptive_frames.update(background_viewports)
     warnings, rows = list(containers["warnings"]), []
     rigid_errors = []
     for unit in graph.units:

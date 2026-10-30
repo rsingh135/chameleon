@@ -127,11 +127,11 @@ detections or aesthetic assessments.
 
 ## Rooftop audit and native crop boundary
 
-The source Rooftop photo fills its1080×1920 canvas, is opaque, and supports live
+The source Rooftop photo fills its 1080×1920 canvas, is opaque, and supports live
 copy over an authored fade. Its prepared image is a source-cropped bitmap with
 `fit:fill`. The earlier media-column/fade-stack states kept that entire portrait
-bitmap at its aspect, leaving a506.25×900 image on1600×900 and a607.5×1080 image
-on1080×1080. Recognizing `image_underlay` in the graph alone did not change that
+bitmap at its aspect, leaving a 506.25×900 image on 1600×900 and a 607.5×1080 image
+on 1080×1080. Recognizing `image_underlay` in the graph alone did not change that
 placement behavior.
 
 A verified-background policy must distinguish this scene support from a
@@ -140,7 +140,7 @@ crop must preserve source image bytes, protect the significant subject region,
 and independently check photo/fade attachment and text contrast. Covering the
 canvas does not prove that faces survive or that copy remains readable.
 
-The prepared bitmap is1080×1920; the retained original photo is2000×1410.
+The prepared bitmap is 1080×1920; the retained original photo is 2000×1410.
 Recovering content outside the authored portrait slot would require an explicit
 original-media/crop mapping. The harness does not silently replace the prepared
 asset with that original or label a newly flattened poster as editable.
@@ -150,8 +150,8 @@ wide target. The current source analysis can use a measured quiet upper region
 to adjust the normalized crop position. This is physical pixel evidence, not
 face or subject detection; no semantic protection is claimed.
 
-The demonstrated540×960 run selects `source-guides/source-fit` and keeps a
-uniform0.5 geometry/type scale. The1600×900 run selects
+The demonstrated 540×960 run selects `source-guides/source-fit` and keeps a
+uniform 0.5 geometry/type scale. The 1600×900 run selects
 `background/cover-caption-0.28`, fills the complete background frame, and uses
 `image_position:[0.5,0.4420357560568086]`. Its native render shows central hair
 headroom, readable lower copy and no sidebars. Both runs pass the current
@@ -163,8 +163,10 @@ The v0.9 image schema has `contain`, `cover`, and `fill`; the local renderer
 implements proportional center-cropping for `cover`. The backend's verified
 background policy, rather than model confidence alone, must authorize any
 departure from its otherwise frozen source fit/aspect rules. A source-derived
-protected-region-aware offset would additionally need a shared declared crop
-transform in rendering, diagnostics and output/writeback.
+semantic protected-region offset would need separate admission and evaluation.
+The current native `image_position` extension already shares an explicit crop
+transform across local painting, geometry diagnostics and output JSON. Its
+source-pixel headroom proxy is not a learned protected-region detector.
 
 Adobe represents a crop as a native media rectangle and mask. Its documentation
 describes changing their geometry for cropping; this is a useful future mapping,

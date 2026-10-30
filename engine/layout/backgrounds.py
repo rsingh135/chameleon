@@ -75,8 +75,18 @@ def generate_background_states(source, target, scene=None):
     smallest_source_font = min(e["font_size"] for e in all_text)
     smallest_caption_font = min(e["font_size"] for unit in caption_units for e in unit.text)
     floor = max(MIN_FONT_PX, MIN_FONT_FRACTION * min(width, height))
+    fractions = {0.28, 0.32, 0.36}
+    # A small export can fall between coarse caption-height samples: the lower
+    # sample is unreadable while the next one requires a fade that hides too
+    # much of the source photo. Include the source-derived readability boundary
+    # within the existing composition budget; photo/support guards still apply.
+    readable_fraction = math.nextafter(
+        floor / smallest_source_font * caption_box.height / height, math.inf
+    )
+    if min(fractions) < readable_fraction < max(fractions):
+        fractions.add(readable_fraction)
     states = []
-    for fraction in (0.28, 0.32, 0.36):
+    for fraction in sorted(fractions):
         scale = min(
             area_scale * 1.15,
             (width - 2 * padding) / caption_box.width,

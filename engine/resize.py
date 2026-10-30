@@ -15,11 +15,11 @@ from engine.layout.composition import generate_composition_states
 from engine.layout.focal import analyze_focal, infer_focal_profile
 from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
-from engine.layout.grouped import generate_grouped_states
+from engine.layout.grouped import GroupedState, generate_grouped_states
 from engine.layout.reading_order import analyze_reading_order, infer_reading_order
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.layout.rules import analyze_rules
-from engine.layout.source_guides import generate_source_guides
+from engine.layout.source_guides import _transform, generate_source_guides
 from engine.resources import get_resources, using_resources
 from engine.scene import analyze_scene, background_coverage
 from engine.scene_model import constrain_candidates, validate_model_response
@@ -104,6 +104,59 @@ def _safe_identity(source: dict, target: dict) -> bool:
             ):
                 return False
     return True
+
+
+def _resolution_state(source, target):
+    """A valid exact-aspect request changes resolution, not composition.
+
+    Keep every permitted pixel geometry field at one scale, including authored
+    decorative clipping. Cropped source images and invalid text fits decline
+    this route; the ordinary constrained composition search remains available.
+    """
+    dimensions = [source["canvas"][key] for key in ("width", "height")]
+    dimensions += [target[key] for key in ("width", "height")]
+    if any(
+        isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v <= 0
+        for v in dimensions
+    ):
+        return None
+    source_width, source_height, width, height = dimensions
+    if source_width * height != source_height * width:
+        return None
+    for element in source["elements"]:
+        if any(
+            isinstance(element[field], bool)
+            or not isinstance(element[field], (int, float))
+            or not math.isfinite(element[field])
+            for field in ("x", "y", "width", "height", "font_size", "corner_radius", "stroke_width")
+            if field in element
+        ):
+            return None
+    try:
+        from engine.eval import check_contract
+        from engine.eval.geometry import canvas_box, contains, rotated_aabb
+
+        canvas = canvas_box(source["canvas"])
+        if any(
+            element["type"] == "image" and not contains(canvas, rotated_aabb(element))
+            for element in source["elements"]
+        ):
+            return None
+        design = deepcopy(source)
+        design["canvas"] = dict(target)
+        if width != source_width:
+            design["elements"] = _transform(source["elements"], width / source_width, 0.0, 0.0)
+        if check_contract(source, design, target_canvas=target):
+            return None
+    except (ImportError, OSError, RuntimeError, ValueError):
+        return None
+    identity = source["canvas"] == target
+    return GroupedState(
+        "source" if identity else "resolution-scale",
+        "source" if identity else "source-similarity",
+        (),
+        json.dumps(design, sort_keys=True, separators=(",", ":")),
+    )
 
 
 def _readability(candidate: dict, context, metrics: dict) -> float:
@@ -407,16 +460,20 @@ def _resize_cached(
 def _candidate_pool(
     source, target_canvas, *, capture_origins=False, scene_proposal=None, model_trace=None
 ):
-    candidates = generate_candidates(source, target_canvas)
-    legacy_count = len(candidates)
-    graph = build_relationship_graph(source)
-    states = (
-        *generate_background_states(source, target_canvas),
-        *generate_composition_states(source, target_canvas, graph),
-        *generate_grouped_states(source, target_canvas, graph),
-        *generate_focal_states(source, target_canvas, graph),
-        *generate_source_guides(source, target_canvas, graph),
-    )
+    resolution = _resolution_state(source, target_canvas)
+    if resolution is not None:
+        candidates, legacy_count, states = [], 0, (resolution,)
+    else:
+        candidates = generate_candidates(source, target_canvas)
+        legacy_count = len(candidates)
+        graph = build_relationship_graph(source)
+        states = (
+            *generate_background_states(source, target_canvas),
+            *generate_composition_states(source, target_canvas, graph),
+            *generate_grouped_states(source, target_canvas, graph),
+            *generate_focal_states(source, target_canvas, graph),
+            *generate_source_guides(source, target_canvas, graph),
+        )
     candidates.extend(state.design for state in states)
     by_design = {json.dumps(state.design, sort_keys=True): state for state in states}
     axes = {key: dict(state.cluster_axes) for key, state in by_design.items()}

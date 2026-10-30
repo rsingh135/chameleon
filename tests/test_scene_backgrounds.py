@@ -255,3 +255,44 @@ def test_background_reflow_preserves_header_body_and_calendar_font_hierarchy(roo
         ]
         assert max(scales) / min(scales) == pytest.approx(1, abs=1e-9)
         assert analyze_style(rooftop, state.design)["warnings"] == []
+
+
+def test_custom_wide_cover_has_readable_scale_without_hiding_more_source_photo(rooftop):
+    from engine.eval.occlusion import collision_safety, conservative_occlusion
+
+    target = {"width": 800, "height": 500}
+    original = deepcopy(rooftop)
+    states = generate_background_states(rooftop, target)
+    safe = [
+        state
+        for state in states
+        if collision_safety(conservative_occlusion(rooftop, state.design), 0)[1]
+    ]
+    # The coarse 28/32/36% caption-height samples skip the feasible interval:
+    # 28% makes the original header too small; 32% hides too much source photo.
+    assert safe
+    originals = {e["id"]: e for e in rooftop["elements"]}
+    for state in safe:
+        design = state.design
+        text = [e for e in design["elements"] if e["type"] == "text"]
+        scales = [e["font_size"] / originals[e["id"]]["font_size"] for e in text]
+        assert min(e["font_size"] for e in text) >= 10 - 1e-9
+        assert max(scales) / min(scales) == pytest.approx(1, abs=1e-9)
+        assert check_contract(rooftop, design, target) == []
+        assert background_coverage(rooftop, design) == 1
+        assert analyze_relationships(build_relationship_graph(rooftop), design)["warnings"] == []
+        assert analyze_reading_order(rooftop, design)["high_confidence_inversions"] == 0
+    assert rooftop == original
+
+
+def test_custom_wide_full_pool_selects_readable_full_background(rooftop):
+    from engine.resize import resize_with_state
+
+    target = {"width": 800, "height": 500}
+    result = resize_with_state(rooftop, target)
+    assert result["state"]["topology"] == "source-background-cover"
+    assert background_coverage(rooftop, result["design"]) == 1
+    assert (
+        min(e["font_size"] for e in result["design"]["elements"] if e["type"] == "text")
+        >= 10 - 1e-9
+    )

@@ -42,6 +42,12 @@ also the mode to use for untouched reserve examples. Targets must be explicitly
 requested, at most six per run, within the local backend's 8192px/20MP limits.
 Output must remain separate from the original input directory/files.
 
+For an exact-aspect target, a contract-valid `resolution-scale` state keeps one
+uniform source scale, including original decorative cropping and typography.
+An aspect change uses composition search. Both routes share source identity,
+optional crop protection and exact output checks. Very small text is still
+reported; resolution preservation does not establish readability.
+
 ## Evidence and authority
 
 `engine.scene.analyze_scene` owns classification and crop permission. Its

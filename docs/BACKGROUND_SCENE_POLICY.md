@@ -7,9 +7,21 @@ identity; callers receive a fresh copy. This implementation is deterministic
 geometry/pixel reasoning. It does not claim face detection or learned semantic
 understanding. `tools.scene_harness` supplies a separate local-model review seam.
 
-The two resize paths are explicit: the background reflow family declines an
-unchanged aspect ratio, leaving the existing uniform source-fit path intact.
-It proposes alternate compositions when the aspect changes.
+The two resize paths are explicit. An exact-aspect request first tries one
+uniform scale of all permitted geometry, type, stroke and corner fields; it
+preserves the source composition instead of promoting individual elements.
+The normal contract, model crop veto, cache and snapshot paths still apply.
+Unsafe source image cropping or an invalid text fit declines that route and
+returns to the ordinary constrained search. Readability diagnostics remain
+visible when the requested resolution makes original fine print too small.
+The background family proposes alternate compositions when the aspect changes.
+
+Background caption search includes its existing bounded height samples and,
+where it falls between those samples, the source-derived minimum-readable type
+scale. This closes a demonstrated search gap at800×500: a smaller sample made
+the header too small, while the next sample's fade hid too much photo. The new
+boundary candidate retains the existing85% relative photo-visibility guard,
+caption-support checks and one common scale for all source typography.
 
 ## Crop authority
 

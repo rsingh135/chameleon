@@ -304,6 +304,7 @@ def _source_image_underlays(source, context, overlays, assets):
         if (
             element["type"] != "image"
             or element.get("source_art", {}).get("kind") != "masked-photo"
+            or element.get("role") in {"product", "hero", "logo"}
             or element["id"] not in overlay_by_underlay
             or element.get("rotation", 0) != 0
             or element.get("opacity", 1) < 0.995
@@ -1379,7 +1380,9 @@ def analyze_relationships(
             from engine.scene import analyze_scene, approved_cover, support_retained
 
             original_scene = json.loads(graph.source_json)
-            scene = analyze_scene(original_scene, assets_dir=graph.assets_dir)
+            scene = analyze_scene(
+                original_scene, assets_dir=graph.assets_dir, fonts_dir=graph.fonts_dir
+            )
             viewport = approved_cover(scene, photo, candidate["canvas"]) and support_retained(
                 original_scene, candidate, scene, layer["id"]
             )

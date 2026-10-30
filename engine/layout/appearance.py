@@ -87,7 +87,10 @@ def _image_box(element: dict, frame: Box, assets_dir: str | Path | None) -> Box:
     sx, sy = frame.width / image_width, frame.height / image_height
     if fit in {"contain", "cover"}:
         sx = sy = (min if fit == "contain" else max)(sx, sy)
-    dx, dy = (frame.width - image_width * sx) / 2, (frame.height - image_height * sy) / 2
+    from engine.image_viewport import image_position
+
+    px, py = image_position(element.get("image_position")) if fit == "cover" else (0.5, 0.5)
+    dx, dy = (frame.width - image_width * sx) * px, (frame.height - image_height * sy) * py
     left, top = max(0.0, dx + alpha[0] * sx), max(0.0, dy + alpha[1] * sy)
     right = min(frame.width, dx + alpha[2] * sx)
     bottom = min(frame.height, dy + alpha[3] * sy)

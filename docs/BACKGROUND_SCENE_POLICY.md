@@ -7,6 +7,10 @@ identity; callers receive a fresh copy. This implementation is deterministic
 geometry/pixel reasoning. It does not claim face detection or learned semantic
 understanding. `tools.scene_harness` supplies a separate local-model review seam.
 
+The two resize paths are explicit: the background reflow family declines an
+unchanged aspect ratio, leaving the existing uniform source-fit path intact.
+It proposes alternate compositions when the aspect changes.
+
 ## Crop authority
 
 A full-bleed opaque imported photo can become a background only when an
@@ -33,6 +37,22 @@ off-canvas elements, dropped IDs, changed copy, fonts, assets and unknown crops
 still fail the existing hard checks. Official judge behavior is not inferred
 from these local checks.
 
+Manifest-backed native documents can also use `image_position: [x, y]`, with
+finite values in `[0,1]`, to align a proportional cover crop inside its frame.
+This is an optional local native-document geometry extension; the original
+schema permits extra element properties but does not define this field. The
+owned native adapter paints it from the original asset. The vendored renderer
+and ordinary brand rendering remain unchanged. Missing positioning retains the
+original center crop. A contract check also rejects unauthorized removal or
+changes to an authored position.
+
+For a verified background with a bright, quiet upper field, the analyzer records
+the onset of substantial central image content. If a center crop would remove
+that authored headroom, the native viewport shifts enough to retain an upper
+margin. This is a local pixel proxy, not recognition of heads or semantic ROIs.
+Sources without that evidence retain a center crop. Model-proposed protected
+regions remain review-only in the harness.
+
 ## Layout and verification
 
 The candidate family preserves complete source-owned header and caption rows,
@@ -54,6 +74,13 @@ model-review sidecar cannot mutate source data, grant crop permission or change
 the selected output. The existing candidate critic and a future first-load
 scene analyzer are separate tasks; neither is currently a validated semantic
 scene model in production.
+
+Rooftop's prepared photo is already a baked portrait-slot crop of a wider
+retained original photograph. This change uses the exact prepared asset rather
+than silently replacing it with pixels outside that source. Recovering the full
+wide composition requires a separate importer change preserving the original
+photo and its exact authored affine viewport, followed by source-render parity
+verification. Crop positioning cannot recover pixels absent from an input asset.
 
 The ten reserve posters remain outside resize tuning and model training.
 Inspect actual image crops and text support, not just successful contract

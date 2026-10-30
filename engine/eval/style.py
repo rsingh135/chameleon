@@ -142,7 +142,14 @@ def _visible_area(element: dict, extent) -> float:
         return width * height * visible_width * visible_height / (image_width * image_height)
     scale_fn = max if element.get("fit", "contain") == "cover" else min
     scale = scale_fn(width / image_width, height / image_height)
-    offset_x, offset_y = (width - image_width * scale) / 2, (height - image_height * scale) / 2
+    from engine.image_viewport import image_position
+
+    px, py = (
+        image_position(element.get("image_position"))
+        if element.get("fit") == "cover"
+        else (0.5, 0.5)
+    )
+    offset_x, offset_y = (width - image_width * scale) * px, (height - image_height * scale) * py
     left, right = (
         max(0.0, offset_x + alpha_box[0] * scale),
         min(width, offset_x + alpha_box[2] * scale),

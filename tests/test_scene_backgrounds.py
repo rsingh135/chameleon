@@ -23,7 +23,16 @@ from engine.scene import (
 PREPARED = (
     Path(__file__).resolve().parents[1] / "fixtures/open_posters/prepared/doory_rooftop-event-story"
 )
-GEOMETRY = {"x", "y", "width", "height", "font_size", "corner_radius", "stroke_width"}
+GEOMETRY = {
+    "x",
+    "y",
+    "width",
+    "height",
+    "font_size",
+    "corner_radius",
+    "stroke_width",
+    "image_position",
+}
 TARGETS = [{"width": 1080, "height": 1080}, {"width": 1600, "height": 900}]
 
 
@@ -143,3 +152,61 @@ def test_moving_fade_away_from_caption_is_still_a_relationship_failure(rooftop):
 
 def test_unchanged_canvas_keeps_original_viewport(rooftop):
     assert generate_background_states(rooftop, rooftop["canvas"]) == []
+    assert generate_background_states(rooftop, {"width": 540, "height": 960}) == []
+
+
+def test_wide_crop_retains_source_headroom_and_default_square_crop(rooftop):
+    from engine.scene import cover_position
+
+    photo = analyze_scene(rooftop)["images"][0]
+    assert 0.2 < photo["content_top_fraction"] < 0.7
+    assert cover_position(photo, TARGETS[0]) == [0.5, 0.5]
+    wide = cover_position(photo, TARGETS[1])
+    assert wide[0] == 0.5 and 0 < wide[1] < 0.5
+    source_w, source_h = photo["image_size"]
+    scale = TARGETS[1]["width"] / source_w
+    cropped_top = (source_h * scale - TARGETS[1]["height"]) * wide[1]
+    onset = photo["content_top_fraction"] * source_h * scale - cropped_top
+    assert onset == pytest.approx(TARGETS[1]["height"] * 0.08)
+
+
+@pytest.mark.parametrize("position", [[0, float("nan")], [True, 0.5], [-1, 0.5], [0.5], "top"])
+def test_bad_crop_position_cannot_pass_contract(rooftop, position):
+    candidate = generate_background_states(rooftop, TARGETS[0])[0].design
+    candidate["elements"][1]["image_position"] = position
+    assert "invalid_image_position" in {v.code for v in check_contract(rooftop, candidate)}
+
+
+def test_crop_position_does_not_authorize_foreground_crop(rooftop):
+    source = deepcopy(rooftop)
+    source["elements"][1]["role"] = "product"
+    candidate = deepcopy(source)
+    candidate["elements"][1]["image_position"] = [0.5, 0.25]
+    assert "unapproved_image_position" in {v.code for v in check_contract(source, candidate)}
+
+
+def test_renderer_crop_position_moves_viewport_without_stretching_or_changing_default(tmp_path):
+    from PIL import Image, ImageChops
+
+    from engine.image_viewport import positioned_image
+    from renderer.converter.assets import _fit_image
+
+    asset = Image.new("RGB", (80, 160))
+    asset.putdata([(y, x, 20) for y in range(160) for x in range(80)])
+    asset = asset.convert("RGBA")
+    asset.save(tmp_path / "source.png")
+    element = {"asset_id": "source.png", "width": 80, "height": 80, "fit": "cover"}
+    centered = _fit_image(asset, 80, 80, "cover")
+    explicit = positioned_image({**element, "image_position": [0.5, 0.5]}, tmp_path)
+    upper = positioned_image({**element, "image_position": [0.5, 0.25]}, tmp_path)
+    assert ImageChops.difference(centered, explicit).getbbox() is None
+    assert ImageChops.difference(centered, asset.crop((0, 40, 80, 120))).getbbox() is None
+    assert ImageChops.difference(upper, asset.crop((0, 20, 80, 100))).getbbox() is None
+
+
+def test_dropping_authored_foreground_crop_position_is_rejected(rooftop):
+    source = deepcopy(rooftop)
+    source["elements"][1].update(role="product", fit="cover", image_position=[0.5, 0.25])
+    candidate = deepcopy(source)
+    candidate["elements"][1].pop("image_position")
+    assert "unapproved_image_position" in {v.code for v in check_contract(source, candidate)}

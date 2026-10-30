@@ -15,7 +15,7 @@ from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 from engine.layout.overlays import infer_source_overlays
 from engine.resources import get_resources, using_resources
@@ -66,18 +66,40 @@ def _pixels(path, modified_ns, byte_size):
                 rgba, column.resize(rgba.size, Image.Resampling.NEAREST)
             )
             invariant = max(high for low, high in row_field.getextrema()) <= 2
-            values = list(column.getchannel("A").getdata())
+            values = list(column.getchannel("A").tobytes())
             lower_fade = (
                 invariant
                 and values[-1] - values[0] >= 64
                 and all(b >= a - 2 for a, b in zip(values, values[1:], strict=False))
             )
+            # A bright, quiet authored upper field supplies physical headroom
+            # evidence. This is a foreground-onset proxy, not face detection.
+            rgb = rgba.convert("RGB")
+            sample = rgb.resize((96, max(8, min(512, round(rgb.height * 96 / rgb.width)))))
+            band = sample.crop((19, 0, 77, sample.height))
+            upper = ImageStat.Stat(band.crop((0, 0, band.width, max(1, band.height // 5))))
+            content_top = None
+            if min(upper.mean) >= 225 and max(upper.stddev) <= 12:
+                occupied = []
+                for y in range(band.height):
+                    pixels = band.crop((0, y, band.width, y + 1)).tobytes()
+                    dark = sum(
+                        min(pixels[i : i + 3]) < min(upper.mean) - 40
+                        for i in range(0, len(pixels), 3)
+                    )
+                    occupied.append(dark / band.width >= 0.08)
+                first = next(
+                    (i for i in range(len(occupied) - 2) if all(occupied[i : i + 3])), None
+                )
+                if first is not None and 0.2 <= first / band.height <= 0.7:
+                    content_top = first / band.height
             return {
                 "asset_sha256": hashlib.sha256(Path(path).read_bytes()).hexdigest(),
                 "image_size": [rgba.width, rgba.height],
                 "opaque": alpha.getextrema()[0] >= 250,
                 "lower_fade": lower_fade,
                 "alpha_column": values if lower_fade else [],
+                "content_top_fraction": content_top,
             }
     except (OSError, ValueError, SyntaxError, Image.DecompressionBombError):
         return None
@@ -98,7 +120,7 @@ def _resource_key(source, root):
 
 
 @lru_cache(maxsize=64)
-def _analyze(source_json, assets_dir, resource_key):
+def _analyze(source_json, assets_dir, resource_key, native):
     source = json.loads(source_json)
     by_id = {e["id"]: e for e in source["elements"]}
     metadata = {}
@@ -119,8 +141,10 @@ def _analyze(source_json, assets_dir, resource_key):
                 "asset_sha256": pixels.get("asset_sha256"),
                 "allow_cover": False,
                 "allow_support_reflow": False,
+                "allow_crop_position": False,
                 "support_ids": [],
                 "image_size": pixels.get("image_size"),
+                "content_top_fraction": pixels.get("content_top_fraction"),
             }
         )
     rows = {row["element_id"]: row for row in images}
@@ -170,6 +194,7 @@ def _analyze(source_json, assets_dir, resource_key):
             role="background",
             confidence=0.95,
             allow_cover=True,
+            allow_crop_position=native,
             support_ids=[fade["id"]],
             evidence=[
                 "opaque source photo fills the authored canvas",
@@ -207,8 +232,17 @@ def analyze_scene(source, *, assets_dir=None, fonts_dir=None):
     if len(source["elements"]) > 256:
         raise ValueError("Scene element budget exceeded.")
     with using_resources(assets_dir, fonts_dir):
+        from engine.native_typography import uses_native_typography
+
         root = get_resources().assets_dir.resolve()
-        return deepcopy(_analyze(_canonical(source), str(root), _resource_key(source, root)))
+        return deepcopy(
+            _analyze(
+                _canonical(source),
+                str(root),
+                _resource_key(source, root),
+                uses_native_typography(get_resources().fonts_dir),
+            )
+        )
 
 
 def approved_cover(profile, element, canvas):
@@ -246,6 +280,24 @@ def approved_support(profile, element, canvas):
         and 0 <= y < canvas["height"]
         and abs(y + h - canvas["height"]) <= 1e-6
     )
+
+
+def cover_position(row, canvas):
+    """Keep source-evidenced upper headroom when a center crop would cut it.
+
+    Sources without a bright quiet upper field retain the established center
+    crop. A future reviewed model ROI can express richer intent separately.
+    """
+    onset, size = row.get("content_top_fraction"), row.get("image_size")
+    if onset is None or not size or not row.get("allow_crop_position"):
+        return [0.5, 0.5]
+    scale = max(canvas["width"] / size[0], canvas["height"] / size[1])
+    viewport_height = canvas["height"] / scale
+    slack = size[1] - viewport_height
+    if slack <= 1e-6:
+        return [0.5, 0.5]
+    desired_top = max(0, onset * size[1] - viewport_height * 0.08)
+    return [0.5, min(0.5, desired_top / slack)]
 
 
 def _alpha_at(row, element, y):

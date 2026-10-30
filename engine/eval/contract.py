@@ -148,6 +148,25 @@ def check_contract(
                 )
             cover = approved_cover(scene, el, canvas)
             support = approved_support(scene, el, canvas)
+        if el["type"] == "image" and ("image_position" in el or "image_position" in src):
+            from engine.image_viewport import image_position
+
+            try:
+                image_position(el.get("image_position"))
+            except ValueError as exc:
+                out.append(Violation("invalid_image_position", eid, str(exc)))
+            permitted_position = cover and any(
+                r["element_id"] == eid and r.get("allow_crop_position")
+                for r in (scene or {}).get("images", [])
+            )
+            if el.get("image_position") != src.get("image_position") and not permitted_position:
+                out.append(
+                    Violation(
+                        "unapproved_image_position",
+                        eid,
+                        "Only a source-verified background may change its crop viewport position.",
+                    )
+                )
         for f in FROZEN_FIELDS:
             if f in src and el.get(f) != src[f]:
                 if f == "fit" and cover:

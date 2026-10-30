@@ -268,6 +268,27 @@ def native_render_example(example: dict, design: dict, fonts_dir: str | Path | N
     example = rewrap_example(example, design, load_font_manager(directory))
     document = design.get("source", design)
     elements = sorted(document["elements"], key=lambda element: element.get("z_index", 0))
+    positioned = [
+        (i, e) for i, e in enumerate(elements) if e.get("type") == "image" and "image_position" in e
+    ]
+    if positioned:
+        from engine.image_viewport import positioned_image
+
+        if example.get("length") != len(elements):
+            raise ValueError("Native image viewport does not match converted element count.")
+        example = {**example, "image": list(example["image"])}
+        for index, element in positioned:
+            if example["type"][index] != "ImageElement" or any(
+                abs(float(example[field][index]) - float(element[source_field])) > 1e-6
+                for field, source_field in (
+                    ("left", "x"),
+                    ("top", "y"),
+                    ("width", "width"),
+                    ("height", "height"),
+                )
+            ):
+                raise ValueError("Native image viewport does not match converter frame order.")
+            example["image"][index] = positioned_image(element, get_resources().assets_dir)
     if not any("native_text_effects" in element for element in elements):
         return example
     if example.get("length") != len(elements):

@@ -10,6 +10,7 @@ import base64
 import json
 import math
 import mimetypes
+import sys
 import threading
 import time
 from copy import deepcopy
@@ -54,6 +55,8 @@ MAX_REQUEST_BYTES = 2 * 1024 * 1024
 MAX_DIMENSION = 8192
 MAX_PIXELS = 20_000_000
 MAX_ELEMENTS = 200
+BODY_READ_TIMEOUT = 10.0
+MAX_IN_FLIGHT_RESIZES = 4
 _ENGINE_LOCK = threading.Lock()
 _STATIC_SUFFIXES = {".html", ".css", ".js", ".json", ".svg", ".png", ".ico", ".woff", ".woff2"}
 
@@ -177,7 +180,20 @@ def validate_request(payload) -> None:
             if "native_text_effects" in element:
                 from engine.native_text_effects import validate_descriptor
 
-                validate_descriptor(element["native_text_effects"], content)
+                try:
+                    validate_descriptor(element["native_text_effects"], content)
+                except (
+                    AttributeError,
+                    IndexError,
+                    NotImplementedError,
+                    OverflowError,
+                    TypeError,
+                ) as exc:
+                    # The native color parser reports malformed user values
+                    # with several exception types. Keep those validation
+                    # failures at the input boundary instead of disconnecting.
+                    detail = str(exc)[:300]
+                    raise ValueError(f"{name}.native_text_effects is invalid: {detail}") from exc
         elif kind == "image":
             asset = _string(element, "asset_id", name, maximum=255)
             if (
@@ -292,6 +308,10 @@ def sample_catalogue() -> dict:
 
 
 class ViewerHandler(BaseHTTPRequestHandler):
+    # Also bound incomplete headers; the tighter total-body deadline below
+    # prevents a trickling upload from extending its processing time forever.
+    timeout = 15
+
     def _send(
         self,
         status: int,
@@ -321,9 +341,14 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 self.send_header("Access-Control-Allow-Headers", "Content-Type")
                 self.send_header("Access-Control-Max-Age", "600")
                 self.send_header("Access-Control-Allow-Private-Network", "true")
-        self.end_headers()
-        if not head:
-            self.wfile.write(body)
+        try:
+            self.end_headers()
+            if not head:
+                self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Browser cancellation is normal. Never attempt a second error
+            # response on the same disconnected socket or strand a work slot.
+            self.close_connection = True
 
     def _json(self, status: int, payload: dict, *, head: bool = False) -> None:
         self._send(
@@ -356,6 +381,27 @@ class ViewerHandler(BaseHTTPRequestHandler):
         route = urlsplit(self.path).path
         if route == "/api/health":
             self._json(HTTPStatus.OK, {"status": "ok"}, head=head)
+            return
+        if route == "/api/benchmark/method":
+            from viewer.benchmark import method_receipt
+
+            try:
+                current = method_receipt()
+            except Exception as exc:
+                self._json(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": f"Benchmark failed: {exc}"},
+                    head=head,
+                )
+                return
+            if current["digest"] != self.server.benchmark_method["digest"]:
+                self._json(
+                    HTTPStatus.CONFLICT,
+                    {"error": "Engine files changed. Restart the server before benchmarking."},
+                    head=head,
+                )
+            else:
+                self._json(HTTPStatus.OK, self.server.benchmark_method, head=head)
             return
         if route == "/api/samples":
             try:
@@ -470,7 +516,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
         document = route == "/api/document/resize"
         if not self._local_request(document=document):
             return
-        if route not in {"/api/resize", "/api/document/resize"}:
+        benchmark = route == "/api/benchmark/run"
+        if route not in {"/api/resize", "/api/document/resize", "/api/benchmark/run"}:
             self._json(HTTPStatus.NOT_FOUND, {"error": "API endpoint not found."})
             return
         if self.headers.get_content_type() != "application/json":
@@ -480,7 +527,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             length = 0
-        limit = MAX_DOCUMENT_REQUEST_BYTES if document else MAX_REQUEST_BYTES
+        limit = MAX_DOCUMENT_REQUEST_BYTES if document or benchmark else MAX_REQUEST_BYTES
         if length > limit:
             self._json(
                 HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
@@ -491,11 +538,91 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": "A JSON request body is required."})
             return
         try:
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            raw = self._read_body(length)
+        except TimeoutError:
+            self._json(
+                HTTPStatus.REQUEST_TIMEOUT,
+                {"error": "Request body timed out; retry the upload."},
+            )
+            return
+        except (ValueError, ConnectionError) as exc:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            return
+        # Fully consume a bounded body before rejecting overload, avoiding a
+        # Windows TCP reset that could conceal the useful 503 response.
+        if not self.server.resize_slots.acquire(blocking=False):
+            self._json(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                {"error": "The local engine is busy. Wait for a current run, then retry."},
+            )
+            return
+        try:
+            self._process_resize_request(raw, document=document, benchmark=benchmark)
+        finally:
+            self.server.resize_slots.release()
+
+    def _read_body(self, length: int) -> bytes:
+        deadline = time.monotonic() + BODY_READ_TIMEOUT
+        previous_timeout = self.connection.gettimeout()
+        remaining = length
+        chunks = []
+        try:
+            while remaining:
+                budget = deadline - time.monotonic()
+                if budget <= 0:
+                    raise TimeoutError("Request body timed out.")
+                self.connection.settimeout(budget)
+                chunk = self.rfile.read1(min(remaining, 65536))
+                if not chunk:
+                    raise ValueError("Incomplete request body; retry the upload.")
+                chunks.append(chunk)
+                remaining -= len(chunk)
+        finally:
+            self.connection.settimeout(previous_timeout)
+        return b"".join(chunks)
+
+    def _process_resize_request(self, raw: bytes, *, document: bool, benchmark: bool) -> None:
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+            if benchmark:
+                from viewer.benchmark import method_receipt, run_benchmark
+
+                try:
+                    current = method_receipt()
+                except Exception as exc:
+                    self._json(
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                        {"error": f"Benchmark failed: {exc}"},
+                    )
+                    return
+                if current["digest"] != self.server.benchmark_method["digest"]:
+                    self._json(
+                        HTTPStatus.CONFLICT,
+                        {"error": "Engine files changed. Restart the server before benchmarking."},
+                    )
+                    return
+                try:
+                    result = run_benchmark(payload)
+                except (ValueError, UnicodeError, RecursionError):
+                    raise
+                except Exception as exc:
+                    self._json(
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                        {"error": f"Benchmark failed: {exc}"},
+                    )
+                    return
+                self._json(HTTPStatus.OK, result)
+                return
             validate_request(payload)
             prepared = prepare_document(payload) if document else None
         except (ValueError, UnicodeError, RecursionError) as exc:
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            return
+        except OSError as exc:
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": f"Document preparation failed: {exc}"},
+            )
             return
         try:
             if prepared is None:
@@ -510,7 +637,16 @@ class ViewerHandler(BaseHTTPRequestHandler):
 
 
 def create_server(port: int = 8765) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer(("127.0.0.1", port), ViewerHandler)
+    from viewer.benchmark import method_receipt
+
+    instance = ThreadingHTTPServer(("127.0.0.1", port), ViewerHandler)
+    instance.resize_slots = threading.BoundedSemaphore(MAX_IN_FLIGHT_RESIZES)
+    try:
+        instance.benchmark_method = method_receipt()
+    except Exception:
+        instance.server_close()
+        raise
+    return instance
 
 
 def main() -> int:
@@ -534,4 +670,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    # ``python -m viewer.server`` executes this module as __main__. The batch
+    # runner imports viewer.server lazily; keep both names bound to this same
+    # module so Studio and batch work share the renderer lock and request state.
+    sys.modules["viewer.server"] = sys.modules[__name__]
+    sys.modules["viewer"].server = sys.modules[__name__]
     raise SystemExit(main())

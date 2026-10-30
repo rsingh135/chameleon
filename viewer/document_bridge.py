@@ -177,11 +177,14 @@ def prepare_document(payload: dict, root: Path | None = None) -> PreparedDocumen
     files["fonts/font-manifest.json"] = json.dumps(font_manifest, sort_keys=True).encode("utf-8")
     hashes = {name: hashlib.sha256(data).hexdigest() for name, data in sorted(files.items())}
     package_digest = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
-    package_root = (DOCUMENT_ROOT if root is None else Path(root)).resolve()
-    directory = package_root / package_digest
-    if not directory.resolve().is_relative_to(package_root):
-        raise ValueError("Document resource cache path escaped its package root.")
     with _WRITE_LOCK:
+        # First imports can create this root concurrently. Resolve and verify
+        # it under the same lock as creation: Windows path resolution while a
+        # sibling thread creates the missing parents can transiently disagree.
+        package_root = (DOCUMENT_ROOT if root is None else Path(root)).resolve()
+        directory = package_root / package_digest
+        if not directory.resolve().is_relative_to(package_root):
+            raise ValueError("Document resource cache path escaped its package root.")
         packages = (
             [path for path in package_root.iterdir() if _PACKAGE_NAME.fullmatch(path.name)]
             if package_root.exists()

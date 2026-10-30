@@ -2,8 +2,10 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const colors = {text: '#86baff', image: '#e9bc73', shape: '#7dcca4'};
-  const state = {samples: [], posters: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, dirty: true, version: 0};
-  const hasResources = task => task && Array.isArray(task.assets) && Array.isArray(task.fonts) && task.document;
+  let connectionRequest = 0, latestConnectionRequest = 0;
+  const state = {samples: [], posters: [], targets: [], imported: null, task: null, result: null, selected: null, images: {}, jsonUrl: null, pngUrl: null, busy: false, initializing: false, dirty: true, version: 0, loadVersion: 0, controller: null};
+  const hasResources = task => task && Array.isArray(task.assets) && Array.isArray(task.fonts)
+    && task.document && typeof task.document === 'object' && !Array.isArray(task.document);
   const elementLabel = el => el.type === 'text' ? el.content.replace(/\s+/g, ' ').trim().slice(0, 64) || el.id : el.name || el.id;
   const webLink = value => {
     try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && url.hostname ? url.href : null; }
@@ -13,6 +15,10 @@
   function errorMessage(error) {
     $('error').textContent = error.message || String(error);
     $('error').hidden = false;
+  }
+  function setConnection(connected) {
+    $('connection').textContent = connected ? 'Engine connected' : 'Engine unavailable';
+    $('connection').classList.toggle('online', connected);
   }
   function disableDownloads() {
     for (const id of ['downloadJson', 'downloadPng']) {
@@ -26,6 +32,8 @@
     state.pngUrl = null;
   }
   function markDirty() {
+    state.version++;
+    cancelRequest();
     state.dirty = true;
     disableDownloads();
     $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
@@ -39,17 +47,77 @@
     state.busy = value;
     $('settings').disabled = value;
     $('previews').setAttribute('aria-busy', String(value));
-    $('runLabel').textContent = value ? 'Resizing design…' : 'Resize design';
+    $('runLabel').textContent = value ? 'Resizing design…' : state.task ? 'Resize design' : 'Retry connection';
     $('run').setAttribute('aria-busy', String(value));
+  }
+  function cancelRequest() {
+    state.controller?.abort();
+    state.controller = null;
+    setBusy(false);
+  }
+  function beginRequest() {
+    cancelRequest();
+    const controller = new AbortController();
+    state.controller = controller;
+    setBusy(true);
+    return controller;
+  }
+  function finishRequest(controller) {
+    if (state.controller !== controller) return;
+    state.controller = null;
+    controller.abort();
+    setBusy(false);
+  }
+  function validateCanvas(canvas) {
+    return canvas && Number.isInteger(canvas.width) && Number.isInteger(canvas.height)
+      && canvas.width >= 1 && canvas.height >= 1 && canvas.width <= 8192 && canvas.height <= 8192
+      && canvas.width * canvas.height <= 20000000;
   }
   function validateDesign(design) {
     if (!design || !design.canvas || !Array.isArray(design.elements) || !design.elements.length) throw new Error('A design needs a canvas and a nonempty elements array.');
-    const {width, height} = design.canvas;
-    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) throw new Error('Source canvas dimensions must be positive whole numbers.');
+    if (!validateCanvas(design.canvas)) throw new Error('Canvas dimensions must be whole numbers from 1 to 8192 px and at most 20 million pixels.');
+    if (design.elements.length > 200) throw new Error('A design supports at most 200 elements.');
+    const ids = new Set();
+    for (const element of design.elements) {
+      if (!element || typeof element.id !== 'string' || !element.id || ids.has(element.id)) throw new Error('Every element needs a unique, nonempty ID.');
+      ids.add(element.id);
+      if (!['text', 'image', 'shape'].includes(element.type)) throw new Error(`Element ${element.id} has an unsupported type.`);
+      if (!['x', 'y', 'width', 'height'].every(key => Number.isFinite(element[key])) || element.width <= 0 || element.height <= 0) throw new Error(`Element ${element.id} needs finite geometry and positive dimensions.`);
+      if (element.type === 'text' && (typeof element.content !== 'string' || !Number.isFinite(element.font_size) || element.font_size <= 0)) throw new Error(`Text element ${element.id} needs content and a positive font size.`);
+    }
+  }
+  function validateResult(value, source, target) {
+    if (!value || !value.report || !Array.isArray(value.report.violations) || value.report.violations.some(message => typeof message !== 'string')) throw new Error('The engine returned an incomplete result report. Retry the resize.');
+    validateDesign(value.design);
+    if (value.design.canvas.width !== target.width || value.design.canvas.height !== target.height) throw new Error('The engine returned a different target canvas. Retry the resize.');
+    const ids = new Set(source.elements.map(element => element.id));
+    if (value.design.elements.length !== ids.size || value.design.elements.some(element => !ids.has(element.id))) throw new Error('The engine returned elements from a different source. Retry the resize.');
+    if (!Number.isFinite(value.elapsed_ms) || value.elapsed_ms < 0) throw new Error('The engine returned invalid timing information. Retry the resize.');
+    for (const image of [value.source_png, value.output_png]) {
+      if (typeof image !== 'string' || !/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(image)) throw new Error('The engine returned invalid PNG preview data. Retry the resize.');
+      try { atob(image.split(',')[1]); }
+      catch { throw new Error('The engine returned invalid PNG preview data. Retry the resize.'); }
+    }
+    if (value.warnings !== undefined && (!Array.isArray(value.warnings) || value.warnings.some(message => typeof message !== 'string'))) throw new Error('The engine returned invalid warnings. Retry the resize.');
+    const report = {...value.report};
+    for (const key of ['style', 'relationships', 'proportions', 'focal']) {
+      if (report[key] == null) continue;
+      if (typeof report[key] !== 'object' || Array.isArray(report[key]) || (report[key].warnings !== undefined && (!Array.isArray(report[key].warnings) || report[key].warnings.some(warning => !warning || typeof warning.message !== 'string')))) throw new Error('The engine returned invalid review diagnostics. Retry the resize.');
+      report[key] = {...report[key], warnings: report[key].warnings || []};
+    }
+    for (const key of ['relations', 'ambiguities']) {
+      if (report.relationships?.[key] !== undefined && !Array.isArray(report.relationships[key])) throw new Error('The engine returned invalid relationship diagnostics. Retry the resize.');
+    }
+    return {...value, report};
   }
   function setTask(task, label) {
-    validateDesign(task.source || task);
-    state.task = structuredClone(task.source ? task : {source: task, target_canvas: {width: Number($('width').value) || 1080, height: Number($('height').value) || 1080}});
+    validateDesign(task?.source || task);
+    if (['assets', 'fonts', 'document'].some(key => key in task) && !hasResources(task)) throw new Error('A portable bundle needs its document, assets array and fonts array.');
+    const next = structuredClone(task.source ? task : {source: task});
+    next.target_canvas ||= {width: Number($('width').value) || next.source.canvas.width, height: Number($('height').value) || next.source.canvas.height};
+    if (!validateCanvas(next.target_canvas)) throw new Error('The target canvas must be 1–8192 px per side and at most 20 million pixels.');
+    cancelRequest();
+    state.task = next;
     state.version++;
     state.result = null;
     state.images = {};
@@ -74,7 +142,7 @@
       const credit = document.createElement('span');
       credit.textContent = `${poster.attribution_text || poster.text || poster.author || 'Imported artwork'} · ${poster.license_id || 'See source license'}. `;
       $('posterCredit').append(credit);
-      if (poster.original_url?.startsWith('/api/posters/')) {
+      if (typeof poster.original_url === 'string' && poster.original_url.startsWith('/api/posters/')) {
         const original = document.createElement('a');
         original.href = poster.original_url; original.textContent = 'Editable original';
         $('posterCredit').append(original);
@@ -84,6 +152,10 @@
         source.textContent = ' · Source and attribution'; source.target = '_blank'; source.rel = 'noopener';
         $('posterCredit').append(source);
       }
+      if (poster.source_note) {
+        const note = document.createElement('p'); note.textContent = poster.source_note;
+        $('posterCredit').append(note);
+      }
     }
     $('sourceSize').textContent = `${source.canvas.width} × ${source.canvas.height}`;
     $('outputSize').textContent = 'Not resized yet';
@@ -92,6 +164,8 @@
     $('inspection').hidden = $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
     $('error').hidden = true;
     $('status').textContent = 'Design loaded. Choose a format and resize.';
+    $('run').disabled = false;
+    $('run').formNoValidate = false;
   }
   function syncPreset() {
     const match = state.targets.find(t => t.width === Number($('width').value) && t.height === Number($('height').value));
@@ -99,6 +173,7 @@
   }
   function importTask(task, label) {
     setTask(task, label);
+    state.loadVersion++;
     state.imported = {task: structuredClone(state.task), label};
     if (![...$('sample').options].some(option => option.value === 'imported')) $('sample').add(new Option('Imported design', 'imported'));
     $('sample').value = 'imported';
@@ -107,36 +182,63 @@
   async function loadPoster(id) {
     const poster = state.posters.find(item => item.id === id);
     if (!poster?.ready) { errorMessage(new Error('This poster needs import support. See the poster library for its notes.')); return; }
-    const version = ++state.version;
-    markDirty(); setBusy(true); $('error').hidden = true;
+    const loadVersion = ++state.loadVersion;
+    markDirty(); $('error').hidden = true;
+    const controller = beginRequest();
+    const timeout = setTimeout(() => controller.abort(), 60000);
     $('status').textContent = 'Loading poster images and fonts…';
     let loaded = false;
     try {
-      const bundle = await requestJSON(poster.bundle_url);
-      if (version !== state.version) return;
+      const bundle = await requestJSON(poster.bundle_url, {signal: controller.signal});
+      if (loadVersion !== state.loadVersion || state.controller !== controller) return;
       bundle.poster_id = id; bundle.task_id = id;
       bundle.attribution ||= {text: poster.attribution_text || poster.author, author: poster.author,
         source_url: poster.source_url, license_id: poster.license_id, license_url: poster.license_url,
-        original_sha256: poster.original_sha256};
+        original_sha256: poster.original_sha256, source_note: poster.source_note};
       setTask(bundle, poster.title); loaded = true;
-    } catch (error) { if (version === state.version) errorMessage(error); }
-    finally { setBusy(false); }
-    if (loaded) await resize();
+    } catch (error) {
+      if (loadVersion === state.loadVersion && state.controller === controller) {
+        errorMessage(error.name === 'AbortError' ? new Error('Poster loading exceeded 60 seconds. Try again.') : error);
+        $('status').textContent = 'Poster loading failed. Choose a design or try again.';
+      }
+    }
+    finally { clearTimeout(timeout); finishRequest(controller); }
+    if (loaded && loadVersion === state.loadVersion) await resize();
   }
   async function requestJSON(url, options = {}) {
+    const request = ++connectionRequest;
+    const updateConnection = connected => {
+      if (request < latestConnectionRequest || options.signal?.aborted) return;
+      latestConnectionRequest = request;
+      setConnection(connected);
+    };
     let response;
     try { response = await fetch(url, options); }
-    catch (error) { if (error.name === 'AbortError') throw error; throw new Error('Cannot reach the local engine. Start python -m viewer.server and reload this page.'); }
+    catch (error) {
+      if (error.name === 'AbortError' || options.signal?.aborted) throw error;
+      updateConnection(false);
+      throw new Error('Cannot reach the local engine. Start python -m viewer.server, then retry your action. Your loaded design is preserved.');
+    }
+    // An HTTP error still proves the engine is reachable. Request validation
+    // and rendering errors belong in the error message, not an offline badge.
+    updateConnection(true);
     let data;
     try { data = await response.json(); }
-    catch { throw new Error(`The engine returned an unreadable response (${response.status}).`); }
+    catch (error) { if (error.name === 'AbortError') throw error; throw new Error(`The engine returned an unreadable response (${response.status}).`); }
     if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
     return data;
   }
-  const loadImage = url => new Promise((resolve, reject) => {
+  const loadImage = (url, signal) => new Promise((resolve, reject) => {
     const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('The engine returned an invalid preview image.'));
+    const cleanup = () => signal?.removeEventListener('abort', abort);
+    const abort = () => {
+      cleanup(); image.onload = image.onerror = null; image.src = '';
+      reject(new DOMException('Preview loading was cancelled.', 'AbortError'));
+    };
+    image.onload = () => { cleanup(); resolve(image); };
+    image.onerror = () => { cleanup(); reject(new Error('The engine returned an invalid preview image.')); };
+    if (signal?.aborted) { abort(); return; }
+    signal?.addEventListener('abort', abort, {once: true});
     image.src = url;
   });
 
@@ -165,13 +267,13 @@
       const rect = canvas.getBoundingClientRect();
       const px = (event.clientX - rect.left) * width / rect.width;
       const py = (event.clientY - rect.top) * height / rect.height;
-      const elements = [...design.elements].sort((a, b) => (b.z_index || 0) - (a.z_index || 0));
+      const elements = [...design.elements].reverse().sort((a, b) => (b.z_index || 0) - (a.z_index || 0));
       const hit = elements.find(el => {
         const angle = -(el.rotation || 0) * Math.PI / 180;
         const dx = px - el.x - el.width / 2, dy = py - el.y - el.height / 2;
         return Math.abs(dx * Math.cos(angle) - dy * Math.sin(angle)) <= el.width / 2 && Math.abs(dx * Math.sin(angle) + dy * Math.cos(angle)) <= el.height / 2;
       });
-      if (hit) selectElement(hit.id);
+      if (hit) selectElement(hit.id, id === 'sourceCanvas' ? 'source' : 'result');
     };
   }
   function redraw() {
@@ -179,13 +281,14 @@
     drawCanvas('sourceCanvas', state.task.source, state.images.source);
     drawCanvas('outputCanvas', state.result.design, state.images.output);
   }
-  function selectElement(id) {
+  function selectElement(id, view = $('previews').dataset.view === 'source' ? 'source' : 'result') {
     if (!state.result) return;
-    state.selected = id;
-    const el = state.result.design.elements.find(item => item.id === id);
+    const design = view === 'source' ? state.task.source : state.result.design;
+    const el = design.elements.find(item => item.id === id);
     if (!el) return;
+    state.selected = id;
     $('propertyTitle').textContent = elementLabel(el);
-    $('propertyType').textContent = el.type;
+    $('propertyType').textContent = `${el.type} · ${view === 'source' ? 'Original' : 'Result'}`;
     $('properties').textContent = JSON.stringify(el, null, 2);
     $('propertyHint').hidden = true;
     $('geometry').hidden = false;
@@ -230,23 +333,30 @@
   }
   async function resize(event) {
     if (event) event.preventDefault();
-    if (state.busy || !state.task || !$('resizeForm').reportValidity()) return;
+    if (state.busy) return;
+    const requestedPoster = $('sample').value.startsWith('poster:') ? $('sample').value.slice(7) : null;
+    if (requestedPoster && state.task?.poster_id !== requestedPoster) { await loadPoster(requestedPoster); return; }
+    if (!state.task) { await init(); return; }
+    if (!$('resizeForm').reportValidity()) return;
     const width = Number($('width').value), height = Number($('height').value);
     if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > 8192 || height > 8192 || width * height > 20000000) {
       errorMessage(new Error('Use whole canvas dimensions from 1 to 8192 px and no more than 20 million pixels.')); return;
     }
     const version = state.version;
     $('error').hidden = true;
-    disableDownloads(); setBusy(true);
+    disableDownloads();
+    const controller = beginRequest();
     $('resultSummary').hidden = $('warnings').hidden = $('reviewPanel').hidden = true;
     $('status').textContent = 'Reflowing elements and rendering real previews…';
-    const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
     try {
       const payload = hasResources(state.task) ? {...state.task, target_canvas: {width, height}} : {source: state.task.source, target_canvas: {width, height}};
-      const result = await requestJSON(hasResources(state.task) ? '/api/document/resize' : '/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal: controller.signal});
-      const [source, output] = await Promise.all([loadImage(result.source_png), loadImage(result.output_png)]);
-      if (version !== state.version) return;
+      const response = await requestJSON(hasResources(state.task) ? '/api/document/resize' : '/api/resize', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), signal: controller.signal});
+      if (version !== state.version || state.controller !== controller) return;
+      const result = validateResult(response, payload.source, {width, height});
+      const [source, output] = await Promise.all([loadImage(result.source_png, controller.signal), loadImage(result.output_png, controller.signal)]);
+      if (version !== state.version || state.controller !== controller) return;
+      if (source.naturalWidth !== payload.source.canvas.width || source.naturalHeight !== payload.source.canvas.height || output.naturalWidth !== width || output.naturalHeight !== height) throw new Error('The preview image dimensions do not match the source and target canvases. Retry the resize.');
       state.result = result; state.images = {source, output}; state.dirty = false; state.selected = null;
       redraw();
       $('sourceEmpty').hidden = $('outputEmpty').hidden = true;
@@ -280,10 +390,10 @@
       $('reviewPanel').open = false;
       renderElements(); enableDownloads();
     } catch (error) {
-      if (version !== state.version) return;
+      if (version !== state.version || state.controller !== controller) return;
       errorMessage(error.name === 'AbortError' ? new Error('The resize exceeded 60 seconds. Try a smaller canvas or a simpler design.') : error);
       $('status').textContent = 'Resize failed. Adjust the input and try again.';
-    } finally { clearTimeout(timeout); setBusy(false); }
+    } finally { clearTimeout(timeout); finishRequest(controller); }
   }
 
   $('resizeForm').addEventListener('submit', resize);
@@ -292,6 +402,7 @@
     $('originalPanel').hidden = view === 'result';
     $('resizedPanel').hidden = view === 'source';
     for (const button of document.querySelectorAll('.view-switch button')) button.setAttribute('aria-pressed', String(button.dataset.view === view));
+    if (state.selected && view !== 'compare') selectElement(state.selected, view);
   }
   for (const button of document.querySelectorAll('.view-switch button')) button.addEventListener('click', () => setView(button.dataset.view));
   setView('result');
@@ -299,7 +410,7 @@
   $('sample').addEventListener('change', () => {
     if ($('sample').value.startsWith('poster:')) { loadPoster($('sample').value.slice(7)); return; }
     const item = $('sample').value === 'imported' ? state.imported : state.samples.find(sample => sample.id === $('sample').value);
-    if (item) { setTask(item.task, item.label); resize(); }
+    if (item) { state.loadVersion++; setTask(item.task, item.label); resize(); }
   });
   $('preset').addEventListener('change', () => {
     const target = state.targets.find(item => item.id === $('preset').value);
@@ -310,8 +421,10 @@
   $('applyJson').addEventListener('click', () => {
     try {
       const edited = JSON.parse($('taskJson').value);
-      const task = edited.source ? edited : {source: edited, target_canvas: state.task?.target_canvas};
-      if (hasResources(state.task) && !hasResources(task)) {
+      const task = edited.source ? edited : {source: edited, target_canvas: {
+        width: Number($('width').value) || 1080, height: Number($('height').value) || 1080,
+      }};
+      if (hasResources(state.task) && !['assets', 'fonts', 'document'].some(key => key in task)) {
         for (const key of ['assets', 'fonts', 'document', 'poster_id', 'attribution']) task[key] = state.task[key];
       }
       importTask(task, 'Edited design');
@@ -320,23 +433,38 @@
   });
   $('taskFile').addEventListener('change', async event => {
     const file = event.target.files[0]; if (!file) return;
+    const loadVersion = ++state.loadVersion;
     try {
       if (file.size > 24 * 1024 * 1024) throw new Error('The file must be smaller than 24 MiB.');
       const task = JSON.parse(await file.text());
+      if (loadVersion !== state.loadVersion) return;
       if (!hasResources(task) && file.size > 2000000) throw new Error('Plain tasks must be smaller than 2 MB. Larger files need an image/font bundle.');
       importTask(task, file.name);
     }
-    catch (error) { errorMessage(new Error(`Cannot load the task file. ${error.message}`)); }
-    finally { event.target.value = ''; }
+    catch (error) { if (loadVersion === state.loadVersion) errorMessage(new Error(`Cannot load the task file. ${error.message}`)); }
+    finally { if (event.target.files[0] === file) event.target.value = ''; }
   });
   for (const id of ['downloadJson', 'downloadPng']) $(id).addEventListener('click', event => { if ($(id).getAttribute('aria-disabled') === 'true') event.preventDefault(); });
-  window.addEventListener('beforeunload', () => { if (state.jsonUrl) URL.revokeObjectURL(state.jsonUrl); if (state.pngUrl) URL.revokeObjectURL(state.pngUrl); });
+  window.addEventListener('pagehide', event => {
+    if (state.busy) {
+      cancelRequest();
+      $('status').textContent = 'Resize paused when leaving the page. Retry to update the preview.';
+    }
+    // Cached documents retain their blob URLs when restored with Back/Forward.
+    if (!event.persisted) disableDownloads();
+  });
 
   async function init() {
+    if (state.initializing) return;
+    state.initializing = true;
+    const loadVersion = state.loadVersion;
+    if (!state.task) { $('run').disabled = true; $('runLabel').textContent = 'Connecting to engine…'; }
     try {
       const [meta, library] = await Promise.all([requestJSON('/api/samples'), requestJSON('/api/posters').catch(() => ({examples: []}))]);
-      state.samples = meta.samples; state.targets = meta.targets; state.posters = library.examples;
+      if (!meta || !Array.isArray(meta.samples) || !Array.isArray(meta.targets)) throw new Error('The engine returned an incomplete design catalogue. Retry connection.');
+      state.samples = meta.samples; state.targets = meta.targets; state.posters = Array.isArray(library?.examples) ? library.examples : [];
       $('sample').replaceChildren(...state.samples.map(item => new Option(item.label, item.id)));
+      if (state.imported) { $('sample').add(new Option('Imported design', 'imported')); $('sample').value = 'imported'; }
       for (const [split, label] of [['reviewed', 'Open posters · reviewed'], ['reserve', 'Open posters · personal tests']]) {
         const entries = state.posters.filter(item => item.split === split);
         if (!entries.length) continue;
@@ -349,15 +477,28 @@
       }
       $('preset').replaceChildren(new Option('Custom dimensions', 'custom'), ...state.targets.map(item => new Option(`${item.label} · ${item.width} × ${item.height}`, item.id)));
       $('sample').disabled = $('preset').disabled = $('run').disabled = false;
-      $('connection').textContent = 'Engine connected'; $('connection').classList.add('online');
+      if (state.task) { syncPreset(); return; }
       if (!state.samples.length) throw new Error('No bundled samples were found. Import a task JSON to start.');
       const requestedPoster = new URLSearchParams(location.search).get('poster');
-      if (state.posters.some(item => item.id === requestedPoster && item.ready)) {
+      if (loadVersion === state.loadVersion && state.posters.some(item => item.id === requestedPoster && item.ready)) {
         $('sample').value = `poster:${requestedPoster}`; await loadPoster(requestedPoster); return;
       }
       const sample = state.samples[Math.min(1, state.samples.length - 1)];
       $('sample').value = sample.id; setTask(sample.task, sample.label); await resize();
-    } catch (error) { errorMessage(error); $('connection').textContent = 'Engine unavailable'; $('status').textContent = 'Start the local server, then reload this page.'; }
+    } catch (error) {
+      if (loadVersion !== state.loadVersion && state.task) return;
+      errorMessage(error);
+      $('status').textContent = state.task
+        ? 'Setup could not finish. Your imported design is preserved; retry Resize design.'
+        : 'Setup could not finish. Start the local server if needed, then choose Retry connection.';
+    } finally {
+      state.initializing = false;
+      if (!state.busy) {
+        $('run').disabled = false;
+        $('run').formNoValidate = !state.task;
+        $('runLabel').textContent = state.task ? 'Resize design' : 'Retry connection';
+      }
+    }
   }
   init();
 })();

@@ -30,7 +30,7 @@
     if (!focus) return;
     if (open) {
       const control = target || $('sample');
-      (control.disabled ? $('closeSettings') : control).focus();
+      (control.matches(':disabled') ? $('closeSettings') : control).focus();
     } else if (focusWasInside) {
       const opener = lastSetupToggle.getClientRects().length ? lastSetupToggle : $('settingsToggle');
       opener.focus();

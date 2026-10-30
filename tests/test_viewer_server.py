@@ -221,6 +221,28 @@ def test_runtime_failure_is_truthfully_reported(http_server, payload, monkeypatc
     assert "renderer unavailable" in result["error"]
 
 
+def test_document_preparation_filesystem_failure_returns_json_error(
+    http_server, payload, monkeypatch
+):
+    def fail(_payload):
+        raise PermissionError("document cache is unwritable")
+
+    monkeypatch.setattr(server, "prepare_document", fail)
+    status, content_type, body = request(
+        http_server,
+        "POST",
+        "/api/document/resize",
+        json.dumps(payload),
+        {"Content-Type": "application/json"},
+    )
+    assert status == 500
+    assert "application/json" in content_type
+    result = json.loads(body)
+    assert "Document preparation failed" in result["error"]
+    assert "unwritable" in result["error"]
+    assert "design" not in result and "output_png" not in result
+
+
 @pytest.mark.parametrize("sample", ["level2_core", "level3_advanced"])
 def test_real_samples_render_and_preserve_style_runs_and_warnings(http_server, sample):
     task_path = server.REPO_ROOT / "input" / f"chameleon_sample_{sample}.json"

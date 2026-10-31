@@ -116,11 +116,79 @@ def _source(source):
     return ids
 
 
-def build_adapter_request(source, source_render, context_images):
-    """Build the trained two-image prompt; IDs/paths never enter text features.
+def _purpose_views(value):
+    if type(value) is not int or value not in {2, 3}:
+        raise ValueError("Purpose views must explicitly be integer two or three")
+    return value
 
-    Context crops come from trusted native source preparation. A crop can show
-    overlaid objects; it is not misrepresented as an isolated element layer.
+
+def _native_digest(value):
+    """Match the source owner's UTF-8 native receipt contract exactly."""
+    encoded = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _isolated_ref(element, reference, receipt):
+    """Accept only the actual native isolation policy; unsupported paint abstains."""
+    if isinstance(receipt, dict) and receipt.get("status") == "unavailable":
+        return None, "native_isolation_unavailable"
+    if isinstance(receipt, dict) and receipt.get("clipped") is True:
+        return None, "native_isolation_clipped_or_unverified"
+    if reference is None:
+        return None, "missing_isolated_image"
+    if not isinstance(receipt, dict):
+        return None, "missing_isolated_receipt"
+    if receipt.get("status") != "available":
+        return None, "native_isolation_unavailable"
+    if receipt.get("clipped") is not False:
+        return None, "native_isolation_clipped_or_unverified"
+    ref = _ref(reference)
+    if (
+        len(canonical(receipt).encode()) > 512 * 1024
+        or receipt.get("protocol") != "native-element-isolation-v1"
+        or not isinstance(receipt.get("policy"), dict)
+        or receipt["policy"].get("version") != "native-element-isolation-v1"
+        or receipt.get("resources_unchanged") is not True
+        or receipt.get("native_single_original_layer") is not True
+        or receipt.get("frame_or_asset_fallback_used") is not False
+        or receipt.get("geometry_authority") is not False
+        or receipt.get("model_executed") is not False
+        or receipt.get("source_element_sha256") != _native_digest(element)
+        or receipt.get("checker_png_sha256") != ref["sha256"]
+        or receipt.get("receipt_digest")
+        != _native_digest({k: v for k, v in receipt.items() if k != "receipt_digest"})
+    ):
+        raise ValueError(
+            "Isolated view receipt does not bind exact native original-element evidence"
+        )
+    _sha(receipt.get("implementation_sha256"))
+    _sha(receipt.get("alpha_png_sha256"))
+    resources = receipt.get("resource_identity")
+    if not isinstance(resources, dict) or not isinstance(resources.get("hashes"), dict):
+        raise ValueError("Native isolated view must bind trusted operator resources")
+    _sha(resources.get("resource_digest"))
+    if receipt["implementation_sha256"] != _native_digest(
+        {"files": receipt.get("implementation_hashes"), "runtime": receipt.get("runtime")}
+    ):
+        raise ValueError("Native isolation implementation identity is inconsistent")
+    return ref, None
+
+
+def build_adapter_request(
+    source,
+    source_render,
+    context_images,
+    *,
+    purpose_views=2,
+    isolated_images=None,
+    isolated_receipts=None,
+):
+    """Build the explicitly versioned prompt; IDs/paths never enter features.
+
+    Default two-view bytes are unchanged. Three views require actual SOURCE,
+    CONTEXT and native ISOLATED/checker evidence; unavailable elements abstain.
     Image byte verification and actual embedding remain the worker's job.
     """
     if dict((alias, purpose) for purpose, alias in ALIASES.items()) != _CANONICAL:
@@ -128,12 +196,27 @@ def build_adapter_request(source, source_render, context_images):
             "The trained purpose taxonomy changed; an explicit bridge update is required"
         )
     ids = _source(source)
+    views = _purpose_views(purpose_views)
     render = _ref(source_render)
     if not isinstance(context_images, dict) or set(context_images) - set(ids):
         raise ValueError("Context images may reference original source IDs only")
+    if views == 2 and (isolated_images is not None or isolated_receipts is not None):
+        raise ValueError("Two-view purpose input cannot silently consume isolated evidence")
+    if views == 3 and (
+        not isinstance(isolated_images, dict)
+        or not isinstance(isolated_receipts, dict)
+        or set(isolated_images) - set(ids)
+        or set(isolated_receipts) - set(ids)
+    ):
+        raise ValueError("Three-view purpose input requires known-ID native isolated evidence maps")
     order = sorted(range(len(ids)), key=lambda i: source["elements"][i].get("z_index", 0))
     rank = {index: position for position, index in enumerate(order)}
-    request = {"protocol": WORKER_PROTOCOL, "task": "purpose", "purpose_views": 2, "records": []}
+    request = {
+        "protocol": WORKER_PROTOCOL,
+        "task": "purpose",
+        "purpose_views": views,
+        "records": [],
+    }
     bindings, absent = [], []
     for index, element in enumerate(source["elements"]):
         key = element["id"]
@@ -141,6 +224,14 @@ def build_adapter_request(source, source_render, context_images):
             absent.append({"element_id": key, "reason": "missing_context_image"})
             continue
         crop = _ref(context_images[key])
+        isolated = None
+        if views == 3:
+            isolated, reason = _isolated_ref(
+                element, isolated_images.get(key), isolated_receipts.get(key)
+            )
+            if reason:
+                absent.append({"element_id": key, "reason": reason})
+                continue
         context = {
             "type": element["type"],
             "bbox_normalized": [
@@ -156,17 +247,22 @@ def build_adapter_request(source, source_render, context_images):
             "paint_order_index": rank[index],
             "element_count": len(ids),
         }
-        prompt = build_purpose_prompt(context)
+        prompt = build_purpose_prompt(context, purpose_views=views)
         record_id = f"element-{index:04d}"
         request["records"].append(
-            {"record_id": record_id, "prompt": prompt, "images": [render, crop]}
+            {
+                "record_id": record_id,
+                "prompt": prompt,
+                "images": [render, crop] + ([isolated] if isolated is not None else []),
+            }
         )
         bindings.append(
             {
                 "record_id": record_id,
                 "element_id": key,
                 "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
-                "input_image_sha256": [render["sha256"], crop["sha256"]],
+                "input_image_sha256": [render["sha256"], crop["sha256"]]
+                + ([isolated["sha256"]] if isolated is not None else []),
             }
         )
     bundle = {
@@ -181,6 +277,13 @@ def build_adapter_request(source, source_render, context_images):
         "classes": list(CLASSES),
         "request_sha256": hashlib.sha256((canonical(request) + "\n").encode()).hexdigest(),
     }
+    if views == 3:
+        bundle.update(
+            purpose_views=3,
+            context_images={key: _ref(value) for key, value in context_images.items()},
+            isolated_images={key: _ref(value) for key, value in isolated_images.items()},
+            isolated_receipts=deepcopy(isolated_receipts),
+        )
     bundle["binding_digest"] = digest(bundle)
     return bundle
 
@@ -204,11 +307,38 @@ def _binding(source, source_render, bundle):
         or bundle.get("known_element_ids") != _source(source)
     ):
         raise ValueError("Adapter analysis binding is stale or belongs to different source pixels")
+    request = bundle.get("request")
+    if not isinstance(request, dict):
+        raise ValueError("Adapter binding has no versioned worker request")
+    views = _purpose_views(request.get("purpose_views", 2))
+    bindings, records = bundle.get("records"), request.get("records")
+    if (
+        not isinstance(bindings, list)
+        or not isinstance(records, list)
+        or len(bindings) != len(records)
+        or len(records) > MAX_ELEMENTS
+        or any(not isinstance(row, dict) for row in bindings)
+        or any(
+            not isinstance(row, dict)
+            or not isinstance(row.get("images"), list)
+            or len(row["images"]) != views
+            for row in records
+        )
+    ):
+        raise ValueError("Adapter binding requires exact record and versioned image counts")
     refs = {
         row["element_id"]: bundle["request"]["records"][index]["images"][1]
         for index, row in enumerate(bundle["records"])
     }
-    if build_adapter_request(source, source_render, refs) != bundle:
+    kwargs = {}
+    if views == 3:
+        refs = bundle["context_images"]
+        kwargs = {
+            "purpose_views": 3,
+            "isolated_images": bundle["isolated_images"],
+            "isolated_receipts": bundle["isolated_receipts"],
+        }
+    if build_adapter_request(source, source_render, refs, **kwargs) != bundle:
         raise ValueError("Adapter prompt/grounding inputs differ from the original source")
     request_bytes(bundle)
     if not bundle["records"]:
@@ -272,7 +402,7 @@ def _parse_predictions(encoded):
     return value
 
 
-def _prediction(row, binding):
+def _prediction(row, binding, *, purpose_views=2):
     required = {
         "record_id",
         "prediction",
@@ -302,7 +432,7 @@ def _prediction(row, binding):
     grid = row["image_grid_thw"]
     if (
         not isinstance(grid, list)
-        or len(grid) != 2
+        or len(grid) != _purpose_views(purpose_views)
         or any(
             not isinstance(item, list)
             or len(item) != 3
@@ -310,7 +440,7 @@ def _prediction(row, binding):
             for item in grid
         )
     ):
-        raise ValueError("Purpose prediction must attest both image embeddings")
+        raise ValueError("Purpose prediction must attest the exact versioned image embeddings")
     scores, probabilities = row["closed_scores"], row["closed_probabilities"]
     for values in (scores, probabilities):
         if (
@@ -467,7 +597,10 @@ def complete_adapter_analysis(
             raise ValueError("Adapter predictions must cover each grounded request exactly once")
         if {row.get("record_id") for row in rows} != set(bindings):
             raise ValueError("Adapter returned an unknown or missing record identity")
-        predictions = [_prediction(row, bindings[row["record_id"]]) for row in rows]
+        views = _purpose_views(bundle["request"].get("purpose_views", 2))
+        predictions = [
+            _prediction(row, bindings[row["record_id"]], purpose_views=views) for row in rows
+        ]
         result.update(executed=True, valid=True)
         result["trace"].update(
             receipt_valid=True,
@@ -481,9 +614,23 @@ def complete_adapter_analysis(
             source_element_ids_are_features=False,
             element_predictions=predictions,
             initial_abstentions=deepcopy(bundle["initial_abstentions"]),
-            model_visual_input_count=len(rows) * 2,
-            purpose_views=2,
+            model_visual_input_count=len(rows) * views,
+            purpose_views=views,
         )
+        if views == 3:
+            result["trace"]["native_isolation"] = {
+                row["element_id"]: {
+                    key: deepcopy(bundle["isolated_receipts"][row["element_id"]][key])
+                    for key in (
+                        "receipt_digest",
+                        "implementation_sha256",
+                        "source_element_sha256",
+                        "checker_png_sha256",
+                        "resource_identity",
+                    )
+                }
+                for row in bundle["records"]
+            }
         observations = []
         accepted = [row for row in predictions if row["abstention_reason"] is None]
         if mode == "diagnostic":

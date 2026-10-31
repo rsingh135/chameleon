@@ -16,6 +16,7 @@ from engine.visual_analysis import bind_analysis
 
 from .adapter_analysis import (
     _identity,
+    _purpose_views,
     _ref,
     _source,
     build_adapter_request,
@@ -28,7 +29,15 @@ MODEL_KEYS = {"base", "adapter_sha256", "adapter_config_sha256", "code_sha256"}
 
 
 def create_adapter_roles(
-    delegated_roles, *, context_builder, score_runner, model_identity, driver_identity, mode="off"
+    delegated_roles,
+    *,
+    context_builder=None,
+    score_runner,
+    model_identity,
+    driver_identity,
+    mode="off",
+    purpose_views=2,
+    view_builder=None,
 ):
     """Compose a classifier analyzer with existing organizer/verifier roles.
 
@@ -41,14 +50,20 @@ def create_adapter_roles(
 
     if mode not in {"off", "diagnostic"}:
         raise ValueError("Unqualified adapter roles support off or diagnostic mode only")
+    views = _purpose_views(purpose_views)
     if not isinstance(model_identity, dict) or set(model_identity) != MODEL_KEYS:
         raise ValueError(
             "Adapter role configuration must pin actual base/adapter/config/worker code"
         )
     _identity({**model_identity, "recipe_sha256": "0" * 64, "dataset_sha256": "0" * 64})
-    if not callable(context_builder) or not callable(score_runner):
+    if (
+        not callable(score_runner)
+        or (views == 2 and (not callable(context_builder) or view_builder is not None))
+        or (views == 3 and (not callable(view_builder) or context_builder is not None))
+    ):
         raise ValueError(
-            "Adapter graph roles require explicit operator-owned preparation/scoring callbacks"
+            "Adapter graph roles require explicit version-matched "
+            "operator preparation/scoring callbacks"
         )
     if not isinstance(driver_identity, dict):
         raise ValueError("Adapter scoring driver needs a stable configuration identity")
@@ -84,6 +99,7 @@ def create_adapter_roles(
                 "analyzer": {
                     "kind": "saved_adapter_purpose_classifier",
                     "mode": self._mode,
+                    "purpose_views": views,
                     "model_identity": deepcopy(self._model),
                     "driver_identity": deepcopy(self._driver_identity),
                     "bridge_code_sha256": code,
@@ -119,6 +135,7 @@ def create_adapter_roles(
                     "qualified": False,
                     "experimental_only": True,
                     "mode": self._mode,
+                    "purpose_views": views,
                 },
             }
             if self._mode == "off":
@@ -134,17 +151,43 @@ def create_adapter_roles(
                     raise ValueError("Adapter graph timeout must be finite and within (0,600]")
                 started = time.monotonic()
                 source_pin = source_digest(source)
-                contexts = context_builder(deepcopy(source), deepcopy(source_render))
-                bundle = build_adapter_request(source, source_render, contexts)
+                if views == 2:
+                    contexts = context_builder(deepcopy(source), deepcopy(source_render))
+                    bundle = build_adapter_request(source, source_render, contexts)
+                else:
+                    prepared_views = view_builder(deepcopy(source), deepcopy(source_render))
+                    if (
+                        not isinstance(prepared_views, dict)
+                        or not {"context_images", "isolated_images", "isolated_receipts"}
+                        <= prepared_views.keys()
+                    ):
+                        raise ValueError(
+                            "Three-view builder must provide actual native evidence maps"
+                        )
+                    bundle = build_adapter_request(
+                        source,
+                        source_render,
+                        prepared_views["context_images"],
+                        purpose_views=3,
+                        isolated_images=prepared_views["isolated_images"],
+                        isolated_receipts=prepared_views["isolated_receipts"],
+                    )
                 if not bundle["records"]:
                     fallback["trace"].update(
                         fallback_reason="no_grounded_context_images",
                         initial_abstentions=bundle["initial_abstentions"],
                     )
                     return fallback
+                if views == 3:
+                    from .adapter_context import verify_source_views
+
+                    verify_source_views(source, source_render, bundle)
                 transmitted = deepcopy(bundle)
                 fallback["trace"]["invoked"] = True
-                scored = score_runner(transmitted, timeout_seconds=seconds)
+                remaining = seconds - (time.monotonic() - started) if views == 3 else seconds
+                if remaining <= 0:
+                    raise ValueError("Adapter graph deadline expired while preparing native views")
+                scored = score_runner(transmitted, timeout_seconds=remaining)
                 if transmitted != bundle or source_digest(source) != source_pin:
                     raise ValueError("Adapter scoring mutated its source/request binding")
                 if not isinstance(scored, dict) or set(scored) != {
@@ -170,6 +213,9 @@ def create_adapter_roles(
                     expected_identity=prepared,
                     mode=self._mode,
                 )
+                fallback = result
+                if views == 3:
+                    verify_source_views(source, source_render, bundle)
                 result["trace"].update(
                     driver_identity=deepcopy(self._driver_identity),
                     request_sha256=bundle["request_sha256"],
@@ -178,7 +224,16 @@ def create_adapter_roles(
                     result.update(valid=False, abstained=True, analysis=empty)
                     result["trace"]["fallback_reason"] = "adapter_analyzer_graph_deadline"
                 return result
-            except (ValueError, OSError, KeyError, TypeError, UnicodeError, RecursionError) as exc:
+            except (
+                ValueError,
+                OSError,
+                KeyError,
+                TypeError,
+                UnicodeError,
+                RecursionError,
+                RuntimeError,
+            ) as exc:
+                fallback.update(valid=False, abstained=True, analysis=empty)
                 fallback["trace"]["fallback_reason"] = str(exc)[:600]
                 return fallback
 

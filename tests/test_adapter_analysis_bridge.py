@@ -80,7 +80,7 @@ def scores(bundle, *, alias="background", strength=6, raw_allowed=True):
                 "raw_next_token": alias if raw_allowed else "\n",
                 "raw_next_token_is_allowed": raw_allowed,
                 "input_token_count": 200,
-                "image_grid_thw": [[1, 8, 8], [1, 8, 8]],
+                "image_grid_thw": [[1, 8, 8]] * bundle["request"].get("purpose_views", 2),
                 "input_image_sha256": deepcopy(binding["input_image_sha256"]),
             }
         )
@@ -343,3 +343,189 @@ def test_classifier_role_context_changes_are_instrumented_and_forwarded_without_
         != outputs[1]["trace"]["source_analysis_digest"]
     )
     assert all(output["trace"]["layout_authority"] is False for output in outputs)
+
+
+def isolated_fixture(scene):
+    """Explicitly synthetic native receipts: protocol tests do not paint or score."""
+    source, _render, _crops = scene
+    images, receipts = {}, {}
+    for index, element in enumerate(source["elements"]):
+        ref = {"path": f"synthetic-native-{index}.png", "sha256": str(index + 4) * 64}
+        implementation, runtime = {"test_only": "f" * 64}, {"synthetic": True}
+        receipt = {
+            "protocol": "native-element-isolation-v1",
+            "policy": {"version": "native-element-isolation-v1"},
+            "status": "available",
+            "clipped": False,
+            "resources_unchanged": True,
+            "native_single_original_layer": True,
+            "frame_or_asset_fallback_used": False,
+            "geometry_authority": False,
+            "model_executed": False,
+            "source_element_sha256": bridge._native_digest(element),
+            "checker_png_sha256": ref["sha256"],
+            "alpha_png_sha256": "8" * 64,
+            "implementation_hashes": implementation,
+            "runtime": runtime,
+            "implementation_sha256": bridge._native_digest(
+                {"files": implementation, "runtime": runtime}
+            ),
+            "resource_identity": {"resource_digest": "9" * 64, "hashes": {}},
+        }
+        receipt["receipt_digest"] = bridge._native_digest(receipt)
+        images[element["id"]], receipts[element["id"]] = ref, receipt
+    return images, receipts
+
+
+def three_bundle(scene, images=None, receipts=None):
+    source, render, crops = scene
+    if images is None or receipts is None:
+        images, receipts = isolated_fixture(scene)
+    return bridge.build_adapter_request(
+        source,
+        render,
+        crops,
+        purpose_views=3,
+        isolated_images=images,
+        isolated_receipts=receipts,
+    )
+
+
+def test_explicit_three_views_uses_frozen_prompt_source_context_and_actual_isolated_binding(scene):
+    source, render, crops = scene
+    images, receipts = isolated_fixture(scene)
+    bundle = three_bundle(scene, images, receipts)
+    assert bundle["request"]["purpose_views"] == 3
+    assert all(len(row["images"]) == 3 for row in bundle["request"]["records"])
+    for index, element in enumerate(source["elements"]):
+        record = bundle["request"]["records"][index]
+        assert record["images"] == [render, crops[element["id"]], images[element["id"]]]
+        assert "third image" in record["prompt"]
+        assert element["id"] not in record["prompt"]
+    data, receipt = attest(bundle, scores(bundle, alias="headline"))
+    result = bridge.complete_adapter_analysis(
+        source, render, bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
+    )
+    assert result["valid"] and result["executed"]
+    assert result["trace"]["purpose_views"] == 3
+    assert result["trace"]["model_visual_input_count"] == 6
+    assert (
+        result["trace"]["native_isolation"][source["elements"][0]["id"]]["receipt_digest"]
+        == receipts[source["elements"][0]["id"]]["receipt_digest"]
+    )
+    assert not result["trace"]["layout_authority"] and not result["trace"]["crop_authority"]
+
+
+@pytest.mark.parametrize("case", ["missing", "unavailable", "clipped", "receipt_missing"])
+def test_three_view_unavailable_evidence_abstains_per_element_without_two_view_fallback(
+    scene, case
+):
+    images, receipts = isolated_fixture(scene)
+    key = scene[0]["elements"][0]["id"]
+    if case == "missing":
+        images.pop(key)
+    elif case == "unavailable":
+        images.pop(key)
+        receipts[key] = {"status": "unavailable", "reason": "unsupported original paint"}
+    elif case == "clipped":
+        receipts[key]["clipped"] = True
+    else:
+        receipts.pop(key)
+    bundle = three_bundle(scene, images, receipts)
+    assert len(bundle["records"]) == 1
+    assert bundle["initial_abstentions"][0]["element_id"] == key
+    assert len(bundle["request"]["records"][0]["images"]) == 3
+    assert key not in {r["element_id"] for r in bundle["records"]}
+    data, receipt = attest(bundle, scores(bundle))
+    result = bridge.complete_adapter_analysis(
+        scene[0], scene[1], bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
+    )
+    assert result["valid"] and result["trace"]["model_visual_input_count"] == 3
+
+
+@pytest.mark.parametrize(
+    "case", ["source", "checker", "receipt", "implementation", "policy", "unknown_id"]
+)
+def test_three_view_native_evidence_identity_mismatch_fails_closed(scene, case):
+    images, receipts = isolated_fixture(scene)
+    key = scene[0]["elements"][0]["id"]
+    if case == "source":
+        receipts[key]["source_element_sha256"] = "0" * 64
+    elif case == "checker":
+        images[key]["sha256"] = "0" * 64
+    elif case == "receipt":
+        receipts[key]["receipt_digest"] = "0" * 64
+    elif case == "implementation":
+        receipts[key]["implementation_sha256"] = "0" * 64
+        receipts[key]["receipt_digest"] = bridge._native_digest(
+            {k: v for k, v in receipts[key].items() if k != "receipt_digest"}
+        )
+    elif case == "policy":
+        receipts[key]["policy"] = None
+    else:
+        images["invented-id"] = images[key]
+    with pytest.raises(ValueError):
+        three_bundle(scene, images, receipts)
+
+
+def test_three_view_predictions_cannot_attest_only_two_grids_or_reuse_two_view_binding(scene):
+    bundle = three_bundle(scene)
+    payload = scores(bundle)
+    payload["predictions"][0]["image_grid_thw"].pop()
+    data, receipt = attest(bundle, payload)
+    result = bridge.complete_adapter_analysis(
+        scene[0], scene[1], bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
+    )
+    assert result["executed"] and not result["valid"] and result["abstained"]
+    two = bridge.build_adapter_request(*scene)
+    data, receipt = attest(two, scores(two))
+    result = bridge.complete_adapter_analysis(
+        scene[0], scene[1], bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
+    )
+    assert not result["executed"] and not result["valid"]
+
+
+def test_default_two_view_bytes_and_graph_api_require_explicit_version_matched_builders(scene):
+    images, receipts = isolated_fixture(scene)
+    original = bridge.build_adapter_request(*scene)
+    explicit = bridge.build_adapter_request(*scene, purpose_views=2)
+    assert bridge.request_bytes(original) == bridge.request_bytes(explicit)
+    assert "isolated_images" not in original and "purpose_views" not in original
+    with pytest.raises(ValueError, match="Two-view"):
+        bridge.build_adapter_request(*scene, isolated_images=images, isolated_receipts=receipts)
+    pins = expected()
+    roles = create_adapter_roles(
+        Delegated(),
+        purpose_views=3,
+        view_builder=lambda *_a: pytest.fail("No native paint when off"),
+        score_runner=lambda *_a, **_kw: pytest.fail("No model score when off"),
+        model_identity={k: pins[k] for k in MODEL_KEYS},
+        driver_identity={"test_only": True},
+    )
+    assert roles.configuration_identity()["analyzer"]["purpose_views"] == 3
+    assert not roles.analyze(scene[0], scene[1])["executed"]
+    with pytest.raises(ValueError, match="version-matched"):
+        create_adapter_roles(
+            Delegated(),
+            purpose_views=3,
+            context_builder=lambda *_a: scene[2],
+            score_runner=lambda *_a, **_kw: None,
+            model_identity={k: pins[k] for k in MODEL_KEYS},
+            driver_identity={},
+        )
+
+
+def test_malformed_three_view_record_cannot_crash_or_fall_back_during_completion(scene):
+    bundle = three_bundle(scene)
+    bundle["request"]["records"][0]["images"] = []
+    bundle["request_sha256"] = hashlib.sha256(
+        (bridge.canonical(bundle["request"]) + "\n").encode()
+    ).hexdigest()
+    bundle["binding_digest"] = bridge.digest(
+        {key: value for key, value in bundle.items() if key != "binding_digest"}
+    )
+    data, receipt = attest(bundle, scores(bundle))
+    result = bridge.complete_adapter_analysis(
+        scene[0], scene[1], bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
+    )
+    assert not result["executed"] and not result["valid"] and result["abstained"]

@@ -10,17 +10,24 @@ import argparse
 import json
 import re
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 from .adapter_analysis import (
     CLASSES,
     _identity,
+    _purpose_views,
     build_adapter_request,
     canonical,
     complete_adapter_analysis,
     request_bytes,
 )
-from .adapter_context import build_source_contexts, sha_file
+from .adapter_context import (
+    build_source_contexts,
+    build_source_views,
+    sha_file,
+    verify_source_views,
+)
 
 MAX_PACKET_BYTES = 16 * 1024 * 1024
 
@@ -70,8 +77,10 @@ def _prepared_identity(directory, bundle):
     recipe_path = directory / "recipe.json"
     recipe_hash = sha_file(recipe_path, 4 * 1024 * 1024)
     recipe = _read(recipe_path)
-    if type(recipe.get("purpose_views", 2)) is not int or recipe.get("purpose_views", 2) != 2:
-        raise ValueError("This bridge requires the trained two-view purpose contract")
+    views = _purpose_views(bundle["request"].get("purpose_views", 2))
+    version = "two-view" if views == 2 else "three-view"
+    if type(recipe.get("purpose_views", 2)) is not int or recipe.get("purpose_views", 2) != views:
+        raise ValueError(f"This bridge requires the exact trained {version} purpose contract")
     if (
         recipe.get("external_evaluation") is not True
         or recipe.get("inference_only") is not True
@@ -85,8 +94,8 @@ def _prepared_identity(directory, bundle):
     if sha_file(dataset_path) != recipe["dataset_sha256"]:
         raise ValueError("Prepared inference dataset changed")
     dataset = _read(dataset_path)
-    if type(dataset.get("purpose_views", 2)) is not int or dataset.get("purpose_views", 2) != 2:
-        raise ValueError("This bridge requires a two-view purpose dataset")
+    if type(dataset.get("purpose_views", 2)) is not int or dataset.get("purpose_views", 2) != views:
+        raise ValueError(f"This bridge requires the exact {version} purpose dataset")
     if (
         dataset.get("task") != "purpose"
         or set(dataset.get("classes", [])) != set(CLASSES)
@@ -143,22 +152,42 @@ def _prepared_identity(directory, bundle):
     return identity
 
 
-def handle(packet, *, artifact_root, diagnostic=False):
+def handle(packet, *, artifact_root, diagnostic=False, purpose_views=2, view_builder=None):
     """Process one packet; operator flags alone permit diagnostic observations."""
     if not isinstance(packet, dict):
         raise ValueError("Adapter JSONL input must contain an operation object")
+    views = _purpose_views(purpose_views)
+    if views == 2 and view_builder is not None:
+        raise ValueError("Two-view transport does not accept an isolated view builder")
     operation = packet.get("operation")
     job = _job(artifact_root, packet.get("job_id"))
     if operation == "prepare":
         if set(packet) != {"operation", "job_id", "source", "source_render"}:
             raise ValueError("Adapter prepare accepts original source and native render only")
+        if views == 3 and not callable(view_builder):
+            raise ValueError("Three-view prepare requires a trusted operator native view builder")
         job.mkdir(parents=True, exist_ok=False)
-        crop = build_source_contexts(
-            packet["source"], packet["source_render"], job / "context-images"
-        )
-        bundle = build_adapter_request(
-            packet["source"], packet["source_render"], crop["context_images"]
-        )
+        if views == 2:
+            crop = build_source_contexts(
+                packet["source"], packet["source_render"], job / "context-images"
+            )
+            bundle = build_adapter_request(
+                packet["source"], packet["source_render"], crop["context_images"]
+            )
+        else:
+            prepared = view_builder(
+                deepcopy(packet["source"]), deepcopy(packet["source_render"]), job / "source-views"
+            )
+            bundle = build_adapter_request(
+                packet["source"],
+                packet["source_render"],
+                prepared["context_images"],
+                purpose_views=3,
+                isolated_images=prepared["isolated_images"],
+                isolated_receipts=prepared["isolated_receipts"],
+            )
+            if bundle["records"]:
+                verify_source_views(packet["source"], packet["source_render"], bundle)
         _write(job / "source.json", packet["source"])
         _write(job / "source-render.json", packet["source_render"])
         _write(job / "binding.json", bundle)
@@ -173,6 +202,8 @@ def handle(packet, *, artifact_root, diagnostic=False):
             "source_digest": bundle["source_digest"],
             "source_render_sha256": bundle["source_render_sha256"],
             "record_count": len(bundle["records"]),
+            "purpose_views": views,
+            "initial_abstentions": bundle["initial_abstentions"],
             "worker_request_ready": bool(bundle["records"]),
             "model_executed": False,
             "deployment_enabled": False,
@@ -195,6 +226,8 @@ def handle(packet, *, artifact_root, diagnostic=False):
         if any((directory / marker).exists() for marker in run_markers):
             raise ValueError("Expected identity must be frozen before model execution starts")
         bundle = _read(job / "binding.json")
+        if _purpose_views(bundle["request"].get("purpose_views", 2)) != views:
+            raise ValueError("Frozen binding differs from the operator's explicit view profile")
         identity = _prepared_identity(directory, bundle)
         if any((directory / marker).exists() for marker in run_markers):
             raise ValueError("Model execution started during expected-identity freezing")
@@ -221,6 +254,8 @@ def handle(packet, *, artifact_root, diagnostic=False):
             raise ValueError("Adapter completion uses only the previously frozen job")
         frozen = _read(job / "frozen-evaluation.json")
         bundle = _read(job / "binding.json")
+        if _purpose_views(bundle["request"].get("purpose_views", 2)) != views:
+            raise ValueError("Completion binding differs from the operator's explicit view profile")
         if bundle["binding_digest"] != frozen["binding_digest"]:
             raise ValueError("Adapter binding changed after pre-inference freezing")
         directory = Path(frozen["evaluation_dir"])
@@ -234,6 +269,10 @@ def handle(packet, *, artifact_root, diagnostic=False):
         for path, checksum in unique_refs.items():
             if sha_file(path) != checksum:
                 raise ValueError("Source/context PNG changed before adapter completion")
+        if views == 3:
+            verify_source_views(
+                _read(job / "source.json"), _read(job / "source-render.json"), bundle
+            )
         prediction_path = directory / "external_adapted.json"
         if not prediction_path.is_file() or prediction_path.stat().st_size > 8 * 1024 * 1024:
             raise ValueError("Adapter prediction file is missing or oversized")
@@ -265,7 +304,29 @@ def main(argv=None, *, stdin=None, stdout=None):
         action="store_true",
         help="Explicit unqualified diagnostic observations only",
     )
+    parser.add_argument("--purpose-views", type=int, choices=(2, 3), default=2)
+    parser.add_argument("--assets-dir", type=Path)
+    parser.add_argument("--fonts-dir", type=Path)
+    parser.add_argument("--resource-digest")
     args = parser.parse_args(argv)
+    if args.purpose_views == 2 and any(
+        value is not None for value in (args.assets_dir, args.fonts_dir, args.resource_digest)
+    ):
+        parser.error("Native isolation resource flags require explicit --purpose-views 3")
+    if args.purpose_views == 3 and (args.assets_dir is None or args.fonts_dir is None):
+        parser.error("Three-view preparation requires trusted --assets-dir and --fonts-dir")
+
+    def views_builder(source, render, destination):
+        return build_source_views(
+            source,
+            render,
+            destination,
+            purpose_views=3,
+            assets_dir=args.assets_dir,
+            fonts_dir=args.fonts_dir,
+            expected_resource_digest=args.resource_digest,
+        )
+
     stdin, stdout = stdin or sys.stdin, stdout or sys.stdout
     while True:
         line = stdin.readline(MAX_PACKET_BYTES + 1)
@@ -275,7 +336,11 @@ def main(argv=None, *, stdin=None, stdout=None):
             if len(line.encode("utf-8")) > MAX_PACKET_BYTES or not line.endswith("\n"):
                 raise ValueError("Adapter JSONL packet exceeds its line budget or lacks a newline")
             output = handle(
-                _parse(line), artifact_root=args.artifact_root, diagnostic=args.diagnostic
+                _parse(line),
+                artifact_root=args.artifact_root,
+                diagnostic=args.diagnostic,
+                purpose_views=args.purpose_views,
+                view_builder=views_builder if args.purpose_views == 3 else None,
             )
         except (ValueError, OSError, KeyError, TypeError, UnicodeError, RecursionError) as exc:
             output = {

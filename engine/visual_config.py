@@ -200,7 +200,13 @@ def resolve_config(config=None):
         raise ValueError("Visual operator configuration must be an object or local JSON path")
     _canonical(value)
     required = {"schema_version", "enabled"}
-    allowed = required | {"provider_command", "timeout_seconds", "artifact_root", "critic"}
+    allowed = required | {
+        "provider_command",
+        "analyzer_command",
+        "timeout_seconds",
+        "artifact_root",
+        "critic",
+    }
     if not required <= value.keys() or value.keys() - allowed:
         raise ValueError("Visual operator configuration has missing or unknown fields")
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
@@ -225,6 +231,10 @@ def resolve_config(config=None):
         command, provider = _provider_identity(value.get("provider_command"), base)
         result["provider_command"] = command
         identity.update(provider)
+        if "analyzer_command" in value:
+            analyzer_command, analyzer = _provider_identity(value["analyzer_command"], base)
+            result["analyzer_command"] = analyzer_command
+            identity["analyzer"] = analyzer
     identity["configuration_sha256"] = _digest(result)
     identity["digest"] = _digest(identity)
     return deepcopy(result), deepcopy(identity)

@@ -54,7 +54,10 @@ single-turn, no-tools template follows the original Qwen template's
 `enable_thinking=False` branch, so a short caption or answer can use the token
 budget. The example also requests evidence-first JSON field order: short visible
 observations, short design reason, then choice. Schema serialization preserves
-this order, and receipts bind the exact schema hash. Neither profile is enabled
+this order, and receipts bind the exact schema hash. Qwen uses a fixed physical
+microbatch of 64 tokens to reduce its CPU scratch allocation. Evidence-first
+prose fields are bounded to 32 characters and the token budget remains 96.
+Neither profile is enabled
 as an application default by this module; Smol remains the adapter's default
 profile. These experiments do not establish challenge-approved model eligibility.
 
@@ -73,6 +76,15 @@ The supervisor never terminates other applications. `python_executable` is only
 used by the optional Transformers backend, but is present for config compatibility.
 
 ## Request and result contract
+
+An optional source-only `mode: "analyze"` now returns bounded, element-grounded
+observations and abstention instead of a menu choice. An independent
+`analyzer_command` can run that VLM once before a separately configured
+organizer, which receives the hash-bound sidecar as advisory data. Both native
+and Transformers backends support this mode; invalid analysis never falls back
+to letter scoring. See the [two-model setup and evidence contract](../../docs/IMAGE_REASONING_PIPELINE.md).
+The existing quality limitations below still apply; the new handoff has not
+qualified either model's design judgment.
 
 Python callers use `predict(request, config)` from `provider.py`. CLI callers
 can supply the same request through stdin instead of `--request`.
@@ -126,6 +138,8 @@ Their ignored artifacts are under `output/visual-planner`.
 | Qwen Q4 CPU grounding | About 6–8 seconds and 1.06–1.15 GiB RSS; captions identified a Solstice bottle and people; free category answers matched both posters | Basic visible category recognition, not layout-quality validation |
 | Qwen choice-format controls | Explicit JSON B/C instructions and free letter choice worked; semantic JSON category was correct in three of four order controls | Decoder is not hard-wired to A; the choice formulation still affects reliability |
 | Qwen evidence-first counterbalanced grounding | Complete original-order decisions: Core B=product, Rooftop A=people. Complete swapped-order decisions: Core A=product, Rooftop C=people; final two tight calls took 6.14/7.14 seconds and 1155 MiB RSS | Basic pixel-grounded category decisions survive reordered choices; layout planning and quality remain pending |
+| Fixed Qwen physical microbatch 64 | Runtime logs confirm CPU compute scratch fell from 501.03 to 62.63 MiB; final-code original-order category controls passed in 9.59/9.05 seconds | Smaller owned scratch allocation; total RSS and available system memory remain separate measurements |
+| Final-code exact Core production request and critic controls | Core request and both three-view critic orders aborted on sustained low available system RAM; no model decisions were returned | No final-code Core planning or visual-comparison qualification; the guard stopped owned workers |
 
 The initial multi-image run used repeated `--image` flags; its distinct-image
 claim was withdrawn and the corrected adapter was rerun. Refer to
@@ -142,9 +156,17 @@ Qwen grounding controls are in `qwen-grounding`, `qwen-small-controls`, and
 evidence-first probe used 64-character prose fields and a 64-token budget; two
 Core generations stopped before a complete choice. The final two calls used
 32-character fields, completed within 64 tokens, and retained the raw clipped
-prose. The production example uses 64-character fields and 96 tokens; incomplete
-JSON remains an error. Read the raw outputs and exact prompts/schemas;
+prose. The production example now uses 32-character fields and 96 tokens;
+incomplete JSON remains an error. Read the raw outputs and exact prompts/schemas;
 category recognition and copying a layout label are different capabilities.
+
+The later `ub64-validation` run bound the final provider hashes before and after
+execution. Its exact saved Core production request aborted at 5.80 seconds with
+883 MiB worker RSS after available system RAM fell to 123 MiB. Two original-order
+grounding calls completed correctly; both swapped grounding calls and both
+diagnostic critic orders subsequently aborted under memory pressure. Earlier
+counterbalanced successes used the prior larger-microbatch implementation.
+Both histories are retained; neither is silently substituted for the other.
 
 Further qualification needs image-versus-blank and target controls, stable choices
 under reordered options, two-candidate visual comparisons in both orders, and

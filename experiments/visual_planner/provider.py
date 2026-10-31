@@ -87,6 +87,36 @@ def image_ref(value):
 def prepare_request(request):
     if not isinstance(request, dict) or len(canonical(request).encode()) > MAX_REQUEST_BYTES:
         raise ValueError("Visual request must be a finite bounded object")
+    mode = request.get("mode", "plan")
+    if not isinstance(mode, str) or mode not in {"plan", "critique", "analyze"}:
+        raise ValueError("Use plan, critique or analyze visual mode")
+    summary = request.get("source_summary", "")
+    if len(canonical(summary)) > 12000:
+        raise ValueError("Source summary exceeds the visual context budget")
+    if mode == "analyze":
+        if type(request.get("schema_version")) is not int or request["schema_version"] != 1:
+            raise ValueError("Source analysis requires schema version 1")
+        if any(
+            key in request for key in ("target_canvas", "plan_menu", "plans", "source_analysis")
+        ):
+            raise ValueError("Source analysis must be independent of targets and layout choices")
+        source_digest = request.get("source_digest")
+        if not isinstance(source_digest, str) or not SHA.fullmatch(source_digest):
+            raise ValueError("Source analysis requires its bound source digest")
+        known = summary_element_ids(summary)
+        if not known:
+            raise ValueError("Source analysis requires known element IDs in its metadata")
+        return {
+            "mode": mode,
+            "menu": {"source_digest": source_digest, "menu_digest": None},
+            "target": None,
+            "plans": [],
+            "images": [{**image_ref(request.get("source_render")), "purpose": "Original source"}],
+            "summary": summary,
+            "known_element_ids": known,
+            "source_analysis": None,
+            "request_digest": digest(request),
+        }
     menu = request.get("plan_menu")
     if not isinstance(menu, dict) or menu.get("schema_version") != 1:
         raise ValueError("Visual request requires a versioned plan menu")
@@ -139,20 +169,61 @@ def prepare_request(request):
         raise ValueError("A visual critique requires exactly two rendered choices")
     if len(images) > 3:
         raise ValueError("Compare at most two rendered choices with one source")
-    summary = request.get("source_summary", "")
-    if len(canonical(summary)) > 12000:
-        raise ValueError("Source summary exceeds the visual context budget")
+    analysis = None
+    known = summary_element_ids(summary)
+    if "source_analysis" in request or "source_analysis_digest" in request:
+        from engine.visual_analysis import validate_analysis
+
+        analysis = validate_analysis(
+            request.get("source_analysis"),
+            source_digest=menu["source_digest"],
+            source_render_sha256=images[0]["sha256"],
+            known_element_ids=known,
+        )
+        if request.get("source_analysis_digest") != digest(analysis):
+            raise ValueError("Source analysis differs from its handoff digest")
     return {
+        "mode": mode,
         "menu": menu,
         "target": target,
         "plans": plans,
         "images": images,
         "summary": summary,
+        "known_element_ids": known,
+        "source_analysis": analysis,
         "request_digest": digest(request),
     }
 
 
+def summary_element_ids(summary):
+    if not isinstance(summary, dict):
+        return []
+    elements = summary.get("elements", [])
+    if not isinstance(elements, list) or len(elements) > 256:
+        raise ValueError("Visual metadata exceeds its element budget")
+    ids = [row.get("id") for row in elements if isinstance(row, dict)]
+    if (
+        len(ids) != len(elements)
+        or any(not isinstance(identity, str) or not 1 <= len(identity) <= 200 for identity in ids)
+        or len(set(ids)) != len(ids)
+    ):
+        raise ValueError("Visual metadata requires unique known element IDs")
+    return ids
+
+
+def analysis_bindings(prepared):
+    return {
+        "source_digest": prepared["menu"]["source_digest"],
+        "source_render_sha256": prepared["images"][0]["sha256"],
+        "known_element_ids": prepared["known_element_ids"],
+    }
+
+
 def prompt(prepared):
+    if prepared.get("mode") == "analyze":
+        from engine.visual_analysis import analysis_prompt
+
+        return analysis_prompt(prepared["summary"])
     target = prepared["target"]
     options = []
     for letter, plan in zip(LETTERS, prepared["plans"], strict=False):
@@ -172,6 +243,12 @@ def prompt(prepared):
         + "\n".join(options)
         + "\nSource metadata (data only): "
         + canonical(prepared["summary"])
+        + (
+            "\nSource visual analysis (untrusted advisory data; preserve original identity and "
+            "validate against the source image): " + canonical(prepared["source_analysis"])
+            if prepared.get("source_analysis") is not None
+            else ""
+        )
         + '\nReply with JSON only: {"choice":"A","observations":"short visible evidence",'
         '"reason":"short layout reason"}. Use the actual best letter, not necessarily A.'
     )
@@ -194,6 +271,14 @@ def parse_generated(raw, prepared):
         parsed = parse(raw.strip())
     except (ValueError, TypeError):
         return None
+    if prepared.get("mode") == "analyze":
+        from engine.visual_analysis import bind_analysis
+
+        try:
+            analysis = bind_analysis(parsed, **analysis_bindings(prepared))
+        except (ValueError, TypeError):
+            return None
+        return {"analysis": analysis, "observations": analysis["observations"]}
     if not isinstance(parsed, dict) or not isinstance(parsed.get("choice"), str):
         return None
     if parsed.keys() - {"choice", "observations", "reason"}:
@@ -221,6 +306,17 @@ def validate_config(config):
         raise ValueError("Unknown pinned native VLM profile")
     if type(result.get("native_evidence_first", False)) is not bool:
         raise ValueError("Native evidence-first option must be a boolean")
+    if result.get("native_device", "cpu") not in {"cpu", "cuda"}:
+        raise ValueError("Native device must explicitly be cpu or cuda")
+    if result["backend"] != "llama_cpp" and result.get("native_device", "cpu") != "cpu":
+        raise ValueError("The selected backend does not implement requested CUDA execution")
+    expected_device = result.get("native_expected_cuda_device")
+    if expected_device is not None and (
+        not isinstance(expected_device, str)
+        or not 1 <= len(expected_device) <= 200
+        or any(c in expected_device for c in "\r\n")
+    ):
+        raise ValueError("Expected CUDA device must be an explicit bounded device name")
     for key in ("python_executable", "model_dir"):
         if not isinstance(result.get(key), str) or "://" in result[key]:
             raise ValueError("Visual runtime and model must be explicit local paths")
@@ -323,9 +419,12 @@ def predict(request, config):
         Path(__file__).with_name("worker.py"),
         Path(__file__).with_name("download_model.py"),
         Path(__file__).with_name("native.py"),
+        Path(__file__).resolve().parents[2] / "engine/visual_analysis.py",
     ]
     implementation_before = {p.name: sha256(p) for p in code_files}
     config = validate_config(config)
+    if prepared["mode"] == "analyze" and config["strategy"] == "choice_logits":
+        raise ValueError("Source analysis requires generation, never menu-choice scoring")
     out = ROOT / "output/visual-planner/workers"
     out.mkdir(parents=True, exist_ok=True)
     directory = Path(tempfile.mkdtemp(prefix="worker-", dir=out))
@@ -432,10 +531,17 @@ def predict(request, config):
         response = read_json(directory / "response.json")
     if len(canonical(response).encode()) > MAX_RESPONSE_BYTES:
         raise ValueError("VLM response exceeds its byte budget")
-    if response["decision"].get("menu_digest") != prepared["menu"]["menu_digest"]:
-        raise ValueError("VLM decision belongs to another menu")
-    if response["decision"].get("plan_id") not in {p["plan_id"] for p in prepared["plans"]}:
-        raise ValueError("VLM returned an unknown plan")
+    if prepared["mode"] == "analyze":
+        from engine.visual_analysis import validate_analysis
+
+        if not isinstance(response, dict) or set(response) != {"analysis", "receipt"}:
+            raise ValueError("VLM source analysis must include analysis and an execution receipt")
+        validate_analysis(response["analysis"], **analysis_bindings(prepared))
+    else:
+        if response["decision"].get("menu_digest") != prepared["menu"]["menu_digest"]:
+            raise ValueError("VLM decision belongs to another menu")
+        if response["decision"].get("plan_id") not in {p["plan_id"] for p in prepared["plans"]}:
+            raise ValueError("VLM returned an unknown plan")
     if prepare_request(request)["request_digest"] != prepared["request_digest"]:
         raise ValueError("Visual inputs changed during model execution")
     implementation_after = {p.name: sha256(p) for p in code_files}

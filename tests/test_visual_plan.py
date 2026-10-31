@@ -7,6 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from engine.eval import check_contract
 from engine.layout.visual_plan import realize_plan
@@ -152,6 +153,41 @@ def test_current_asset_and_font_bytes_are_rebound_even_for_keep(tmp_path):
         menu = build_plan_menu(source, target)
         asset = copied_assets / source["elements"][0]["asset_id"]
         asset.write_bytes(asset.read_bytes() + b"changed")
+        with pytest.raises(ValueError, match="stale"):
+            realize_plan(source, target, menu, _decision(menu, "keep"))
+
+
+@pytest.mark.parametrize("initially_present", [False, True])
+def test_keep_menu_binds_missing_asset_presence_without_replacing_it(tmp_path, initially_present):
+    assets, fonts = tmp_path / "assets", tmp_path / "fonts"
+    assets.mkdir()
+    fonts.mkdir()
+    asset = assets / "optional-art.png"
+    source = {
+        "canvas": {"width": 100, "height": 100},
+        "elements": [
+            {
+                "id": "artwork-42",
+                "type": "image",
+                "asset_id": asset.name,
+                "x": 10,
+                "y": 10,
+                "width": 80,
+                "height": 80,
+            }
+        ],
+    }
+    target = {"width": 50, "height": 50}
+    if initially_present:
+        Image.new("RGB", (80, 80), "blue").save(asset)
+    with using_resources(assets, fonts):
+        menu = build_plan_menu(source, target)
+        assert asset.exists() is initially_present
+        assert realize_plan(source, target, menu, _decision(menu, "keep")) == ()
+        if initially_present:
+            asset.unlink()
+        else:
+            Image.new("RGB", (80, 80), "blue").save(asset)
         with pytest.raises(ValueError, match="stale"):
             realize_plan(source, target, menu, _decision(menu, "keep"))
 

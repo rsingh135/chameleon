@@ -34,6 +34,14 @@ def whole_view(path):
     return canvas
 
 
+def interpret_generation(raw, prepared):
+    """Invalid descriptions fail instead of entering the letter-scoring path."""
+    interpreted = parse_generated(raw, prepared)
+    if interpreted is None and prepared.get("mode") == "analyze":
+        raise ValueError("VLM source analysis was invalid; no choice fallback is allowed")
+    return interpreted
+
+
 def run(directory):
     started = time.monotonic()
     directory = Path(directory)
@@ -54,6 +62,9 @@ def run(directory):
     event("worker_started")
     request, config = read_json(directory / "request.json"), read_json(directory / "config.json")
     prepared = prepare_request(request)
+    analyze = prepared.get("mode") == "analyze"
+    if analyze and config["strategy"] == "choice_logits":
+        raise ValueError("Source analysis requires generation, never menu-choice scoring")
     model_dir = Path(config["model_dir"])
     manifest = read_json(model_dir / "verified-model.json")
     spec = next((s for s in MODELS.values() if s["revision"] == manifest.get("revision")), None)
@@ -121,8 +132,10 @@ def run(directory):
             )
             raw = processor.batch_decode(output[:, input_tokens:], skip_special_tokens=True)[0]
             event("generation_finished")
-            interpreted = parse_generated(raw, prepared)
+            interpreted = interpret_generation(raw, prepared)
         if interpreted is None:
+            if analyze:
+                raise ValueError("VLM source analysis was invalid; no choice fallback is allowed")
             # This is real model conditional scoring, not an algorithmic choice.
             # One finite letter token is evaluated for each already-known plan.
             if config["strategy"] != "choice_logits":
@@ -161,10 +174,11 @@ def run(directory):
             method = "generated_json"
     prepare_request(request)
     response = {
-        "decision": interpreted["decision"],
+        "analysis" if analyze else "decision": interpreted["analysis" if analyze else "decision"],
         "receipt": {
             "schema_version": 1,
             "executed": True,
+            "mode": prepared.get("mode", "plan"),
             "backend": "local-generative-vlm",
             "model_id": spec["repo_id"],
             "model_revision": spec["revision"],
@@ -173,7 +187,11 @@ def run(directory):
             "provider_sha256": sha256(Path(__file__).with_name("provider.py")),
             "worker_sha256": sha256(__file__),
             "request_digest": prepared["request_digest"],
+            "source_analysis_digest": digest(prepared["source_analysis"])
+            if prepared.get("source_analysis") is not None
+            else None,
             "source_digest": prepared["menu"]["source_digest"],
+            "source_render_sha256": prepared["images"][0]["sha256"],
             "menu_digest": prepared["menu"]["menu_digest"],
             "target_canvas": prepared["target"],
             "images": prepared["images"],
@@ -181,7 +199,7 @@ def run(directory):
             "input_tokens": input_tokens,
             "raw_output": raw,
             "visual_observations": interpreted["observations"],
-            "choice_letter": interpreted["choice"],
+            "choice_letter": interpreted.get("choice"),
             "decision_method": method,
             "choice_log_likelihoods": scores,
             "prompt_sha256": digest(rendered_prompt),

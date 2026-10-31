@@ -4,8 +4,10 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from engine import visual_config, visual_pipeline
+from engine.resources import DEFAULT_FONTS_DIR
 
 
 @pytest.fixture
@@ -143,6 +145,83 @@ def test_resource_hashes_reject_relative_escape_and_bind_actual_bytes(source, tm
     (tmp_path / "private.bin").write_bytes(b"source bytes")
     with pytest.raises(ValueError, match="escapes"):
         visual_pipeline._io.resource_hashes(value, assets, fonts)
+
+
+@pytest.fixture
+def missing_artwork_document(tmp_path):
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    source = {
+        "canvas": {"width": 100, "height": 100},
+        "elements": [
+            {
+                "id": "artwork-42",
+                "type": "image",
+                "asset_id": "missing-brand-art.png",
+                "x": 10,
+                "y": 10,
+                "width": 80,
+                "height": 80,
+                "z_index": 1,
+            }
+        ],
+    }
+    return source, assets
+
+
+def test_visual_pipeline_renders_missing_asset_placeholder_without_replacing_artwork(
+    missing_artwork_document, tmp_path
+):
+    source, assets = missing_artwork_document
+    original = deepcopy(source)
+    out = tmp_path / "evidence"
+    report = visual_pipeline.evaluate_visual_resize(
+        source,
+        assets,
+        DEFAULT_FONTS_DIR,
+        out,
+        targets=[source["canvas"]],
+        command=["unused-provider"],
+        provider=lambda *_args: pytest.fail("An unchanged single-image source needs no model"),
+        implementation_hashes=lambda: {"test": "unchanged"},
+    )
+    assert report["targets"][0]["status"] == "contract_valid"
+    assert report["resource_hashes"]["assets"] == {"missing-brand-art.png": {"status": "missing"}}
+    assert source == original
+    assert list(assets.iterdir()) == []
+    with Image.open(out / "source.png") as preview:
+        assert preview.size == (100, 100)
+        assert preview.convert("RGB").getpixel((10, 10)) == (150, 40, 40)
+    assert (out / "100x100" / "final.png").is_file()
+
+
+@pytest.mark.parametrize("initially_present", [False, True])
+def test_visual_pipeline_rejects_asset_presence_changes(
+    missing_artwork_document, tmp_path, initially_present
+):
+    source, assets = missing_artwork_document
+    asset = assets / source["elements"][0]["asset_id"]
+    if initially_present:
+        Image.new("RGB", (80, 80), "blue").save(asset)
+
+    def snapshot(*_args, **_kwargs):
+        if initially_present:
+            asset.unlink()
+        else:
+            Image.new("RGB", (80, 80), "blue").save(asset)
+        return {}
+
+    with pytest.raises(RuntimeError, match="resource bytes changed"):
+        visual_pipeline.evaluate_visual_resize(
+            source,
+            assets,
+            DEFAULT_FONTS_DIR,
+            tmp_path / "evidence",
+            targets=[source["canvas"]],
+            command=["unused-provider"],
+            api={"snapshot": snapshot},
+            implementation_hashes=lambda: {"test": "unchanged"},
+        )
 
 
 def test_complex_source_text_context_is_bounded_without_mutating_original(source):

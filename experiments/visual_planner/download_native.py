@@ -1,15 +1,17 @@
-"""Explicitly fetch a pinned public CPU runtime and VLM; inference never fetches."""
+"""Explicitly fetch a pinned public local runtime and VLM; inference never fetches."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import stat
 import urllib.request
 import zipfile
 from pathlib import Path
 
 from .native import (
+    CUDA_ARCHIVES,
     MODEL,
     PINNED,
     PROFILE_IDS,
@@ -22,6 +24,7 @@ from .native import (
     RUNTIME_SHA,
     RUNTIME_TAG,
     profile,
+    runtime_profile,
 )
 from .provider import ROOT, sha256
 
@@ -98,13 +101,13 @@ def fetch(path, specification):
         partial.unlink(missing_ok=True)
 
 
-def extract_runtime(archive, destination):
-    if sha256(archive) != RUNTIME_SHA:
+def extract_runtime(archive, destination, expected_sha=None, maximum_bytes=256 * 1024 * 1024):
+    if sha256(archive) != (RUNTIME_SHA if expected_sha is None else expected_sha):
         raise ValueError("Runtime ZIP differs from its pinned release")
     destination = destination.resolve()
     with zipfile.ZipFile(archive) as zipped:
         entries = zipped.infolist()
-        if len(entries) > 1024 or sum(p.file_size for p in entries) > 256 * 1024 * 1024:
+        if len(entries) > 1024 or sum(p.file_size for p in entries) > maximum_bytes:
             raise ValueError("Pinned runtime exceeds its extraction budget")
         # Validate the complete archive before writing any member.
         for member in entries:
@@ -118,20 +121,41 @@ def extract_runtime(archive, destination):
                 target.mkdir(parents=True, exist_ok=True)
             else:
                 target.parent.mkdir(parents=True, exist_ok=True)
-                target.write_bytes(zipped.read(member))
+                with zipped.open(member) as stream, target.open("wb") as output:
+                    shutil.copyfileobj(stream, output, length=1024 * 1024)
 
 
-def download(out, profile_id="smolvlm_500m"):
+def download(out, profile_id="smolvlm_500m", device="cpu"):
     specification = profile({"native_profile": profile_id})
-    sources = SOURCES if profile_id == "smolvlm_500m" else QWEN_SOURCES
+    selected_runtime = runtime_profile({"native_device": device})
+    sources = dict(SOURCES if profile_id == "smolvlm_500m" else QWEN_SOURCES)
+    if device == "cuda":
+        sources.pop(ARCHIVE)
+        sources.update(
+            {
+                name: {
+                    **value,
+                    "url": (
+                        f"https://github.com/ggml-org/llama.cpp/releases/download/{RUNTIME_TAG}/{name}"
+                    ),
+                }
+                for name, value in CUDA_ARCHIVES.items()
+            }
+        )
     out = Path(out).resolve()
     if not out.is_relative_to((ROOT / "output/visual-planner").resolve()):
         raise ValueError("Native setup belongs under this project's output/visual-planner")
     out.mkdir(parents=True, exist_ok=True)
     for name, source in sources.items():
         fetch(out / name, source)
-    runtime = out / f"runtime-{RUNTIME_TAG}"
-    extract_runtime(out / ARCHIVE, runtime)
+    runtime = out / selected_runtime["directory"]
+    for archive, expected in selected_runtime["archives"].items():
+        extract_runtime(
+            out / archive,
+            runtime,
+            expected_sha=expected,
+            maximum_bytes=(2048 if device == "cuda" else 256) * 1024 * 1024,
+        )
     manifest = {
         "schema_version": 1,
         "profile": profile_id,
@@ -139,6 +163,7 @@ def download(out, profile_id="smolvlm_500m"):
         "base_model_id": specification["base_model_id"],
         "quantizer": specification["quantizer"],
         "runtime_tag": RUNTIME_TAG,
+        "native_device": device,
         "sources": sources,
         "files": {
             str(p.relative_to(runtime)): {"sha256": sha256(p), "bytes": p.stat().st_size}
@@ -149,10 +174,13 @@ def download(out, profile_id="smolvlm_500m"):
     manifest_name = (
         "verified-native.json" if profile_id == "smolvlm_500m" else "verified-native-qwen.json"
     )
+    if device == "cuda":
+        manifest_name = manifest_name.replace(".json", "-cuda.json")
     (out / manifest_name).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return {
         "model_dir": str(out),
         "native_profile": profile_id,
+        "native_device": device,
         "runtime_tag": RUNTIME_TAG,
         "model_revision": specification["revision"],
     }
@@ -162,8 +190,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "output/visual-planner/native")
     parser.add_argument("--profile", choices=PROFILE_IDS, default="smolvlm_500m")
+    parser.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     args = parser.parse_args()
-    print(json.dumps(download(args.out, args.profile)), flush=True)
+    print(json.dumps(download(args.out, args.profile, args.device)), flush=True)
 
 
 if __name__ == "__main__":

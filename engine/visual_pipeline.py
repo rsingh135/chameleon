@@ -96,9 +96,17 @@ class _EvidenceIO:
             if not isinstance(asset, str) or not asset or PureWindowsPath(asset).drive:
                 raise ValueError("Image assets must be relative local paths")
             path = (assets_dir / asset.replace("\\", "/")).resolve()
-            if not path.is_relative_to(assets_dir) or not path.is_file():
-                raise ValueError("Image asset is missing or escapes its resource directory")
-            assets[asset] = _EvidenceIO._sha(path)
+            if not path.is_relative_to(assets_dir):
+                raise ValueError("Image asset escapes its resource directory")
+            if not path.exists():
+                # The supplied Level 3 sample deliberately references absent
+                # artwork. Preserve that state for the renderer's existing
+                # placeholder and detect if a resource appears during the run.
+                assets[asset] = {"status": "missing"}
+            elif not path.is_file():
+                raise ValueError("Image asset must reference a file")
+            else:
+                assets[asset] = _EvidenceIO._sha(path)
         for path in sorted(fonts_dir.rglob("*")):
             if not path.is_file() or path.suffix.lower() not in {".ttf", ".otf", ".json"}:
                 continue
@@ -230,6 +238,7 @@ def resize_configured(
             timeout=operator["timeout_seconds"],
             strict_stage_one=strict_stage_one,
             critic_enabled=operator["critic"],
+            analyzer_command=operator.get("analyzer_command"),
         )
     row = report["targets"][0]
     if row["status"] != "contract_valid" or not report["implementation_unchanged"]:
@@ -265,6 +274,7 @@ def resize_configured(
         "evidence_report": str(directory / "report.json"),
         "implementation_unchanged": report["implementation_unchanged"],
         "strict_stage_one": strict_stage_one,
+        "analysis": deepcopy(row.get("analysis", {"invoked": False})),
     }
     return plan
 
@@ -534,7 +544,7 @@ def _validated_result(result, menu):
     return deepcopy(decision)
 
 
-def make_request(source, source_render, menu, *, mode, renders=None):
+def make_request(source, source_render, menu, *, mode, renders=None, source_analysis=None):
     if mode not in {"plan", "critique"}:
         raise ValueError("Use plan or critique mode")
     request = {
@@ -550,6 +560,16 @@ def make_request(source, source_render, menu, *, mode, renders=None):
     for plan in request["plans"]:
         if renders and plan["plan_id"] in renders:
             plan["render"] = deepcopy(renders[plan["plan_id"]])
+    if source_analysis is not None:
+        from engine.visual_analysis import validate_analysis
+
+        request["source_analysis"] = validate_analysis(
+            source_analysis,
+            source_digest=menu["source_digest"],
+            source_render_sha256=source_render["sha256"],
+            known_element_ids=[row["id"] for row in request["source_summary"]["elements"]],
+        )
+        request["source_analysis_digest"] = _io._digest(request["source_analysis"])
     request["request_digest"] = _io._digest(request)
     return request
 
@@ -612,11 +632,91 @@ def _provider_stage(command, request, menu, directory, name, timeout, provider=N
         expected_images = 3 if request["mode"] == "critique" else 1
         if result["receipt"].get("input_image_count") != expected_images:
             raise ValueError("Provider did not attest all required source/candidate image inputs")
+        if "source_analysis" in request:
+            expected = {
+                "source_analysis_digest": request["source_analysis_digest"],
+                "request_digest": _io._digest(request),
+                "source_digest": request["source_digest"],
+                "source_render_sha256": request["source_render"]["sha256"],
+            }
+            if any(result["receipt"].get(key) != value for key, value in expected.items()):
+                raise ValueError("Organizer receipt does not bind the supplied source analysis")
         trace.update(proposal_valid=True, receipt=result["receipt"], decision=decision)
     except (ValueError, OSError, UnicodeError, RecursionError) as exc:
         trace["fallback_reason"] = str(exc)[:600]
     _io._write(directory / f"{name}-trace.json", trace)
     return trace
+
+
+def _analysis_stage(command, source, source_render, directory, timeout, provider=None):
+    """Run source-only perception once; observations never grant layout authority."""
+    from engine.visual_analysis import validate_analysis
+    from engine.visual_plan import source_digest
+
+    summary = _source_summary(source)
+    request = {
+        "schema_version": 1,
+        "mode": "analyze",
+        "source_digest": source_digest(source),
+        "source_render": deepcopy(source_render),
+        "source_summary": summary,
+    }
+    # CLI callers may reuse an evidence directory. Never leave a prior valid
+    # sidecar beside a failed/abstained current run.
+    owned = [
+        directory / name
+        for name in (
+            "analysis-request.json",
+            "analysis-response.json",
+            "analysis-trace.json",
+            "source-analysis.json",
+        )
+    ]
+    if any(path.is_symlink() for path in owned):
+        raise ValueError("Analysis evidence cannot overwrite a symlink target")
+    for path in owned:
+        path.unlink(missing_ok=True)
+    _io._write(directory / "analysis-request.json", request)
+    trace = {"invoked": True, "model_executed": False, "analysis_valid": False, "abstained": False}
+    analysis = None
+    try:
+        result = (provider or run_provider)(command, request, timeout)
+        _io._write(directory / "analysis-response.json", result)
+        if not isinstance(result, dict) or set(result) != {"analysis", "receipt"}:
+            raise ValueError("Source analyzer must return analysis and execution receipt")
+        receipt = result["receipt"]
+        if not isinstance(receipt, dict) or receipt.get("executed") is not True:
+            raise ValueError("Source analyzer did not attest model execution")
+        trace.update(model_executed=True, receipt=deepcopy(receipt))
+        expected = {
+            "request_digest": _io._digest(request),
+            "source_digest": request["source_digest"],
+            "source_render_sha256": source_render["sha256"],
+            "input_image_count": 1,
+        }
+        if type(receipt.get("input_image_count")) is not int or any(
+            receipt.get(key) != value for key, value in expected.items()
+        ):
+            raise ValueError("Source analyzer receipt does not bind the exact source image/request")
+        analysis = validate_analysis(
+            result["analysis"],
+            source_digest=request["source_digest"],
+            source_render_sha256=source_render["sha256"],
+            known_element_ids=[row["id"] for row in summary["elements"]],
+        )
+        trace.update(
+            analysis_valid=True,
+            abstained=analysis["abstain"],
+            analysis_digest=_io._digest(analysis),
+        )
+        _io._write(directory / "source-analysis.json", analysis)
+        if analysis["abstain"]:
+            trace["fallback_reason"] = "Source analyzer abstained; deterministic layout retained"
+    except (ValueError, OSError, UnicodeError, RecursionError, RuntimeError, MemoryError) as exc:
+        analysis = None
+        trace["fallback_reason"] = str(exc)[:600]
+    _io._write(directory / "analysis-trace.json", trace)
+    return analysis, trace
 
 
 def evaluate_visual_resize(
@@ -634,6 +734,7 @@ def evaluate_visual_resize(
     provider=None,
     implementation_hashes=None,
     critic_enabled=True,
+    analyzer_command=None,
 ):
     from engine.eval import check_contract
     from engine.resources import using_resources
@@ -643,6 +744,8 @@ def evaluate_visual_resize(
     if len({(t["width"], t["height"]) for t in targets}) != len(targets):
         raise ValueError("Duplicate targets would overwrite evidence")
     _io.model_command(command)
+    if analyzer_command is not None:
+        _io.model_command(analyzer_command)
     _validate_request({"source": source, "target_canvas": source["canvas"]})
     out = Path(out).resolve()
     if any(out.is_relative_to(Path(root).resolve()) for root in (assets_dir, fonts_dir)):
@@ -662,6 +765,15 @@ def evaluate_visual_resize(
         _io._write(out / "source.json", source)
         source_render = _io._render(source, out / "source.png")
         source_render["path"] = str(out / "source.png")
+        analysis, analysis_trace = None, {"invoked": False, "model_executed": False}
+        if analyzer_command is not None:
+            analysis, analysis_trace = _analysis_stage(
+                analyzer_command, source, source_render, out, timeout, provider
+            )
+            unchanged()
+        analysis_ready = analyzer_command is None or (
+            analysis_trace.get("analysis_valid") and not analysis_trace.get("abstained")
+        )
         for target in targets:
             _validate_request({"source": source, "target_canvas": target})
             name = f"{target['width']}x{target['height']}"
@@ -676,8 +788,10 @@ def evaluate_visual_resize(
             _io._write(directory / "plan-menu.json", menu)
             planner = {"invoked": False, "model_executed": False, "proposal_valid": False}
             snapshot, selected = baseline, baseline_row
-            if menu.get("status") == "ready" and len(menu.get("plans", [])) > 1:
-                request = make_request(source, source_render, menu, mode="plan")
+            if analysis_ready and menu.get("status") == "ready" and len(menu.get("plans", [])) > 1:
+                request = make_request(
+                    source, source_render, menu, mode="plan", source_analysis=analysis
+                )
                 planner = _provider_stage(
                     command, request, menu, directory, "planner", timeout, provider
                 )
@@ -697,6 +811,8 @@ def evaluate_visual_resize(
             else:
                 planner["fallback_reason"] = (
                     f"No planning choice: {menu.get('status', 'unsupported')}"
+                    if analysis_ready
+                    else analysis_trace["fallback_reason"]
                 )
             _io._write(directory / "planned-snapshot.json", snapshot)
             baseline_ids = {row["candidate_id"] for row in baseline["candidates"]}
@@ -706,7 +822,7 @@ def evaluate_visual_resize(
             _io._write(directory / "critic-menu.json", critic_menu)
             critic = {"invoked": False, "model_executed": False, "proposal_valid": False}
             selection_trace = {}
-            if critic_enabled and len(critic_menu.get("plans", [])) >= 2:
+            if analysis_ready and critic_enabled and len(critic_menu.get("plans", [])) >= 2:
                 renders = {}
                 for choice in critic_menu["plans"]:
                     row = next(
@@ -716,7 +832,12 @@ def evaluate_visual_resize(
                     render["path"] = str(directory / render["path"])
                     renders[choice["plan_id"]] = render
                 request = make_request(
-                    source, source_render, critic_menu, mode="critique", renders=renders
+                    source,
+                    source_render,
+                    critic_menu,
+                    mode="critique",
+                    renders=renders,
+                    source_analysis=analysis,
                 )
                 critic = _provider_stage(
                     command, request, critic_menu, directory, "critic", timeout, provider
@@ -731,7 +852,9 @@ def evaluate_visual_resize(
                         critic["fallback_reason"] = str(exc)[:600]
             else:
                 critic["fallback_reason"] = (
-                    "critic_disabled: operator configuration"
+                    analysis_trace["fallback_reason"]
+                    if not analysis_ready
+                    else "critic_disabled: operator configuration"
                     if not critic_enabled
                     else "no_choice: fewer than two distinct admitted candidates"
                 )
@@ -758,7 +881,7 @@ def evaluate_visual_resize(
             selected_new = final_id in new_ids
             reasons = [
                 stage["fallback_reason"]
-                for stage in (planner, critic)
+                for stage in (analysis_trace, planner, critic)
                 if stage.get("fallback_reason")
             ]
             record = {
@@ -767,7 +890,10 @@ def evaluate_visual_resize(
                 "final_design_digest": _io._digest(selected["design"]),
                 "target_canvas": target,
                 "status": "contract_valid" if not violations else "contract_failed",
-                "model_executed": planner["model_executed"] or critic["model_executed"],
+                "model_executed": any(
+                    stage["model_executed"] for stage in (analysis_trace, planner, critic)
+                ),
+                "analysis": deepcopy(analysis_trace),
                 "proposal_valid": planner["proposal_valid"],
                 "new_candidates_generated": bool(new_ids),
                 "new_candidate_ids": sorted(new_ids),
@@ -808,7 +934,18 @@ def evaluate_visual_resize(
         "implementation_after_digest": _io._digest(after),
         "implementation_unchanged": implementation == after,
         "provider_command_digest": _io._digest(_io.model_command(command)),
-        "model_receipts": [
+        "analyzer_command_digest": (
+            _io._digest(_io.model_command(analyzer_command))
+            if analyzer_command is not None
+            else None
+        ),
+        "analysis": deepcopy(analysis_trace),
+        "model_receipts": (
+            [{"target_canvas": None, "stage": "analysis", "receipt": analysis_trace["receipt"]}]
+            if "receipt" in analysis_trace
+            else []
+        )
+        + [
             {"target_canvas": row["target_canvas"], "stage": name, "receipt": row[name]["receipt"]}
             for row in records
             for name in ("planner", "critic")

@@ -1,7 +1,8 @@
-"""Pinned project-local llama.cpp CPU backend; no server or runtime fetching."""
+"""Pinned project-local llama.cpp CPU/CUDA backend; no runtime fetching."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import zipfile
@@ -13,6 +14,18 @@ from .worker import whole_view
 REVISION = "72e986006ef53e37cdd3f6d4241c90b0f01df376"
 RUNTIME_TAG = "b12017"
 RUNTIME_SHA = "e89d351a603e91a9e3e944c4c4c4ccf5b4af6acbd44c5434b61bacfa3999b1f6"
+CUDA_ARCHIVES = {
+    "llama-b12017-bin-win-cuda-12.4-x64.zip": {
+        "sha256": "294eb8f846bdcd21a7b59b8483fac56fc44f14f7d7580107022a911ee76fab48",
+        "bytes": 279_943_357,
+        "license": "MIT and bundled component notices",
+    },
+    "cudart-llama-bin-win-cuda-12.4-x64.zip": {
+        "sha256": "8c79a9b226de4b3cacfd1f83d24f962d0773be79f1e7b75c6af4ded7e32ae1d6",
+        "bytes": 391_443_627,
+        "license": "NVIDIA CUDA Toolkit redistribution terms",
+    },
+}
 MODEL = "SmolVLM-500M-Instruct-Q8_0.gguf"
 PROJECTOR = "mmproj-SmolVLM-500M-Instruct-f16.gguf"
 PINNED = {
@@ -35,6 +48,69 @@ QWEN_TEMPLATE = (
     "{% endfor %}{% if add_generation_prompt %}"
     "{{ '<|im_start|>assistant\\n<think>\\n\\n</think>\\n\\n' }}{% endif %}"
 )
+
+
+def runtime_profile(config):
+    device = config.get("native_device", "cpu")
+    if device == "cpu":
+        return {
+            "device": device,
+            "directory": f"runtime-{RUNTIME_TAG}",
+            "archives": {f"llama-{RUNTIME_TAG}-bin-win-cpu-x64.zip": RUNTIME_SHA},
+        }
+    if device == "cuda":
+        return {
+            "device": device,
+            "directory": f"runtime-{RUNTIME_TAG}-cuda-12.4",
+            "archives": {name: value["sha256"] for name, value in CUDA_ARCHIVES.items()},
+        }
+    raise ValueError("Native device must explicitly be cpu or cuda")
+
+
+def archive_member_sha256(zipped, member):
+    value = hashlib.sha256()
+    with zipped.open(member) as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            value.update(block)
+    return value.hexdigest()
+
+
+def cuda_proof(stderr, config):
+    """CUDA selection alone is insufficient: require actual language and vision offload."""
+    devices = re.findall(r"Device\s+(\d+):\s*([^,\r\n]+),\s*compute capability", stderr)
+    selected = next((name.strip() for index, name in devices if index == "0"), None)
+    if selected is None:
+        actual = re.search(r"using device CUDA0 \(([^)\r\n]+)\)", stderr)
+        selected = actual.group(1).strip() if actual else None
+    layers = re.findall(r"offloaded\s+(\d+)/(\d+)\s+layers to GPU", stderr)
+    vision = [
+        line
+        for line in stderr.splitlines()
+        if "CUDA0" in line
+        and re.search(r"clip|vision|mtmd", line, re.IGNORECASE)
+        and re.search(r"using|backend|buffer", line, re.IGNORECASE)
+    ]
+    if not selected or not layers or not vision:
+        raise ValueError("Requested CUDA execution lacks device, layer, or vision-backend proof")
+    offloaded, total = map(int, layers[-1])
+    if not total or offloaded != total:
+        raise ValueError("Requested CUDA all-layer offload fell back partially to CPU")
+    expected = config.get("native_expected_cuda_device")
+    if expected is not None and selected != expected:
+        raise ValueError("Native CUDA selected a different device from the operator config")
+    return {
+        "cuda_execution_verified": True,
+        "cuda_device": {"index": 0, "backend": "CUDA0", "name": selected},
+        "gpu_layers": offloaded,
+        "gpu_layers_total": total,
+        "image_encoder_backend": "CUDA0",
+        "projector_offloaded": True,
+        "cuda_log_excerpt": [
+            line
+            for line in stderr.splitlines()
+            if line in vision or "layers to GPU" in line or "Device 0:" in line
+        ],
+    }
 
 
 def profile(config):
@@ -68,28 +144,30 @@ def profile(config):
 
 def prepare(prepared, config, directory):
     specification = profile(config)
+    selected_runtime = runtime_profile(config)
     root = Path(config["model_dir"]).resolve()
-    runtime = root / f"runtime-{RUNTIME_TAG}"
-    archive = root / f"llama-{RUNTIME_TAG}-bin-win-cpu-x64.zip"
-    if sha256(archive) != RUNTIME_SHA:
-        raise ValueError("Native runtime ZIP differs from the official pinned release")
+    runtime = root / selected_runtime["directory"]
     for name, expected in specification["weights"].items():
         if sha256(root / name) != expected:
             raise ValueError("Native VLM/projector differs from the official pinned weights")
     # Verify extracted executable/DLLs against the authenticated archive, not a
     # self-reported mutable sidecar. No archive content is executed at this step.
-    with zipfile.ZipFile(archive) as zipped:
-        for item in zipped.infolist():
-            if item.is_dir():
-                continue
-            path = (runtime / item.filename).resolve()
-            if not path.is_relative_to(runtime.resolve()) or not path.is_file():
-                raise ValueError("Native runtime file leaves its pinned directory")
-            import hashlib
-
-            expected = hashlib.sha256(zipped.read(item)).hexdigest()
-            if sha256(path) != expected:
-                raise ValueError("Native executable or DLL differs from the pinned archive")
+    binary_hashes = {}
+    for name, expected_zip_sha in selected_runtime["archives"].items():
+        archive = root / name
+        if sha256(archive) != expected_zip_sha:
+            raise ValueError("Native runtime ZIP differs from the official pinned release")
+        with zipfile.ZipFile(archive) as zipped:
+            for item in zipped.infolist():
+                if item.is_dir():
+                    continue
+                path = (runtime / item.filename).resolve()
+                if not path.is_relative_to(runtime.resolve()) or not path.is_file():
+                    raise ValueError("Native runtime file leaves its pinned directory")
+                expected = archive_member_sha256(zipped, item)
+                if sha256(path) != expected:
+                    raise ValueError("Native executable or DLL differs from the pinned archive")
+                binary_hashes[item.filename] = expected
     views = []
     for i, image in enumerate(prepared["images"]):
         path = directory / f"view-{i}.png"
@@ -99,11 +177,13 @@ def prepare(prepared, config, directory):
     # image. Explicit labels beside the markers keep the three-view order clear.
     media = "\n".join(f"{view['purpose']}: <__media__>" for view in views)
     question = media + "\n" + prompt(prepared).split("\nReply with JSON only:", 1)[0]
-    question += (
-        "\nReply with a JSON object containing choice, observations and reason. "
-        "Use the best option letter. Each prose field must use at most eight words."
-    )
-    evidence_first = config.get("native_evidence_first", False)
+    analyze = prepared.get("mode") == "analyze"
+    if not analyze:
+        question += (
+            "\nReply with a JSON object containing choice, observations and reason. "
+            "Use the best option letter. Each prose field must use at most eight words."
+        )
+    evidence_first = not analyze and config.get("native_evidence_first", False)
     if evidence_first:
         question += (
             " First describe visible subjects and image coverage in observations, "
@@ -120,6 +200,10 @@ def prepare(prepared, config, directory):
         "required": ["choice", "observations", "reason"],
         "additionalProperties": False,
     }
+    if analyze:
+        from engine.visual_analysis import analysis_json_schema
+
+        schema = analysis_json_schema(prepared["known_element_ids"])
     if evidence_first:
         order = ("observations", "reason", "choice")
         schema["properties"] = {key: schema["properties"][key] for key in order}
@@ -138,9 +222,8 @@ def prepare(prepared, config, directory):
         str(root / specification["model"]),
         "--mmproj",
         str(root / specification["projector"]),
-        "--no-mmproj-offload",
         "-ngl",
-        "0",
+        "all" if selected_runtime["device"] == "cuda" else "0",
         "--no-warmup",
         "-t",
         str(config["threads"]),
@@ -157,6 +240,12 @@ def prepare(prepared, config, directory):
         "-p",
         question,
     ]
+    if selected_runtime["device"] == "cuda":
+        command.extend(
+            ["--device", "CUDA0", "--mmproj-device", "CUDA0", "--split-mode", "none", "-fit", "off"]
+        )
+    else:
+        command.append("--no-mmproj-offload")
     if specification["name"] == "qwen35_08b":
         # The default 512-token physical batch allocates a large CPU scratch
         # buffer. Bound it so the engine and this owned worker can coexist.
@@ -179,7 +268,7 @@ def prepare(prepared, config, directory):
             "response_schema_sha256": sha256(schema_file),
             "response_field_order": list(schema["properties"]),
             "evidence_first": evidence_first,
-            "prose_character_limit": 32 if evidence_first else 64,
+            "prose_character_limit": 160 if analyze else (32 if evidence_first else 64),
             "physical_ubatch_size": 64 if specification["name"] == "qwen35_08b" else None,
             "native_profile": specification["name"],
             "chat_template_policy": (
@@ -190,7 +279,11 @@ def prepare(prepared, config, directory):
             "chat_template_sha256": (
                 digest(QWEN_TEMPLATE) if specification["name"] == "qwen35_08b" else None
             ),
-            "runtime_sha256": RUNTIME_SHA,
+            "native_device_requested": selected_runtime["device"],
+            "gpu_layers_requested": "all" if selected_runtime["device"] == "cuda" else 0,
+            "runtime_sha256": next(iter(selected_runtime["archives"].values())),
+            "runtime_archives": selected_runtime["archives"],
+            "runtime_binary_sha256": binary_hashes,
             "runtime_executable_sha256": sha256(runtime / "llama-mtmd-cli.exe"),
         },
     )
@@ -209,6 +302,12 @@ def result(prepared, config, directory, identity):
         raise ValueError("Native VLM output exceeded its byte budget")
     raw = path.read_text(encoding="utf-8-sig", errors="replace").strip()
     stderr = (directory / "stderr.log").read_text(encoding="utf-8", errors="replace")
+    cuda = config.get("native_device", "cpu") == "cuda"
+    accelerator = (
+        cuda_proof(stderr, config)
+        if cuda
+        else {"gpu_layers": 0, "projector_offloaded": False, "image_encoder_backend": "CPU"}
+    )
     if "only last value will be used" in stderr or "Number of media markers" in stderr:
         raise ValueError("Native CLI did not bind the requested distinct image sequence")
     encoded = re.findall(r"encoding mtmd batch, n_chunks = (\d+)", stderr)
@@ -220,25 +319,34 @@ def result(prepared, config, directory, identity):
             raise ValueError("Model input view changed during native inference")
     parsed = parse_generated(raw, prepared)
     if parsed is None:
-        raise ValueError(f"Native VLM did not produce a valid known choice; inspect {path}")
+        raise ValueError(f"Native VLM did not produce valid structured output; inspect {path}")
+    analyze = prepared.get("mode") == "analyze"
     return {
-        "decision": parsed["decision"],
+        "analysis" if analyze else "decision": parsed["analysis" if analyze else "decision"],
         "receipt": {
             "schema_version": 1,
             "executed": True,
-            "backend": "llama.cpp-cpu",
+            "mode": prepared.get("mode", "plan"),
+            "backend": "llama.cpp-cuda" if cuda else "llama.cpp-cpu",
             "model_id": specification["repo_id"],
             "model_revision": specification["revision"],
             "base_model_id": specification["base_model_id"],
             "quantizer": specification["quantizer"],
             "model_license": "Apache-2.0",
             "runtime_license": "MIT",
+            "runtime_dependency_license": "NVIDIA CUDA Toolkit redistribution terms"
+            if cuda
+            else None,
             "weights": specification["weights"],
             "runtime_tag": RUNTIME_TAG,
             **identity,
             "source_digest": prepared["menu"]["source_digest"],
+            "source_render_sha256": prepared["images"][0]["sha256"],
             "menu_digest": prepared["menu"]["menu_digest"],
             "request_digest": prepared["request_digest"],
+            "source_analysis_digest": digest(prepared["source_analysis"])
+            if prepared.get("source_analysis") is not None
+            else None,
             "target_canvas": prepared["target"],
             "images": prepared["images"],
             "input_image_count": len(prepared["images"]),
@@ -252,12 +360,11 @@ def result(prepared, config, directory, identity):
             "max_new_tokens": config["max_new_tokens"],
             "raw_output": raw,
             "visual_observations": parsed["observations"],
-            "choice_letter": parsed["choice"],
+            "choice_letter": parsed.get("choice"),
             "decision_method": "schema_constrained_vlm_generation",
-            "device": "cpu",
+            "device": "cuda:0" if cuda else "cpu",
             "threads": config["threads"],
-            "gpu_layers": 0,
-            "projector_offloaded": False,
+            **accelerator,
             "quality_validated": False,
             "regions_predicted": False,
             "crop_authority": False,

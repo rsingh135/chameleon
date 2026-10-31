@@ -60,7 +60,10 @@ def _resources(source):
         path = (root / name.replace("\\", "/")).resolve()
         if not path.is_relative_to(root):
             raise ValueError("Visual-plan asset leaves its resource directory")
-        assets[name] = _file_hash(path, 32_000_000)
+        # Bind an absent supplied asset just as explicitly as existing bytes.
+        # The renderer already supports missing artwork with a placeholder;
+        # adding or removing that artwork must still invalidate this menu.
+        assets[name] = _file_hash(path, 32_000_000) if path.exists() else {"status": "missing"}
     root = current.fonts_dir.resolve()
     if not root.is_dir():
         raise ValueError("Visual-plan font resources are missing")

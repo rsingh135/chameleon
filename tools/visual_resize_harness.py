@@ -164,6 +164,7 @@ def inspect_visual_resize(
     source_id=None,
     reviews=None,
     strict_stage_one=True,
+    analyzer_command=None,
 ):
     reject_reserved_source(source, source_id)
     report = pipeline.evaluate_visual_resize(
@@ -176,6 +177,7 @@ def inspect_visual_resize(
         timeout=timeout,
         source_id=source_id,
         strict_stage_one=strict_stage_one,
+        analyzer_command=analyzer_command,
         api=_engine_api(),
         provider=run_provider,
         implementation_hashes=_implementation_hashes,
@@ -200,6 +202,9 @@ def main(argv=None):
     parser.add_argument("--source-id")
     parser.add_argument("--target", type=scene.target_dimensions, action="append", required=True)
     parser.add_argument("--model-command", required=True, help="Explicit local JSON argv; no shell")
+    parser.add_argument(
+        "--analyzer-command", help="Optional source-only local VLM JSON argv before organizing"
+    )
     parser.add_argument("--model-timeout", type=float, default=180)
     parser.add_argument("--reviews", type=Path, help="Optional PNG-bound visual review mapping")
     parser.add_argument("--out", type=Path, default=ROOT / "output/visual-resize")
@@ -232,6 +237,7 @@ def main(argv=None):
             args.out,
             targets=args.target,
             command=args.model_command,
+            analyzer_command=args.analyzer_command,
             timeout=args.model_timeout,
             source_id=args.source_id or (args.prepared.name if args.prepared else None),
             reviews=scene._read(args.reviews) if args.reviews else None,

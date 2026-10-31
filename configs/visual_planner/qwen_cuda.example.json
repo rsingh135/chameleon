@@ -1,0 +1,13 @@
+{
+  "backend": "llama_cpp",
+  "native_profile": "qwen35_08b",
+  "native_device": "cuda",
+  "native_evidence_first": true,
+  "python_executable": ".venv/Scripts/python.exe",
+  "model_dir": "output/visual-planner/native",
+  "max_seconds": 180,
+  "max_new_tokens": 96,
+  "threads": 4,
+  "max_rss_mb": 2662,
+  "minimum_available_mb": 256
+}

@@ -152,3 +152,27 @@ def test_nested_provider_mode_types_raise_validation_error(configured, change):
     provider.write_text(json.dumps(data))
     with pytest.raises(ValueError):
         module.resolve_config(config)
+
+
+def test_analyzer_has_independent_configuration_and_execution_identity(configured):
+    config, provider, _ = configured
+    analyzer_path = provider.with_name("analyzer.json")
+    data = json.loads(provider.read_text())
+    data["max_new_tokens"] = 96
+    analyzer_path.write_text(json.dumps(data))
+    config["analyzer_command"] = [*config["provider_command"][:-1], str(analyzer_path)]
+    resolved, initial = module.resolve_config(config)
+    assert resolved["analyzer_command"][-1] == str(analyzer_path)
+    assert initial["analyzer"]["provider_configuration"]["max_new_tokens"] == 96
+    data["max_new_tokens"] = 128
+    analyzer_path.write_text(json.dumps(data))
+    _, changed = module.resolve_config(config)
+    assert initial["digest"] != changed["digest"]
+    assert initial["provider_configuration_sha256"] == changed["provider_configuration_sha256"]
+
+
+def test_analyzer_command_retains_same_local_execution_boundary(configured):
+    config, _, _ = configured
+    config["analyzer_command"] = [sys.executable, "-c", "print('untrusted')"]
+    with pytest.raises(ValueError, match="fixed local"):
+        module.resolve_config(config)

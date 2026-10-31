@@ -329,3 +329,99 @@ def test_native_rejects_a_changed_schema_instead_of_reusing_its_receipt(native_c
     (directory / "response-schema.json").write_text('{"type":"string"}')
     with pytest.raises(ValueError, match="schema changed"):
         native.result(prepared, config, directory, identity)
+
+
+@pytest.fixture
+def cuda_call(native_call, monkeypatch):
+    prepared, config, directory, _, _ = native_call
+    config["native_device"] = "cuda"
+    root = provider.Path(config["model_dir"])
+    runtime = root / f"runtime-{native.RUNTIME_TAG}-cuda-12.4"
+    runtime.mkdir()
+    archives = {}
+    for index, name in enumerate(native.CUDA_ARCHIVES):
+        member = "llama-mtmd-cli.exe" if index == 0 else "cublas64_12.dll"
+        (runtime / member).write_bytes(b"not executable: GPU command construction test")
+        archive = root / name
+        with zipfile.ZipFile(archive, "w") as zipped:
+            zipped.write(runtime / member, member)
+        archives[name] = {"sha256": provider.sha256(archive), "bytes": archive.stat().st_size}
+    monkeypatch.setattr(native, "CUDA_ARCHIVES", archives)
+    command, _, identity = native.prepare(prepared, config, directory)
+    return prepared, config, directory, command, identity
+
+
+def test_cuda_command_requires_explicit_language_and_vision_offload(cuda_call):
+    _, _, _, command, identity = cuda_call
+    assert command[command.index("--device") + 1] == "CUDA0"
+    assert command[command.index("--mmproj-device") + 1] == "CUDA0"
+    assert command[command.index("-ngl") + 1] == "all"
+    assert command[command.index("-fit") + 1] == "off"
+    assert "--no-mmproj-offload" not in command
+    assert identity["native_device_requested"] == "cuda"
+    assert len(identity["runtime_archives"]) == 2
+    assert "cublas64_12.dll" in identity["runtime_binary_sha256"]
+
+
+CUDA_LOG = (
+    "ggml_cuda_init: Device 0: NVIDIA GeForce RTX 4070 Laptop GPU, compute capability 8.9\n"
+    "load_tensors: offloaded 25/25 layers to GPU\n"
+    "clip_model_loader: using CUDA0 backend\n"
+)
+
+
+def test_cuda_receipt_requires_real_log_proof_even_for_valid_generated_json(cuda_call):
+    prepared, config, directory, _, identity = cuda_call
+    (directory / "stdout.log").write_text('{"choice":"B"}')
+    encoding = "encoding mtmd batch, n_chunks = 6\nmtmd batch encoding done in 50 ms\n"
+    (directory / "stderr.log").write_text(encoding)
+    with pytest.raises(ValueError, match="CUDA execution lacks"):
+        native.result(prepared, config, directory, identity)
+    (directory / "stderr.log").write_text(CUDA_LOG + encoding)
+    receipt = native.result(prepared, config, directory, identity)["receipt"]
+    assert receipt["device"] == "cuda:0"
+    assert receipt["cuda_execution_verified"] is True
+    assert receipt["gpu_layers"] == receipt["gpu_layers_total"] == 25
+    assert receipt["image_encoder_backend"] == "CUDA0"
+    assert receipt["projector_offloaded"] is True
+
+
+def test_cuda_proof_rejects_partial_offload_and_wrong_device():
+    with pytest.raises(ValueError, match="partially"):
+        native.cuda_proof(CUDA_LOG.replace("25/25", "12/25"), {})
+    with pytest.raises(ValueError, match="different device"):
+        native.cuda_proof(CUDA_LOG, {"native_expected_cuda_device": "Different GPU"})
+
+
+def test_cuda_proof_accepts_actual_b12017_device_and_vision_log_format():
+    log = (
+        "llama_prepare_model_devices: using device CUDA0 "
+        "(NVIDIA GeForce RTX 4070 Laptop GPU) (0000:01:00.0) - 7054 MiB free\n"
+        "load_tensors: offloaded 26/26 layers to GPU\n"
+        "clip_ctx: CLIP using CUDA0 backend\n"
+    )
+    proof = native.cuda_proof(log, {})
+    assert proof["cuda_device"]["name"] == "NVIDIA GeForce RTX 4070 Laptop GPU"
+    assert proof["gpu_layers"] == proof["gpu_layers_total"] == 26
+    assert proof["image_encoder_backend"] == "CUDA0"
+
+
+def test_transformers_backend_cannot_silently_ignore_cuda_request(tmp_path):
+    with pytest.raises(ValueError, match="does not implement"):
+        provider.validate_config(
+            {
+                "python_executable": sys.executable,
+                "model_dir": str(tmp_path),
+                "native_device": "cuda",
+            }
+        )
+
+
+def test_native_archive_verification_streams_members(native_call, monkeypatch):
+    prepared, config, directory, _, _ = native_call
+
+    def forbid_whole_member_read(*args, **kwargs):
+        raise AssertionError("Runtime members must be streamed")
+
+    monkeypatch.setattr(zipfile.ZipFile, "read", forbid_whole_member_read)
+    native.prepare(prepared, config, directory)

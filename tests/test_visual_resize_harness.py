@@ -7,6 +7,7 @@ import pytest
 from PIL import Image
 
 from engine.resources import DEFAULT_FONTS_DIR
+from engine.visual_plan import source_digest
 from tools import scene_harness as scene
 from tools import visual_resize_harness as harness
 
@@ -54,7 +55,7 @@ class FakeEngine:
     def menu(self, source, target):
         value = {
             "schema_version": 1,
-            "source_digest": scene._digest(source),
+            "source_digest": source_digest(source),
             "target_canvas": target,
             "status": self.status,
             "plans": [
@@ -90,7 +91,7 @@ class FakeEngine:
                 winner = changed["candidate_id"]
         return {
             "schema_version": 1,
-            "source_digest": scene._digest(source),
+            "source_digest": source_digest(source),
             "target_canvas": target,
             "baseline_candidate_id": winner,
             "admitted_finalist_ids": admitted,
@@ -139,6 +140,10 @@ def model_result(request, choice=None):
             "executed": True,
             "backend": "test_stub",
             "input_image_count": 3 if request["mode"] == "critique" else 1,
+            "source_analysis_digest": request.get("source_analysis_digest"),
+            "request_digest": scene._digest(request),
+            "source_digest": request["source_digest"],
+            "source_render_sha256": request["source_render"]["sha256"],
         },
     }
 
@@ -354,3 +359,152 @@ def test_visual_improvement_requires_hash_bound_review(document, tmp_path, monke
     assert row["quality_improved"] is None
     harness._attach_review(review, row)
     assert row["quality_improved"] is True
+
+
+def analysis_result(request, *, abstain=False):
+    from engine.visual_analysis import bind_analysis
+
+    return {
+        "analysis": bind_analysis(
+            {
+                "observations": []
+                if abstain
+                else [
+                    {
+                        "kind": "subject",
+                        "element_ids": ["image"],
+                        "evidence": "A tall blue subject dominates the source.",
+                    }
+                ],
+                "abstain": abstain,
+            },
+            source_digest=request["source_digest"],
+            source_render_sha256=request["source_render"]["sha256"],
+            known_element_ids=[row["id"] for row in request["source_summary"]["elements"]],
+        ),
+        "receipt": {
+            "executed": True,
+            "backend": "test_stub",
+            "input_image_count": 1,
+            "request_digest": scene._digest(request),
+            "source_digest": request["source_digest"],
+            "source_render_sha256": request["source_render"]["sha256"],
+        },
+    }
+
+
+def test_source_analysis_reaches_separate_organizer_and_critic(document, tmp_path, monkeypatch):
+    def provider(request):
+        return analysis_result(request) if request["mode"] == "analyze" else model_result(request)
+
+    report, requests, _ = execute(
+        document, tmp_path, monkeypatch, provider=provider, analyzer_command=["source-vlm"]
+    )
+    assert [request["mode"] for request in requests] == ["analyze", "plan", "critique"]
+    assert "plan_menu" not in requests[0] and "target_canvas" not in requests[0]
+    for request in requests[1:]:
+        analysis = request["source_analysis"]
+        assert analysis["source_render_sha256"] == request["source_render"]["sha256"]
+        assert request["source_analysis_digest"] == scene._digest(analysis)
+        assert "source_analysis" not in request["plan_menu"]
+    assert report["analysis"]["analysis_valid"]
+    assert report["targets"][0]["status"] == "contract_valid"
+    assert report["targets"][0]["quality_improved"] is None
+    assert [row["stage"] for row in report["model_receipts"]] == ["analysis", "planner", "critic"]
+
+
+@pytest.mark.parametrize("failure", ["stale_pixels", "stale_receipt", "unknown_id", "abstain"])
+def test_bad_source_analysis_retains_baseline_without_organizer(
+    document, tmp_path, monkeypatch, failure
+):
+    def provider(request):
+        result = analysis_result(request, abstain=failure == "abstain")
+        if failure == "stale_pixels":
+            result["analysis"]["source_render_sha256"] = "f" * 64
+        elif failure == "stale_receipt":
+            result["receipt"]["request_digest"] = "f" * 64
+        elif failure == "unknown_id":
+            result["analysis"]["observations"][0]["element_ids"] = ["invented"]
+        return result
+
+    report, requests, engine = execute(
+        document, tmp_path, monkeypatch, provider=provider, analyzer_command=["source-vlm"]
+    )
+    row = report["targets"][0]
+    assert [request["mode"] for request in requests] == ["analyze"]
+    assert engine.calls == [None]
+    assert not row["layout_changed"] and row["status"] == "contract_valid"
+    assert row["analysis"]["model_executed"] and not row["planner"]["invoked"]
+    assert row["fallback_reason"]
+
+
+def test_source_analysis_executes_once_for_multiple_targets(document, tmp_path, monkeypatch):
+    from engine import visual_pipeline
+
+    source, target, assets, fonts = document
+    engine = FakeEngine(source, target)
+    calls = []
+
+    def provider(command, request, timeout):
+        calls.append((command, deepcopy(request)))
+        return analysis_result(request) if request["mode"] == "analyze" else model_result(request)
+
+    def snapshot(value, dimensions, **kwargs):
+        current = FakeEngine(value, dimensions)
+        return current.snapshot(value, dimensions, **kwargs)
+
+    report = visual_pipeline.evaluate_visual_resize(
+        source,
+        assets,
+        fonts,
+        tmp_path / "multiple",
+        targets=[target, {"width": 300, "height": 100}],
+        command=["organizer"],
+        analyzer_command=["source-vlm"],
+        provider=provider,
+        api={**engine.api(), "snapshot": snapshot},
+        critic_enabled=False,
+        implementation_hashes=lambda: {"test": "a" * 64},
+    )
+    assert [request["mode"] for _, request in calls] == ["analyze", "plan", "plan"]
+    assert calls[0][0] == ["source-vlm"]
+    assert all(command == ["organizer"] for command, _ in calls[1:])
+    assert all(row["status"] == "contract_valid" for row in report["targets"])
+
+
+def test_organizer_cannot_reuse_a_decision_from_different_analysis(document, tmp_path, monkeypatch):
+    def provider(request):
+        if request["mode"] == "analyze":
+            return analysis_result(request)
+        result = model_result(request)
+        result["receipt"]["source_analysis_digest"] = "f" * 64
+        return result
+
+    report, requests, engine = execute(
+        document, tmp_path, monkeypatch, provider=provider, analyzer_command=["source-vlm"]
+    )
+    row = report["targets"][0]
+    assert [request["mode"] for request in requests] == ["analyze", "plan"]
+    assert not row["proposal_valid"] and not row["layout_changed"]
+    assert "supplied source analysis" in row["fallback_reason"]
+    assert engine.calls == [None]
+
+
+def test_failed_analyzer_rerun_clears_old_valid_sidecar(document, tmp_path, monkeypatch):
+    def provider(request):
+        return analysis_result(request) if request["mode"] == "analyze" else model_result(request)
+
+    execute(document, tmp_path, monkeypatch, provider=provider, analyzer_command=["source-vlm"])
+    sidecar = tmp_path / "evidence/source-analysis.json"
+    assert sidecar.is_file()
+
+    def unavailable(request):
+        raise RuntimeError("Local analyzer weights unavailable")
+
+    report, requests, _ = execute(
+        document, tmp_path, monkeypatch, provider=unavailable, analyzer_command=["source-vlm"]
+    )
+    assert len(requests) == 1 and not sidecar.exists()
+    assert not (tmp_path / "evidence/analysis-response.json").exists()
+    assert "weights unavailable" in report["targets"][0]["fallback_reason"]
+    assert report["targets"][0]["status"] == "contract_valid"

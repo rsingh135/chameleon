@@ -25,14 +25,26 @@ from .data import (
     sha,
     write_json,
 )
+from .image_role_content import build_image_role_content
+from .sampling import choose_training_record
+from .snapshot import FROZEN_TOOL_KEYS, code_path, verify_code
+
+
+def score_artifact_hashes(output, *, base_executed):
+    """Bind actual score files; an inference-only run never attests an old base file."""
+    output = Path(output)
+    return {
+        "prediction_file_sha256": sha(output / "external_adapted.json"),
+        "base_prediction_file_sha256": sha(output / "external_base.json")
+        if base_executed
+        else None,
+    }
 
 
 def main(recipe_path):
     recipe_path = Path(recipe_path).resolve()
     recipe = read_json(recipe_path)
-    for name, expected in recipe["code_sha256"].items():
-        if Path(name).name != name or sha(Path(__file__).parent / name) != expected:
-            raise ValueError("Isolated experiment code differs from its frozen recipe")
+    verify_code(Path(__file__).parent, recipe["code_sha256"])
     out = Path(recipe["output"])
     out.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
@@ -147,8 +159,13 @@ def main(recipe_path):
         message = [
             {
                 "role": "user",
-                "content": [{"type": "image"} for _ in pictures]
-                + [{"type": "text", "text": row["prompt"]}],
+                "content": build_image_role_content(
+                    dataset["task"],
+                    row["prompt"],
+                    image_count=len(pictures),
+                    layout=recipe.get("image_role_layout", "legacy"),
+                    purpose_views=dataset.get("purpose_views") or 2,
+                ),
             }
         ]
         prompt = processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True)
@@ -258,7 +275,7 @@ def main(recipe_path):
                 "recipe_sha256": sha(recipe_path),
                 "dataset_sha256": recipe["dataset_sha256"],
                 "code_sha256": recipe["code_sha256"],
-                "prediction_file_sha256": sha(out / "external_adapted.json"),
+                **score_artifact_hashes(out, base_executed=not recipe.get("inference_only")),
                 "quality_approved": False,
                 "experimental_only": True,
             },
@@ -325,6 +342,20 @@ def main(recipe_path):
     rng = random.Random(recipe["seed"])
     sampling = recipe.get("sampling", "sqrt_class_frequency")
     purpose_cycle = list(sampling_labels)
+    record_sampling = recipe.get("record_sampling", "legacy_random")
+    coverage = None
+    record_by_id = {row["record_id"]: row for row in training}
+    if record_sampling == "coverage_family_interleave":
+        if dataset["task"] != "purpose" or not FROZEN_TOOL_KEYS.issubset(recipe["code_sha256"]):
+            raise ValueError("Coverage training requires its explicit frozen helper identity")
+        import tools.purpose_coverage_sampler as coverage_module
+
+        expected_helper = code_path(Path(__file__).parent, "tools/purpose_coverage_sampler.py")
+        if Path(coverage_module.__file__).resolve() != expected_helper.resolve():
+            raise ValueError("Coverage sampler must load only the frozen tools helper")
+        coverage = coverage_module.ClassCoverageSampler(training, seed=recipe["seed"])
+    elif record_sampling != "legacy_random":
+        raise ValueError("Unknown record-selection policy")
     phase(
         "training_begin",
         trainable_parameters=sum(p.numel() for _, p in trainable),
@@ -332,6 +363,7 @@ def main(recipe_path):
         rank=recipe["rank"],
         learning_rate=recipe["learning_rate"],
         sampling="balanced_A_B_N_cycle" if dataset["task"] == "critic" else sampling,
+        record_sampling=record_sampling,
         vision_frozen=True,
     )
     losses = []
@@ -352,7 +384,9 @@ def main(recipe_path):
                 label = purpose_cycle[position]
             else:
                 label = rng.choices(sampling_labels, weights=weights, k=1)[0]
-            row = rng.choice(pools[label])
+            row = choose_training_record(
+                rng, pools[label], label, coverage=coverage, record_by_id=record_by_id
+            )
             with (out / "training-samples.jsonl").open("a", encoding="utf-8") as trace:
                 trace.write(
                     json.dumps(
@@ -408,12 +442,17 @@ def main(recipe_path):
                         "sampling": sampling,
                         "purpose_cycle": purpose_cycle,
                         "completed_microsteps": (step + 1) * recipe["accumulation"],
+                        "record_sampling": record_sampling,
+                        "coverage_state": coverage.state_dict() if coverage else None,
                     },
                     "completed_steps": step + 1,
                     "losses": losses,
                 },
                 stage / "training-state.pt",
             )
+            if coverage is not None:
+                write_json(stage / "coverage-state.json", coverage.state_dict())
+                write_json(stage / "coverage-report.json", coverage.coverage_report())
             write_json(
                 stage / "progress.json",
                 {
@@ -445,6 +484,8 @@ def main(recipe_path):
                     "adapter_sha256": sha(stage / "adapter_model.safetensors"),
                     "adapter_config_sha256": sha(stage / "adapter_config.json"),
                     "optimizer_scheduler_rng_sampler_saved": True,
+                    "record_sampling": record_sampling,
+                    "coverage_state_saved": coverage is not None,
                 },
             )
             publish(stage, checkpoint)
@@ -460,6 +501,8 @@ def main(recipe_path):
         raise RuntimeError("The adapter did not learn a finite nonzero parameter delta")
     del initial, optimizer, scheduler
     gc.collect()
+    if coverage is not None:
+        write_json(out / "training-coverage.json", coverage.coverage_report())
     adapted = evaluate("adapted_validation", validation)
     checkpoint = out / ("checkpoint-" + str(recipe["steps"]))
     # Reload the saved adapter into the resident base; avoid a second 2B model allocation.

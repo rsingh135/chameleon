@@ -170,6 +170,8 @@ def package(
     purpose_views=2,
     max_pixels=None,
     evaluation_limit=48,
+    sampling="balanced_class_cycle",
+    record_sampling="legacy_random",
 ):
     root, out = Path(__file__).resolve().parents[1], Path(out).resolve()
     archive = out.with_suffix(".tar.gz")
@@ -198,6 +200,12 @@ def package(
         "run_prepared_visual_adapter.py",
     ):
         shutil.copyfile(root / "tools" / name, out / "tools" / name)
+    if record_sampling == "coverage_family_interleave":
+        if task != "purpose":
+            raise ValueError("Coverage sampling is a separate purpose-only recipe")
+        shutil.copyfile(
+            root / "tools/purpose_coverage_sampler.py", out / "tools/purpose_coverage_sampler.py"
+        )
     references = out / "references"
     references.mkdir()
     identity = read_json(base_manifest)
@@ -270,7 +278,7 @@ def package(
         '--manifest export/manifest.json --task purpose --base "$MODEL_BASE" '
         '--base-manifest references/base-identity.json --out "$RUN_OUT" '
         f"--steps 32 --evaluation-limit {evaluation_limit} --purpose-views {purpose_views} "
-        "--sampling balanced_class_cycle --learning-rate 0.00002 "
+        f"--sampling {sampling} --record-sampling {record_sampling} --learning-rate 0.00002 "
         f"--max-pixels {max_pixels or 65536} --max-seconds 900 --max-rss-mb 16384 "
         "--deadline-utc 2026-10-31T05:01:00+00:00\n",
         encoding="utf-8",
@@ -403,6 +411,16 @@ def main():
     parser.add_argument("--purpose-views", type=int, choices=(2, 3), default=2)
     parser.add_argument("--max-pixels", type=int)
     parser.add_argument("--evaluation-limit", type=int, default=48)
+    parser.add_argument(
+        "--sampling",
+        choices=("balanced_class_cycle", "sqrt_class_frequency"),
+        default="balanced_class_cycle",
+    )
+    parser.add_argument(
+        "--record-sampling",
+        choices=("legacy_random", "coverage_family_interleave"),
+        default="legacy_random",
+    )
     args = parser.parse_args()
     import json
 
@@ -417,6 +435,8 @@ def main():
                 purpose_views=args.purpose_views,
                 max_pixels=args.max_pixels,
                 evaluation_limit=args.evaluation_limit,
+                sampling=args.sampling,
+                record_sampling=args.record_sampling,
             ),
             indent=2,
         )

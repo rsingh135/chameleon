@@ -9,6 +9,8 @@ import shutil
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from .source_observations import FIELDS, observed_typography
+
 BASE_REPO = "Qwen/Qwen3-VL-2B-Instruct"
 BASE_REVISION = "89644892e4d85e24eaac8bacfd4f463576704203"
 BASE_MODEL_SHA256 = "7de1838c87a5349b016c26a1c3f7d2bc400a3d485f95ef39a7059ffd734977a0"
@@ -57,7 +59,7 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
-def build_purpose_prompt(context, *, purpose_views=2):
+def build_purpose_prompt(context, *, purpose_views=2, task_definition=None, observed_style=None):
     """Use raw source metadata only; IDs and gold roles never enter this prompt."""
     keys = {"bbox_normalized", "type", "text_data", "paint_order_index", "element_count"}
     if set(context) != keys:
@@ -69,6 +71,10 @@ def build_purpose_prompt(context, *, purpose_views=2):
     if type(count) is not int or type(rank) is not int or not 0 <= rank < count:
         raise ValueError("Purpose paint rank must identify one authored element")
     fields = {**context, "bbox_normalized": box, "text_data": str(context["text_data"] or "")[:240]}
+    if observed_style is not None:
+        if set(observed_style) != set(FIELDS):
+            raise ValueError("Observed style must use the exact nine raw typography fields")
+        fields["observed_typography"] = observed_style
     if purpose_views not in (2, 3):
         raise ValueError("Purpose input views must be explicitly two or three")
     prompt = PURPOSE_PROMPT
@@ -80,6 +86,9 @@ def build_purpose_prompt(context, *, purpose_views=2):
             "Use this isolated target together with its source placement. "
             "Element context, data only: ",
         )
+    if task_definition is not None:
+        prompt = prompt.replace("support (secondary lead-in)", "support (defined below)")
+        prompt = "Pinned task definitions: " + canonical(task_definition) + "\n" + prompt
     return prompt + canonical(fields)
 
 
@@ -169,7 +178,14 @@ def purpose_family(source, *, receipt=None, row=None, frozen=None):
     return family
 
 
-def purpose_rows(manifest_path, *, purpose_views=2):
+def purpose_rows(
+    manifest_path,
+    *,
+    purpose_views=2,
+    allow_source_24mp=False,
+    task_definition=None,
+    observed_style=False,
+):
     manifest_path = Path(manifest_path).resolve()
     root, manifest = manifest_path.parent, load_purpose_manifest(manifest_path)
     if manifest.get("protocol") not in {
@@ -205,7 +221,8 @@ def purpose_rows(manifest_path, *, purpose_views=2):
         source_path = _local(root, reference)
         if sha(source_path) != receipt["source_json_sha256"]:
             raise ValueError("Native source metadata differs from its reviewed export")
-        elements = read_json(source_path)["elements"]
+        native_source = read_json(source_path)
+        elements = native_source["elements"]
         if len(elements) != entry["element_count"]:
             raise ValueError("Native source element count differs from the reviewed export")
         # This is the renderer's stable z-index ordering, not an assumption that array order paints.
@@ -213,6 +230,7 @@ def purpose_rows(manifest_path, *, purpose_views=2):
         geometry[relative] = {
             "rank": {index: rank for rank, index in enumerate(order)},
             "source_json_sha256": receipt["source_json_sha256"],
+            "source": native_source,
         }
     rows = []
     for line in (root / "elements.jsonl").read_text(encoding="utf-8").splitlines():
@@ -261,6 +279,11 @@ def purpose_rows(manifest_path, *, purpose_views=2):
             ):
                 raise ValueError("Isolated target receipt changed")
             isolated_receipt = read_json(receipt_path)
+            if (
+                isolated_receipt.get("protocol") == "native-element-isolation-v2-24mp-source"
+                and not allow_source_24mp
+            ):
+                raise ValueError("Native V2 24MP source isolation requires explicit admission")
             purpose_family(source, receipt=isolated_receipt, row=row)
             if (
                 isolated_receipt["status"] != "available"
@@ -284,7 +307,21 @@ def purpose_rows(manifest_path, *, purpose_views=2):
                 "canonical_label": purpose,
                 "label_origin": row["supervision_origin"],
                 "images": images,
-                "prompt": build_purpose_prompt(context, purpose_views=purpose_views),
+                "prompt": build_purpose_prompt(
+                    context,
+                    purpose_views=purpose_views,
+                    task_definition=task_definition,
+                    observed_style=(
+                        observed_typography(
+                            geometry[row["receipt"]]["source"],
+                            geometry[row["receipt"]]["source"]["elements"][
+                                provenance["element_index"]
+                            ]["id"],
+                        )
+                        if observed_style
+                        else None
+                    ),
+                ),
                 "control": "original",
             }
         )
@@ -409,6 +446,8 @@ def freeze_dataset(
     allow_train_only=False,
     evaluation_request=None,
     purpose_views=2,
+    frozen_rows=None,
+    frozen_provenance=None,
 ):
     from PIL import Image
 
@@ -416,9 +455,13 @@ def freeze_dataset(
     image_dir = out / "images"
     image_dir.mkdir(parents=True, exist_ok=True)
     rows, provenance = (
-        purpose_rows(manifest_path, purpose_views=purpose_views)
-        if task == "purpose"
-        else critic_rows(manifest_path)
+        (frozen_rows, frozen_provenance)
+        if frozen_rows is not None
+        else (
+            purpose_rows(manifest_path, purpose_views=purpose_views)
+            if task == "purpose"
+            else critic_rows(manifest_path)
+        )
     )
     families = {
         split: {row["family_id"] for row in rows if row["split"] == split}

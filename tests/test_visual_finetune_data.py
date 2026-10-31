@@ -75,6 +75,23 @@ def test_constant_choice_does_not_look_like_balanced_success():
     assert metrics["per_class"]["N"]["recall"] == 0
 
 
+def test_external_receipt_binds_both_scores_only_when_base_actually_executed(tmp_path):
+    from experiments.visual_finetune.worker import score_artifact_hashes
+
+    write_json(tmp_path / "external_adapted.json", {"predictions": ["body"]})
+    write_json(tmp_path / "external_base.json", {"predictions": ["support"]})
+    assert score_artifact_hashes(tmp_path, base_executed=True) == {
+        "prediction_file_sha256": sha(tmp_path / "external_adapted.json"),
+        "base_prediction_file_sha256": sha(tmp_path / "external_base.json"),
+    }
+    assert (
+        score_artifact_hashes(tmp_path, base_executed=False)["base_prediction_file_sha256"] is None
+    )
+    (tmp_path / "external_base.json").unlink()
+    with pytest.raises(FileNotFoundError):
+        score_artifact_hashes(tmp_path, base_executed=True)
+
+
 def test_external_scoring_refuses_sealed_answers(tmp_path):
     from tools.evaluate_visual_adapter import prepare
 
@@ -409,3 +426,158 @@ def test_purpose_family_binding_rejects_parent_row_receipt_or_split_disagreement
         purpose_family(source, row={"family_id": "asset", "split": "validation"})
     with pytest.raises(ValueError, match="missing"):
         purpose_family(source, receipt={"source_id": "scene"})
+
+
+def test_coverage_helper_is_copied_hashed_and_verified_without_repo_fallback(tmp_path):
+    from experiments.visual_finetune.snapshot import code_path, freeze_coverage_helper, verify_code
+
+    root = Path(__file__).resolve().parents[1]
+    code = tmp_path / "code"
+    package = code / "experiments/visual_finetune"
+    package.mkdir(parents=True)
+    hashes = freeze_coverage_helper(root, code)
+    assert set(hashes) == {"tools/__init__.py", "tools/purpose_coverage_sampler.py"}
+    verify_code(package, hashes)
+    helper = code / "tools/purpose_coverage_sampler.py"
+    assert sha(helper) == sha(root / "tools/purpose_coverage_sampler.py")
+    frozen_copy = tmp_path / "eval-code"
+    assert freeze_coverage_helper(code, frozen_copy, expected=hashes) == hashes
+    helper.write_bytes(helper.read_bytes() + b"\n# changed\n")
+    with pytest.raises(ValueError, match="frozen recipe"):
+        verify_code(package, hashes)
+    with pytest.raises(ValueError, match="Unsupported path"):
+        code_path(package, "../outside.py")
+
+
+def test_prepared_dataset_style_arm_preserves_pixels_and_pins_coverage(tmp_path, monkeypatch):
+    import sys
+
+    from tools.train_visual_adapter import main
+
+    image = tmp_path / "source.png"
+    Image.new("RGB", (32, 32), "white").save(image)
+    source = tmp_path / "dataset.json"
+    manifest = tmp_path / "base-identity.json"
+    write_json(manifest, {"test_fixture": "prepare-only; no model loaded"})
+    write_json(
+        source,
+        {
+            "task": "purpose",
+            "purpose_views": 3,
+            "records": [
+                {
+                    "record_id": "heldout",
+                    "family_id": "heldout-family",
+                    "split": "validation",
+                    "control": "original",
+                    "label": "body",
+                    "images": [{"path": image.name, "sha256": sha(image)}] * 3,
+                    "prompt": "legacy prompt",
+                }
+            ],
+            "evaluation_records": [],
+            "style_prompt_overlay": {"heldout": "same prompt with observed typography"},
+            "provenance": {"task_definition_sha256": "a" * 64},
+        },
+    )
+    outputs = []
+    for version in ("v2", "observed_typo_v1"):
+        out = tmp_path / version
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "train_visual_adapter",
+                "--dataset",
+                str(source),
+                "--task",
+                "purpose",
+                "--purpose-views",
+                "3",
+                "--context-version",
+                version,
+                "--record-sampling",
+                "coverage_family_interleave",
+                "--out",
+                str(out),
+                "--base-manifest",
+                str(manifest),
+                "--prepare-only",
+            ],
+        )
+        main()
+        recipe = json.loads((out / "recipe.json").read_text())
+        copied = json.loads((out / "data/dataset.json").read_text())
+        assert recipe["context_version"] == version
+        assert recipe["task_definition_sha256"] == "a" * 64
+        assert recipe["record_sampling"] == "coverage_family_interleave"
+        assert "tools/purpose_coverage_sampler.py" in recipe["code_sha256"]
+        assert sha(out / "data/source.png") == sha(image)
+        outputs.append(copied)
+    assert outputs[0]["records"][0]["prompt"] == "legacy prompt"
+    assert outputs[1]["records"][0]["prompt"] == "same prompt with observed typography"
+    assert outputs[0]["records"][0]["images"] == outputs[1]["records"][0]["images"]
+
+
+def test_coverage_selection_preserves_label_rng_and_legacy_selection():
+    import random
+
+    from experiments.visual_finetune.sampling import choose_training_record
+    from tools.purpose_coverage_sampler import ClassCoverageSampler
+
+    rows = [
+        {
+            "record_id": f"{label}-{i}",
+            "label": label,
+            "family_id": f"family-{i % 2}",
+            "split": "train",
+        }
+        for label in ("a", "b")
+        for i in range(6)
+    ]
+    pools = {label: [row for row in rows if row["label"] == label] for label in ("a", "b")}
+    byid = {row["record_id"]: row for row in rows}
+
+    def sample(covered):
+        rng = random.Random(1729)
+        coverage = ClassCoverageSampler(rows, seed=1729) if covered else None
+        labels, ids = [], []
+        for _ in range(48):
+            label = rng.choices(["a", "b"], weights=[1, 2], k=1)[0]
+            row = choose_training_record(
+                rng, pools[label], label, coverage=coverage, record_by_id=byid
+            )
+            labels.append(label)
+            ids.append(row["record_id"])
+        return labels, ids, rng.getstate()
+
+    legacy, covered = sample(False), sample(True)
+    assert legacy[0] == covered[0]
+    assert legacy[2] == covered[2]
+    for label in ("a", "b"):
+        ids = [
+            record_id
+            for record_id, selected in zip(covered[1], covered[0], strict=True)
+            if selected == label
+        ]
+        assert len(set(ids[:6])) == 6
+
+
+def test_coverage_selection_rejects_nontraining_records():
+    import random
+
+    from experiments.visual_finetune.sampling import choose_training_record
+
+    class BadCoverage:
+        def draw(self, label):
+            return "heldout"
+
+    training = {"record_id": "train", "label": "a", "split": "train"}
+    with pytest.raises(ValueError, match="non-training"):
+        choose_training_record(
+            random.Random(1729),
+            [training],
+            "a",
+            coverage=BadCoverage(),
+            record_by_id={"heldout": {"label": "a", "split": "validation"}},
+        )

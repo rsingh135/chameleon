@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from experiments.visual_finetune.data import _copy_image, read_json, sha, write_json
+from experiments.visual_finetune.snapshot import FROZEN_TOOL_KEYS, freeze_coverage_helper
 from experiments.visual_finetune.supervise import run
 
 
@@ -41,6 +42,11 @@ def prepare(
     training_data = read_json(training_dataset)
     if request["task"] != training_data["task"]:
         raise ValueError("Probe task and adapter task differ")
+    definition_sha = training_data.get("provenance", {}).get("task_definition_sha256")
+    if request.get("task_definition_sha256") != definition_sha:
+        raise ValueError("Purpose request must pin the exact trained task definition")
+    if request.get("context_version", "v2") != training_recipe.get("context_version", "v2"):
+        raise ValueError("Request context version differs from the trained observation contract")
     purpose_views = training_data.get("purpose_views", 2)
     if request["task"] == "purpose" and request.get("purpose_views", 2) != purpose_views:
         raise ValueError("Purpose request view count differs from the trained input contract")
@@ -105,6 +111,12 @@ def prepare(
     ):
         shutil.copyfile(source, package / source.name)
         hashes[source.name] = sha(source)
+    if FROZEN_TOOL_KEYS & training_recipe["code_sha256"].keys():
+        hashes.update(
+            freeze_coverage_helper(
+                training_run / "code", out / "code", expected=training_recipe["code_sha256"]
+            )
+        )
     adapter = Path(adapter_path).resolve()
     receipt = read_json(adapter / "training_receipt.json")
     if receipt["recipe_sha256"] != sha(training_run / "recipe.json"):

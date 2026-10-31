@@ -76,7 +76,7 @@
   }
   function validateRequestPolicy(policy) {
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)
-      || !['studio_timeout_ms', 'benchmark_timeout_ms'].every(key => Number.isInteger(policy[key]) && policy[key] > 0 && policy[key] <= 1500000)
+      || !['studio_timeout_ms', 'benchmark_timeout_ms'].every(key => Number.isInteger(policy[key]) && policy[key] > 0 && policy[key] <= 2100000)
       || typeof policy.model_configured !== 'boolean') throw new Error('The engine returned an invalid resize runtime policy. Restart or update the local server, then retry.');
     return policy;
   }

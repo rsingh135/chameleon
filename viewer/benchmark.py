@@ -49,8 +49,9 @@ def _visual_identity():
         critic = bool(operator and operator["enabled"] and operator["critic"])
         if operator and operator["enabled"]:
             # Each optional provider invocation has its own bounded deadline.
-            # Allow native layout/rendering plus transport after planner/critic.
-            budget = (operator["timeout_seconds"] * (1 + critic) + 150) * 1000
+            # Allow native layout/rendering and transport after all model roles.
+            analyzer = bool(operator.get("analyzer_command"))
+            budget = (operator["timeout_seconds"] * (1 + analyzer + critic) + 150) * 1000
             policy["studio_timeout_ms"] = max(policy["studio_timeout_ms"], budget)
             policy["benchmark_timeout_ms"] = max(policy["benchmark_timeout_ms"], budget)
     except (ValueError, OSError, TypeError):

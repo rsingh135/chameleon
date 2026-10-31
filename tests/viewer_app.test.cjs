@@ -343,6 +343,38 @@ test('configured Studio model budgets exceed 240 seconds without an old 60-secon
   assert.equal(app.timers.size, 0);
 });
 
+for (const budget of [1950000, 2100000]) test(`Studio accepts the bounded three-role model budget ${budget}`, async () => {
+  const app = application(); await app.flush();
+  app.policyHandler = () => ({studio_timeout_ms: budget, benchmark_timeout_ms: budget, model_configured: true});
+  const count = app.requests.length;
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.equal(app.requests.length, count + 1);
+  const request = app.requests.at(-1);
+  assert.ok([...app.timers.values()].some(timer => timer.delay === budget));
+  await app.timeout(1500000);
+  assert.equal(request.signal.aborted, false);
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'true');
+  pending.resolve(rendered(request.payload)); await running;
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+  assert.equal(app.timers.size, 0);
+});
+
+test('the three-role Studio deadline aborts and rejects a late result', async () => {
+  const app = application(); await app.flush();
+  app.policyHandler = () => ({studio_timeout_ms: 1950000, benchmark_timeout_ms: 1950000, model_configured: true});
+  const pending = deferred(); app.resizeHandler = () => pending.promise;
+  const running = app.elements.resizeForm.fire('submit'); await app.flush();
+  const request = app.requests.at(-1);
+  await app.timeout(1950000);
+  assert.equal(request.signal.aborted, true);
+  pending.resolve(rendered(request.payload)); await running;
+  assert.match(app.elements.error.textContent, /configured 1950-second runtime budget/);
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.equal(app.elements.run.getAttribute('aria-busy'), 'false');
+  assert.equal(app.timers.size, 0);
+});
+
 test('the configured Studio deadline rejects a noncooperative late response without publishing it', async () => {
   const app = application(); await app.flush();
   app.policyHandler = () => ({studio_timeout_ms: 630000, benchmark_timeout_ms: 630000, model_configured: true});
@@ -372,7 +404,8 @@ for (const policy of [null,
   {studio_timeout_ms: 0, benchmark_timeout_ms: 120000, model_configured: false},
   {studio_timeout_ms: true, benchmark_timeout_ms: 120000, model_configured: false},
   {studio_timeout_ms: 60000.5, benchmark_timeout_ms: 120000, model_configured: false},
-  {studio_timeout_ms: 1500001, benchmark_timeout_ms: 120000, model_configured: true},
+  {studio_timeout_ms: 2100001, benchmark_timeout_ms: 120000, model_configured: true},
+  {studio_timeout_ms: 1950000, benchmark_timeout_ms: 2100001, model_configured: true},
   {studio_timeout_ms: 60000, benchmark_timeout_ms: 120000, model_configured: 'true'},
 ]) test(`invalid Studio policy fails before expensive submission: ${JSON.stringify(policy)}`, async () => {
   const app = application(); await app.flush();

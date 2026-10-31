@@ -28,7 +28,9 @@ def no_ambient_model_configuration(monkeypatch):
     monkeypatch.setattr(visual_pipeline, "resize_configured", unexpected_provider)
 
 
-def _mock_configuration(monkeypatch, *, enabled=True, critic=True, timeout=240, error=None):
+def _mock_configuration(
+    monkeypatch, *, enabled=True, critic=True, analyzer=False, timeout=240, error=None
+):
     monkeypatch.setenv("CHAMELEON_VISUAL_PLANNER_CONFIG", "mocked-operator-config")
     calls = Counter()
     identity = {
@@ -41,7 +43,10 @@ def _mock_configuration(monkeypatch, *, enabled=True, critic=True, timeout=240, 
         calls["resolve"] += 1
         if error is not None:
             raise error
-        return {"enabled": enabled, "critic": critic, "timeout_seconds": timeout}, {}
+        operator = {"enabled": enabled, "critic": critic, "timeout_seconds": timeout}
+        if analyzer:
+            operator["analyzer_command"] = ["declared-source-analyzer"]
+        return operator, {}
 
     def execution_identity():
         calls["identity"] += 1
@@ -63,13 +68,26 @@ def test_default_policy_does_not_even_resolve_or_identify_a_model(monkeypatch):
     assert critic is False and policy == DEFAULT_POLICY
 
 
-@pytest.mark.parametrize("timeout,critic", [(1, False), (240, False), (240, True), (600, True)])
-def test_enabled_operator_policy_covers_planner_critic_and_native_overhead(
-    monkeypatch, timeout, critic
+@pytest.mark.parametrize(
+    "timeout,critic,analyzer",
+    [
+        (1, False, False),
+        (240, False, False),
+        (240, True, False),
+        (600, True, False),
+        (240, False, True),
+        (240, True, True),
+        (600, True, True),
+    ],
+)
+def test_enabled_operator_policy_covers_organizer_analyzer_critic_and_native_overhead(
+    monkeypatch, timeout, critic, analyzer
 ):
-    expected_identity, calls = _mock_configuration(monkeypatch, critic=critic, timeout=timeout)
+    expected_identity, calls = _mock_configuration(
+        monkeypatch, critic=critic, analyzer=analyzer, timeout=timeout
+    )
     identity, actual_critic, policy = benchmark._visual_identity()
-    budget = (timeout * (1 + bool(critic)) + 150) * 1000
+    budget = (timeout * (1 + bool(analyzer) + bool(critic)) + 150) * 1000
     assert identity == expected_identity and actual_critic is critic
     assert policy == {
         "studio_timeout_ms": max(60000, budget),
@@ -81,7 +99,9 @@ def test_enabled_operator_policy_covers_planner_critic_and_native_overhead(
 
 
 def test_disabled_operator_uses_default_deadlines_and_is_not_model_configured(monkeypatch):
-    expected_identity, _ = _mock_configuration(monkeypatch, enabled=False, critic=True, timeout=600)
+    expected_identity, _ = _mock_configuration(
+        monkeypatch, enabled=False, critic=True, analyzer=True, timeout=600
+    )
     identity, critic, policy = benchmark._visual_identity()
     assert identity == expected_identity
     assert critic is False and policy == DEFAULT_POLICY
@@ -111,6 +131,31 @@ def test_method_receipt_exposes_the_same_computed_policy(monkeypatch):
     receipt = benchmark.method_receipt()
     assert receipt["options"]["request_policy"] is policy
     assert receipt["critic"] == {"enabled": True}
+
+
+def test_three_role_method_metadata_exposes_its_full_bounded_deadline_without_running_models(
+    monkeypatch,
+):
+    identity, _ = _mock_configuration(monkeypatch, analyzer=True, critic=True, timeout=600)
+    receipt = benchmark.method_receipt()
+    assert receipt["analyzer"] == identity
+    assert receipt["critic"] == {"enabled": True}
+    assert receipt["options"]["layout"] == "configured-visual-pipeline"
+    assert receipt["options"]["request_policy"] == {
+        "studio_timeout_ms": 1_950_000,
+        "benchmark_timeout_ms": 1_950_000,
+        "model_configured": True,
+    }
+
+
+def test_trained_fit_policy_does_not_mark_a_visual_model_configured(monkeypatch):
+    monkeypatch.setattr(benchmark, "fit_policy_identity", lambda: {"enabled": True})
+    receipt = benchmark.method_receipt()
+    assert receipt["fit_planner"]["enabled"] is True
+    assert receipt["options"]["layout"] == "trained-fit-policy"
+    assert receipt["analyzer"] == {"enabled": False}
+    assert receipt["critic"] == {"enabled": False}
+    assert receipt["options"]["request_policy"] == DEFAULT_POLICY
 
 
 @pytest.fixture

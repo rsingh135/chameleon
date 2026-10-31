@@ -134,8 +134,9 @@ stable checkpoints. The executable training details are in
 No experimental head is promoted by a passing structural test. The pilot lacks
 an independent positive product family and any unknown-class supervision.
 It cannot establish unseen-product recall, calibrated uncertainty, region
-protection, or improved design quality. The dense VLM/LoRA path remains a
-separate future experiment in the [training plan](SCENE_MODEL_TRAINING_PLAN.md).
+protection, or improved design quality. Vision-language fine-tuning follows a
+separate task and runtime contract; this CLIP-head pilot does not qualify those
+adapters or authorize their production use.
 
 Before enabling a model by default, collect independent editable product,
 scene-background, inset-photo and ambiguous-role families; obtain human role

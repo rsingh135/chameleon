@@ -61,10 +61,10 @@ What it handles for you automatically:
 
 Requires Python 3.10+. If your system Python is older (e.g. 3.9), use the repo's own virtual environment as shown above rather than your system interpreter — cr-renderer won't install otherwise.
 
-The optional `viewer/index.html` is a local JSON/PNG inspector for development.
-The final challenge PDF places the full Express add-on in the finale; stage one
-requires the engine. Neither the viewer nor local quality metrics replace the
-official scoring pipeline.
+The local `viewer/index.html` is a JSON/PNG inspector for development. It is
+separate from the viewer add-on described under **Submitting** below and from
+the official scoring pipeline. Local quality metrics do not replace official
+scoring.
 
 **Q4. Where do I find the actual brand assets and fonts?**
 
@@ -104,10 +104,21 @@ One deliberate exception: the Level 3 sample's `holiday_watermark` element refer
 
 **Submitting:**
 
-The final challenge PDF requests the engine, `Dockerfile`, and a short read-me
-explaining the approach and run instructions for stage one. The full Express
-add-on, short pitch and demo video belong to the finale. This updates the older
-FAQ wording that described a viewer add-on as a stage-one requirement. Submit
-before code freeze and confirm the final checklist with organizers.
+The supplied FAQ requires the engine (code, `Dockerfile`, and a short read-me
+explaining the approach and run instructions), **plus a required but unscored
+viewer add-on**, for stage one. Submit before code freeze.
+
+**Unresolved submission conflict:** the final challenge PDF lists the engine
+for stage one and the full Express add-on, short pitch, and demo video for the
+finale. Until organizers clarify this difference, keep the FAQ's stage-one
+viewer add-on on the submission checklist. The local inspector does not fulfill
+that requirement. The [Express integration](integrations/adobe-express/README.md)
+now includes a stable stage-one viewer ZIP and a separate experimental native
+editing adapter. The stable viewer opens real engine JSON/PNG result bundles;
+Adobe installation and live host verification remain separate completion checks.
+
+Current project scope follows the final brief's offline engine deliverable. The
+user has deferred Adobe host work; keep the built viewer package available and
+retain this FAQ discrepancy as unresolved. See [submission evidence and scope](docs/SUBMISSION_CHECKLIST.md).
 
 Where to send it, and any submission form, will be announced separately ahead of the deadline — keep an eye out for that announcement. In the meantime, make sure your repo builds and runs cleanly in Docker (see step 5 above) so you're not doing that work last-minute once submission opens.

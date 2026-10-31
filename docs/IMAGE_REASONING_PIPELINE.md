@@ -111,9 +111,9 @@ identity and a valid observation do not prove pixel grounding or source intent.
 Before qualification, compare image-versus-blank/replacement controls, reordered
 organizer menus, source-specific relations and actual source/result renders on
 independent development families. The existing training corpus acceptance and
-held-out reserve rules remain applicable. No training or cloud session was
-launched for this change. See the [fork/branch audit](FORK_IDEAS_AUDIT.md) for
-reused ideas and rejected alternatives.
+held-out reserve rules remain applicable. Keep source analysis, organization,
+and trusted geometry compilation separate; evaluate alternate orchestration
+through the exact evidence it consumes and its native output renders.
 
 ## Local verification notes
 

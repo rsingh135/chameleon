@@ -43,9 +43,6 @@ experiment is captured in
 [checkpoint e9d651b](https://github.com/rsingh135/chameleon/tree/e9d651b), with
 reference screenshots still in `viewer/assets/trials/`.
 
-Research and validation notes:
-[`docs/FRONTEND_DESIGN_RESEARCH.md`](../docs/FRONTEND_DESIGN_RESEARCH.md).
-
 The server binds only to loopback and accepts at most 2 MiB per request, 200
 elements, and 20 million pixels per canvas with a maximum side of 8192 px.
 `python -m tools.verify_local` checks the running API and writes

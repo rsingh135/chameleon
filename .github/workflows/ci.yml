@@ -70,17 +70,18 @@ jobs:
           tags: chameleon-engine:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # Run it exactly the way stage-one scoring will: no network, input/
-      # and output/ mounted, and check every task produced both artifacts.
-      - name: Run engine offline on the sample tasks
+      - name: Install host schema validator
+        run: python3 -m pip install "jsonschema==4.26.0"
+      # Verify the same image offline, with real JSON/PNG pairs and strict
+      # schema, contract, packaged-file and native-render checks.
+      - name: Verify offline sample contracts and native renders
         run: |
-          mkdir -p ci_output
-          docker run --rm --network none \
-            -v "$PWD/input:/app/input" -v "$PWD/ci_output:/app/output" \
-            chameleon-engine:ci
-          for task in input/*.json; do
-            stem=$(basename "$task" .json)
-            test -s "ci_output/${stem}_output.json" || { echo "missing ${stem}_output.json"; exit 1; }
-            test -s "ci_output/${stem}_output.png"  || { echo "missing ${stem}_output.png"; exit 1; }
-          done
-          ls -la ci_output
+          python3 -m tools.verify_docker --skip-build \
+            --image chameleon-engine:ci --out output/docker-ci
+      - name: Retain offline verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-offline-verification
+          path: output/docker-ci
+          if-no-files-found: ignore

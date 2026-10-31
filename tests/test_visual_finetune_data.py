@@ -129,7 +129,7 @@ def test_stale_experiment_code_is_rejected_before_model_import(tmp_path):
 
 def test_atomic_checkpoint_includes_complete_state_and_verifies(tmp_path):
     from experiments.visual_finetune.checkpoint import REQUIRED, publish, staging_directory
-    from tools.vision_lora_smoke import verify_checkpoint
+    from tools.checkpoint_manifest import verify_checkpoint
 
     destination = tmp_path / "checkpoint-4"
     stage = staging_directory(destination)

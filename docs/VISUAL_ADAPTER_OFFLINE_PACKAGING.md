@@ -222,3 +222,103 @@ Before enabling either deployment route:
 Preserve original safetensors and full training checkpoints even if GGUF is the
 deployment format. Conversion is an export, not a replacement for recoverable
 training state.
+
+## Rapid review of the completed context-v2 pilot
+
+The later Brev pilot is preserved under
+`local_backups/brev/agentic-20261031/purpose32-v3-full-01`. Its saved prediction
+JSON reports base 17/48, macro F1 0.3459, versus adapted 16/48, macro F1 0.3389.
+Separate the tasks: original-role accuracy improved 12/39 → 13/39, while control
+accuracy fell 5/9 → 3/9. One headline became correct; two background examples
+changed from `visual` to `body`, remaining wrong. Background and support recall
+remained zero. The adapter predicted `visual` 12 times for one visual gold label
+(base: 17). Finite gradients and 32 optimizer steps establish execution, not a
+useful visual policy. Saved-checkpoint reload/dtype parity is a separate active
+diagnosis and must pass before further quality comparisons are trusted.
+
+A JSON-only corpus audit found 169 original training examples plus 15 controls,
+and 166 original validation examples plus 9 controls. Training originals contain
+82 body, 24 headline, 17 action, 14 support, 12 background, 10 brand, 7 accent,
+2 footer and **1 visual** examples. Footer and visual each occur in only one
+training family. No exactly identical image-pair/prompt inputs had conflicting
+labels; crop ambiguity remains a plausible target-grounding problem, not a
+demonstrated exact-input label contradiction.
+
+The actual class-balanced 128 microsteps sampled the sole visual example 12
+times, footer 13 times across two examples, and body 13 times across 82 examples.
+Consequently body had at most 13 distinct exposures; repeating rare examples
+does not supply new visual families. Neither increasing rank nor extending this
+same cycle can establish product generalization. New independent product and
+background families are a data requirement, with their split fixed before
+inspection and purpose kept separate from placement/cover policy.
+
+The measured validation inputs contain only 68–128 visual tokens total across
+the two views, and at most 438 input tokens. The actual processor has patch size
+16 and merge size 2: a roughly square 256² view contributes about 64 merged
+visual tokens; 512² permits about 256, subject to aspect-ratio rounding. Thus
+higher resolution has a concrete detail budget to test, but cannot identify an
+ambiguous target by itself. Qwen's official fine-tuning guide stresses matching
+image resolution to the task and documents explicit image ordering. Its example
+learning rates and component-tuning flags are not evidence that a particular
+LoRA learning rate is optimal for this short-answer classifier.
+[Qwen fine-tuning guide](https://github.com/QwenLM/Qwen3-VL/blob/main/qwen-vl-finetune/README.md),
+[official image-budget defaults](https://github.com/QwenLM/Qwen3-VL/blob/main/qwen-vl-finetune/qwenvl/train/argument.py).
+
+### Next two bounded recipes
+
+Run these only after saved-adapter reload parity passes. These are proposed
+ablations, not tested improvements. Start each from the exact same verified base
+and fresh adapter initialization; do not warm-start from the failed pilot.
+
+| Setting | G1: target grounding | G2: resolution |
+| --- | --- | --- |
+| Training families and labels | Same frozen context-v2 originals/controls | Exactly G1 |
+| Views, ordered | Full original; context crop; isolated native target crop | Exactly G1 |
+| Maximum pixels per view | 65,536 (256²) | 262,144 (512²) |
+| Minimum pixels | 16,384 | Exactly G1 |
+| LoRA | Language q/v, rank 4, alpha 8, dropout 0 | Exactly G1 |
+| Optimizer | Existing AdamW, LR 2e-5, weight decay 0.01, clip 1 | Exactly G1 |
+| Training | 32 updates × 4 accumulation; seed 1729 | Same exact sampled record sequence |
+| Checkpoints | Every 4 updates, full state, fresh output directory | Exactly G1 |
+| Evaluation | Fresh base and adapted fixed 48 probes, then all 175 validation rows | Same record IDs, separately preprocessed |
+
+G1 changes only the declared target-view representation relative to context-v2;
+G2 changes only its pixel budget relative to G1. Hash the sampled-record sequence
+as well as images, prompt and class vocabulary. Record token grids, truncation,
+peak VRAM and elapsed time. Keep the input-token limit unchanged if all examples
+fit; otherwise declare a new token-budget change explicitly and compare both
+arms at that same limit. Do not truncate away the target metadata to force a fit.
+
+Render the isolated target using original native styling and exact fonts, crop
+its visible alpha bounds with fixed padding, and use a fixed neutral/checkered
+matte so white and black artwork remain visible. A full-canvas isolated render
+downsampled to 256² can leave a small target illegible. No labels, target role,
+post-resize geometry or semantic IDs may influence its production. Preserve the
+original scene view because an isolated asset alone cannot establish purpose.
+Blank controls must blank **all three views**. Keep source-replacement controls
+explicitly labeled as consistency tests rather than ordinary purpose examples.
+
+Explicit visual referents have primary research precedent, but the SoM paper
+tests visual marks in GPT-4V; it does not establish that this isolated-layer
+representation will improve Qwen. That is what G1 tests.
+[Set-of-Mark paper](https://arxiv.org/abs/2310.11441).
+
+Report per-class and per-family results, original roles separately from controls,
+and paired correct→wrong/wrong→correct counts. A gain on one `visual` validation
+example is not reliable product evidence. Both recipes remain development
+experiments; repeated weak-label validation is not sealed independent testing.
+
+Keep new product families out of these two causal comparisons. Freeze a later
+expanded corpus, hold out at least one independent product family, and then train
+on the selected representation. If training-example accuracy is still poor after
+grounding/data fixes, test language-wide LoRA modules or rank 8 in a separate
+capacity experiment, holding the data and schedule fixed. PEFT supports broader
+linear targeting and higher-rank capacity; neither guarantees this task's quality.
+Do not blindly apply `all-linear` to a multimodal model and unintentionally
+unfreeze vision. Audit the actual trainable module names.
+[PEFT LoRA configuration](https://huggingface.co/docs/peft/package_reference/lora).
+
+Longer training or a larger LR belongs after these diagnoses, with a fixed
+training probe, actual example coverage and checkpoint learning curves. A noisy
+loss from changing examples cannot demonstrate either underfitting or a need
+for more epochs.

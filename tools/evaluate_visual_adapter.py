@@ -21,6 +21,9 @@ def prepare(
     base=None,
     base_manifest=None,
     inference_only=False,
+    max_seconds=900,
+    max_rss_mb=4096,
+    deadline_utc="2026-10-31T05:01:00+00:00",
 ):
     request_path, training_run, out = map(Path, (request_path, training_run, out))
     request = read_json(request_path)
@@ -134,6 +137,13 @@ def prepare(
         "base_manifest_sha256": sha(out / "base_identity.json"),
         "inference_only": bool(inference_only),
         "quality_approved": False,
+        "supervision": {
+            "minimum_available_mb": 256,
+            "owned_working_set_trim": True,
+            "max_seconds": max_seconds,
+            "max_rss_mb": max_rss_mb,
+            "absolute_deadline_utc": deadline_utc,
+        },
     }
     write_json(out / "recipe.json", recipe)
     return recipe
@@ -141,10 +151,13 @@ def prepare(
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--request", required=True)
-    parser.add_argument("--training-run", required=True)
-    parser.add_argument("--adapter", required=True)
-    parser.add_argument("--out", required=True)
+    parser.add_argument("--request")
+    parser.add_argument("--training-run")
+    parser.add_argument("--adapter")
+    parser.add_argument("--out")
+    parser.add_argument(
+        "--run-prepared", help="Execute this immutable recipe using its frozen guards"
+    )
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--inference-only", action="store_true")
     parser.add_argument("--base")
@@ -158,8 +171,20 @@ def main():
             else sys.executable
         ),
     )
-    parser.add_argument("--max-seconds", type=int, default=1800)
+    parser.add_argument("--max-seconds", type=int, default=900)
+    parser.add_argument("--max-rss-mb", type=int, default=4096)
+    parser.add_argument("--deadline-utc", default="2026-10-31T05:01:00+00:00")
     args = parser.parse_args()
+    if args.run_prepared:
+        from tools.run_prepared_visual_adapter import execute
+
+        receipt = execute(args.run_prepared, python=args.python)
+        print(receipt)
+        raise SystemExit(0 if receipt["exit_code"] == 0 else 1)
+    if not all((args.request, args.training_run, args.adapter, args.out)):
+        parser.error("--request, --training-run, --adapter and --out are required for preparation")
+    if args.max_rss_mb <= 0 or args.max_seconds <= 0:
+        parser.error("Owned-worker resource limits must remain positive")
     out = Path(args.out).resolve()
     prepare(
         args.request,
@@ -169,6 +194,9 @@ def main():
         base=args.base,
         base_manifest=args.base_manifest,
         inference_only=args.inference_only,
+        max_seconds=args.max_seconds,
+        max_rss_mb=args.max_rss_mb,
+        deadline_utc=args.deadline_utc,
     )
     if args.prepare_only:
         print(str(out / "recipe.json"))
@@ -198,6 +226,8 @@ def main():
         cwd=str(out / "code"),
         environment=environment,
         max_seconds=args.max_seconds,
+        max_rss_mb=args.max_rss_mb,
+        deadline_utc=args.deadline_utc,
     )
     print(receipt)
     raise SystemExit(0 if receipt["exit_code"] == 0 else 1)

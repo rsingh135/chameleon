@@ -475,3 +475,122 @@ def test_line_supported_matching_alpha_is_preserved(resources, cheap_identity):
     assert result["status"] == "available", result["reason"]
     image = decoded(result)
     assert image.getpixel((image.width // 2, image.height // 2)) == (0, 0, 255, 128)
+
+
+@pytest.mark.parametrize(
+    ("size", "policy", "accepted"),
+    [
+        ((4000, 5000), None, True),
+        ((4000, 5000), evidence.ISOLATION_V1, True),
+        ((1, 20_000_001), None, False),
+        ((4000, 6000), evidence.ISOLATION_V1, False),
+        ((4000, 6000), evidence.ISOLATION_V2_24MP, True),
+        ((1, 24_000_001), evidence.ISOLATION_V2_24MP, False),
+    ],
+)
+def test_source_decode_budget_is_versioned_and_checked_before_paint(
+    size, policy, accepted, resources, cheap_identity, monkeypatch
+):
+    assets, fonts = resources
+    path = assets / "original.png"
+    path.write_bytes(b"raw original bytes remain hashed, no large allocation")
+    verified, painted = [], []
+
+    class Header:
+        width, height = size
+        n_frames = 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def verify(self):
+            verified.append(True)
+
+    def paint(*args):
+        painted.append(True)
+        return b"test-only-alpha", b"test-only-checker"
+
+    # Exercise admission/plumbing, not native rendering, using header-only objects.
+    monkeypatch.setattr(evidence.Image, "open", lambda _path: Header())
+    monkeypatch.setattr(evidence, "_paint", paint)
+    kwargs = {} if policy is None else {"policy": policy}
+    result = evidence.render_isolated_element(
+        picture(), assets_dir=assets, fonts_dir=fonts, **kwargs
+    )
+    if accepted:
+        assert result["status"] == "available", result["reason"]
+        assert len(verified) == 2 and len(painted) == 1
+        assert result["receipt"]["resource_identity"]["hashes"]["assets"]["original.png"] == (
+            hashlib.sha256(path.read_bytes()).hexdigest()
+        )
+    else:
+        unavailable(result, "oversized")
+        assert not verified and not painted
+    expected = policy or evidence.ISOLATION_V1
+    assert result["receipt"]["protocol"] == result["receipt"]["policy"]["version"] == expected
+    if expected == evidence.ISOLATION_V1:
+        assert "max_source_pixels" not in result["receipt"]["policy"]
+    else:
+        assert result["receipt"]["policy"]["max_source_pixels"] == 24_000_000
+
+
+def test_source_decode_opt_in_does_not_change_native_pngs_or_other_limits(
+    resources, cheap_identity
+):
+    assets, fonts = resources
+    Image.new("RGBA", (40, 20), (10, 20, 30, 128)).save(assets / "original.png")
+    first = run(picture(), resources)
+    newer = evidence.render_isolated_element(
+        picture(), assets_dir=assets, fonts_dir=fonts, policy=evidence.ISOLATION_V2_24MP
+    )
+    assert first["status"] == newer["status"] == "available"
+    assert first["alpha_png"] == newer["alpha_png"]
+    assert first["checker_png"] == newer["checker_png"]
+    assert newer["receipt"]["policy"] == {
+        **first["receipt"]["policy"],
+        "version": evidence.ISOLATION_V2_24MP,
+        "max_source_pixels": 24_000_000,
+    }
+    assert first["receipt"]["resource_identity"] == newer["receipt"]["resource_identity"]
+
+
+def test_24mp_policy_keeps_converter_and_cover_intermediates_bounded(
+    resources, cheap_identity, monkeypatch
+):
+    assets, fonts = resources
+    Image.new("RGBA", (1, 1)).save(assets / "original.png")
+    unavailable(
+        evidence.render_isolated_element(
+            picture(width=2001, height=2000),
+            assets_dir=assets,
+            fonts_dir=fonts,
+            policy=evidence.ISOLATION_V2_24MP,
+        ),
+        "converter intermediate",
+    )
+
+    class Header:
+        width, height, n_frames = 1, 24_000_000, 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def verify(self):
+            pytest.fail("Excessive cover intermediate reached source decode")
+
+    monkeypatch.setattr(evidence.Image, "open", lambda _path: Header())
+    unavailable(
+        evidence.render_isolated_element(
+            picture(fit="cover"),
+            assets_dir=assets,
+            fonts_dir=fonts,
+            policy=evidence.ISOLATION_V2_24MP,
+        ),
+        "fit intermediate",
+    )

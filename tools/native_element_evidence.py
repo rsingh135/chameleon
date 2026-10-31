@@ -34,6 +34,7 @@ from renderer.converter.convert import convert_chameleon_to_crello
 from viewer.resize_cache import ResourceBindings
 
 ISOLATION_V1 = "native-element-isolation-v1"
+ISOLATION_V2_24MP = "native-element-isolation-v2-24mp-source"
 _POLICY = {
     "version": ISOLATION_V1,
     "max_native_axis": 1024,
@@ -42,6 +43,13 @@ _POLICY = {
     "max_thumbnail_axis": 512,
     "alpha_padding": 8,
     "checker": {"colors_rgba": [[224, 224, 224, 255], [192, 192, 192, 255]], "cell_pixels": 8},
+}
+_POLICIES = {
+    ISOLATION_V1: (_POLICY, 20_000_000),
+    ISOLATION_V2_24MP: (
+        {**_POLICY, "version": ISOLATION_V2_24MP, "max_source_pixels": 24_000_000},
+        24_000_000,
+    ),
 }
 _ROOT = Path(__file__).resolve().parents[1]
 _LOCK = threading.RLock()
@@ -189,7 +197,7 @@ def _validate(element):
             raise ValueError("Native image_position requires the authored cover viewport")
 
 
-def _resources(element, assets, fonts):
+def _resources(element, assets, fonts, *, max_source_pixels=20_000_000):
     if not assets.is_dir() or not fonts.is_dir():
         raise ValueError("Explicit native asset and font directories must exist")
     font_files = [
@@ -215,7 +223,7 @@ def _resources(element, assets, fonts):
             raise ValueError("Native original asset is missing or exceeds its byte budget")
         with Image.open(path) as original:
             if (
-                original.width * original.height > 20_000_000
+                original.width * original.height > max_source_pixels
                 or getattr(original, "n_frames", 1) != 1
             ):
                 raise ValueError("Native original image is oversized or animated")
@@ -398,7 +406,9 @@ def render_isolated_element(element, *, assets_dir, fonts_dir, policy=ISOLATION_
 
     Resource paths must be immutable, and callers must own one existing native
     worker/thread and any engine renderer lock. This helper's lock alone does
-    not establish native-object ownership outside this module.
+    not establish native-object ownership outside this module. V1 retains its
+    20-MP source-decode limit; explicitly selecting ISOLATION_V2_24MP permits
+    24 MP without changing the native/intermediate raster or thumbnail limits.
     """
     global _WORKER_THREAD, _CODE_PIN
     receipt = {
@@ -417,13 +427,15 @@ def render_isolated_element(element, *, assets_dir, fonts_dir, policy=ISOLATION_
     alpha_png = checker_png = None
     with _LOCK:
         try:
-            if policy != ISOLATION_V1:
+            if not isinstance(policy, str) or policy not in _POLICIES:
                 raise ValueError("Unsupported native isolation policy")
+            selected_policy, max_source_pixels = _POLICIES[policy]
+            receipt.update(protocol=policy, policy=deepcopy(selected_policy))
             frozen = deepcopy(element)
             _validate(frozen)
             receipt["source_element_sha256"] = _digest(frozen)
             assets, fonts = Path(assets_dir).resolve(), Path(fonts_dir).resolve()
-            bound = _resources(frozen, assets, fonts)
+            bound = _resources(frozen, assets, fonts, max_source_pixels=max_source_pixels)
             receipt["resource_identity"] = {
                 "assets_dir": str(assets),
                 "fonts_dir": str(fonts),
@@ -445,7 +457,7 @@ def render_isolated_element(element, *, assets_dir, fonts_dir, policy=ISOLATION_
                 implementation_sha256=implementation_digest,
             )
             alpha_png, checker_png = _paint(frozen, assets, fonts, receipt)
-            current = _resources(frozen, assets, fonts)
+            current = _resources(frozen, assets, fonts, max_source_pixels=max_source_pixels)
             if current.digest != bound.digest or _implementation() != (implementation, runtime):
                 raise ValueError("Native resources or implementation changed during paint")
             if element != frozen:

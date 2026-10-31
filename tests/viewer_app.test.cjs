@@ -24,6 +24,19 @@ const sample = id => ({id, label: `Sample ${id}`, task: {
 const metadata = () => ({samples: [sample('a'), sample('b')], targets: [
   {id: 'square', label: 'Square', width: 100, height: 100},
 ]});
+const officialSampleIds = ['chameleon_sample_level1_warmup', 'chameleon_sample_level2_core', 'chameleon_sample_level3_advanced'];
+const officialMetadata = () => ({...metadata(), samples: officialSampleIds.map(sample)});
+const libraryPoster = (id, split = 'reviewed', ready = true) => ({id, title: `Poster ${id}`,
+  split, ready, bundle_url: `/api/posters/${id}/bundle`});
+const portablePoster = (id, width = 1000, height = 1400) => {
+  const task = sample(id).task;
+  task.target_canvas = {width: 1600, height: 400};
+  task.source.canvas = {width, height};
+  Object.assign(task.source.elements[0], {width, height});
+  Object.assign(task.source.elements[1], {x: width / 10, y: height / 10, width: width / 5, height: height / 5});
+  return {...task, assets: [{asset_id: `${id}.png`, data_base64: 'ZXhhY3Q='}],
+    fonts: [], document: {snapshot_id: id}};
+};
 const png = label => `data:image/png;base64,${Buffer.from(label).toString('base64')}`;
 const rendered = payload => ({
   design: {...structuredClone(payload.source), canvas: {...payload.target_canvas}},
@@ -1110,4 +1123,184 @@ test('navigation cancels a pending poster import and retry after return loads on
   assert.equal(exported.poster_id, 'new');
   assert.equal(exported.document.snapshot_id, 'current');
   assert.equal(app.elements.taskName.textContent, 'New poster');
+});
+
+test('official levels stay out of the picker while every poster and nonlevel bundled input remains available', async () => {
+  const meta = metadata();
+  const hiddenIds = [...officialSampleIds, 'chameleon_sample_level3'];
+  meta.samples.push(...hiddenIds.map(sample), sample('chameleon_sample_level10_custom'));
+  const app = application({meta, posters: [
+    libraryPoster('reviewed'), libraryPoster('personal', 'reserve'), libraryPoster('unsupported', 'reviewed', false),
+  ]});
+  await app.flush();
+  const values = app.elements.sample.options.map(option => option.value);
+  assert.ok(hiddenIds.every(id => !values.includes(id)));
+  assert.ok(['a', 'b', 'chameleon_sample_level10_custom', 'poster:reviewed', 'poster:personal', 'poster:unsupported']
+    .every(id => values.includes(id)));
+  assert.equal(app.elements.sample.options.find(option => option.value === 'poster:unsupported').disabled, true);
+  assert.equal(app.elements.taskName.textContent, 'Sample b');
+});
+
+test('a catalogue containing only official levels opens the first ready reviewed poster with exact resources', async () => {
+  const bundle = portablePoster('reviewed');
+  const app = application({meta: officialMetadata(), posters: [
+    libraryPoster('personal', 'reserve'), libraryPoster('unsupported', 'reviewed', false), libraryPoster('reviewed'),
+  ]});
+  app.posterHandler = () => structuredClone(bundle);
+  await app.flush();
+  assert.equal(app.elements.sample.value, 'poster:reviewed');
+  assert.equal(app.elements.taskName.textContent, 'Poster reviewed');
+  assert.equal(app.elements.sample.options.some(option => officialSampleIds.includes(option.value)), false);
+  const request = app.requests.at(-1);
+  assert.equal(request.url, '/api/document/resize');
+  assert.deepEqual(request.payload.source, bundle.source);
+  assert.deepEqual(request.payload.assets, bundle.assets);
+  assert.deepEqual(request.payload.fonts, bundle.fonts);
+  assert.deepEqual(request.payload.document, bundle.document);
+  assert.equal(new URL(app.context.location.href).searchParams.get('poster'), 'reviewed');
+});
+
+test('an unavailable requested poster falls back to a ready personal poster when no reviewed poster is ready', async () => {
+  const app = application({meta: officialMetadata(), search: '?poster=unsupported&view=compare', posters: [
+    libraryPoster('unsupported', 'reviewed', false), libraryPoster('personal', 'reserve'),
+  ]});
+  app.posterHandler = () => portablePoster('personal');
+  await app.flush();
+  assert.equal(app.elements.sample.value, 'poster:personal');
+  assert.equal(app.requests.at(-1).payload.document.snapshot_id, 'personal');
+  const query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('poster'), 'personal');
+  assert.equal(query.get('view'), 'compare');
+});
+
+for (const id of officialSampleIds) test(`the old ${id} link falls back to a poster without restoring a hidden level`, async () => {
+  const app = application({meta: officialMetadata(), workspace: true,
+    search: `?sample=${id}&view=compare&width=800&height=500`, posters: [libraryPoster('fallback')]});
+  app.posterHandler = () => portablePoster('fallback');
+  await app.flush();
+  assert.equal(app.elements.sample.value, 'poster:fallback');
+  assert.equal(app.elements.previews.dataset.view, 'compare');
+  const query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('sample'), null);
+  assert.equal(query.get('poster'), 'fallback');
+  assert.equal(query.get('view'), 'compare');
+  assert.equal(query.get('width'), '800');
+  assert.equal(query.get('height'), '500');
+  assert.equal(app.requests.at(-1).payload.document.snapshot_id, 'fallback');
+});
+
+test('an explicit ready poster link wins over the reviewed default and clears an old sample query', async () => {
+  const app = application({meta: officialMetadata(), search: `?sample=${officialSampleIds[1]}&poster=personal&view=compare`,
+    posters: [libraryPoster('reviewed'), libraryPoster('personal', 'reserve')]});
+  app.posterHandler = url => portablePoster(url.includes('/personal/') ? 'personal' : 'reviewed');
+  await app.flush();
+  assert.equal(app.elements.sample.value, 'poster:personal');
+  assert.equal(app.requests.at(-1).payload.document.snapshot_id, 'personal');
+  const query = new URL(app.context.location.href).searchParams;
+  assert.equal(query.get('poster'), 'personal');
+  assert.equal(query.get('sample'), null);
+  assert.equal(query.get('view'), 'compare');
+});
+
+for (const [name, source, target] of [
+  ['portrait', {width: 1000, height: 1400}, {width: 900, height: 1330}],
+  ['landscape', {width: 1400, height: 1000}, {width: 1330, height: 900}],
+  ['square', {width: 1000, height: 1000}, {width: 950, height: 950}],
+  ['small portrait', {width: 1, height: 2}, {width: 1, height: 2}],
+  ['large landscape', {width: 8192, height: 2000}, {width: 7782, height: 1800}],
+]) test(`${name} poster defaults to a bounded source-relative gentle target instead of its legacy banner`, async () => {
+  const bundle = portablePoster(name, source.width, source.height);
+  const original = structuredClone(bundle);
+  const app = application({meta: officialMetadata(), posters: [libraryPoster('design')]});
+  app.posterHandler = () => bundle;
+  await app.flush();
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, target);
+  assert.equal(Number(app.elements.width.value), target.width);
+  assert.equal(Number(app.elements.height.value), target.height);
+  assert.equal(app.elements.preset.value, 'gentle');
+  assert.ok(app.elements.preset.options.some(option => option.value === 'gentle' && /Near original.*gentle resize/.test(option.textContent)));
+  assert.ok(Number.isInteger(target.width) && Number.isInteger(target.height));
+  assert.ok(target.width >= 1 && target.height >= 1 && target.width <= 8192 && target.height <= 8192);
+  assert.ok(target.width * target.height <= 20000000);
+  assert.equal(Math.sign(target.width - target.height), Math.sign(source.width - source.height));
+  assert.deepEqual(bundle.source, original.source);
+  assert.deepEqual(bundle.assets, original.assets);
+  const exported = JSON.parse(await app.blobs.get(app.elements.downloadJson.href).text());
+  assert.deepEqual(exported.source.canvas, target);
+  assert.deepEqual(exported.target_canvas, target);
+  assert.deepEqual(exported.assets, original.assets);
+  assert.deepEqual(exported.document, original.document);
+});
+
+test('automatic gentle targets follow the next poster and immediately invalidate older downloads', async () => {
+  const app = application({meta: officialMetadata(), workspace: true,
+    posters: [libraryPoster('portrait'), libraryPoster('landscape')]});
+  app.posterHandler = () => portablePoster('portrait');
+  await app.flush();
+  const oldExports = [app.elements.downloadJson.href, app.elements.downloadPng.href];
+  await app.views.find(button => button.dataset.view === 'compare').fire('click');
+  await app.elements.closeSettings.fire('click');
+  const pending = deferred();
+  app.posterHandler = () => pending.promise;
+  const selecting = app.select('poster:landscape');
+  await app.flush();
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'true');
+  assert.ok(oldExports.every(url => app.revoked.includes(url)));
+  pending.resolve(portablePoster('landscape', 1400, 1000));
+  await selecting; await app.flush();
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 1330, height: 900});
+  assert.equal(app.elements.preset.value, 'gentle');
+  assert.equal(app.elements.previews.dataset.view, 'compare');
+  assert.equal(app.elements.workspace.dataset.setupOpen, 'false');
+  assert.match(app.elements.downloadPng.download, /^landscape_1330x900/);
+});
+
+test('explicit custom and catalogue targets survive poster changes and gentle can be selected again', async () => {
+  const app = application({meta: officialMetadata(), posters: [libraryPoster('first'), libraryPoster('second')]});
+  app.posterHandler = url => portablePoster(url.includes('/first/') ? 'first' : 'second', 1400, 1000);
+  await app.flush();
+  app.elements.width.value = '320'; app.elements.height.value = '180';
+  await app.elements.width.fire('input');
+  assert.equal(app.elements.preset.value, 'custom');
+  await app.select('poster:second');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 320, height: 180});
+  app.elements.preset.value = 'square'; await app.elements.preset.fire('change');
+  await app.select('poster:first');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 100, height: 100});
+  app.elements.preset.value = 'gentle'; await app.elements.preset.fire('change');
+  assert.equal(app.elements.downloadJson.getAttribute('aria-disabled'), 'true');
+  await app.elements.resizeForm.fire('submit'); await app.flush();
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, {width: 1330, height: 900});
+  assert.equal(app.elements.preset.value, 'gentle');
+});
+
+for (const posters of [[], [libraryPoster('unsupported', 'reviewed', false)]]) test(`a filtered catalogue with ${posters.length} unavailable posters still permits a complete imported task`, async () => {
+  const app = application({meta: officialMetadata(), search: `?sample=${officialSampleIds[0]}`,
+    posters});
+  await app.flush();
+  assert.equal(app.requests.length, 0);
+  assert.equal(app.elements.sample.options.some(option => officialSampleIds.includes(option.value)), false);
+  const task = sample('owned').task;
+  task.target_canvas = {width: 320, height: 180};
+  await app.file('owned.json', task); await app.flush();
+  assert.equal(app.elements.sample.value, 'imported');
+  assert.equal(app.elements.taskName.textContent, 'owned.json');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, task.target_canvas);
+  assert.equal(app.elements.downloadPng.getAttribute('aria-disabled'), 'false');
+  assert.equal(new URL(app.context.location.href).searchParams.get('sample'), null);
+});
+
+test('late level-only startup metadata cannot replace an imported task with a default poster or gentle target', async () => {
+  const boot = deferred();
+  const app = application({meta: boot.promise, posters: [libraryPoster('default')]});
+  app.posterHandler = () => portablePoster('default');
+  const task = portablePoster('owned'); task.target_canvas = {width: 320, height: 180};
+  await app.file('owned.json', task); await app.flush();
+  boot.resolve(officialMetadata()); await app.flush();
+  assert.equal(app.elements.sample.value, 'imported');
+  assert.equal(app.elements.taskName.textContent, 'owned.json');
+  assert.deepEqual(app.requests.at(-1).payload.target_canvas, task.target_canvas);
+  const exported = JSON.parse(await app.blobs.get(app.elements.downloadJson.href).text());
+  assert.equal(exported.document.snapshot_id, 'owned');
+  assert.deepEqual(exported.source.canvas, task.target_canvas);
 });

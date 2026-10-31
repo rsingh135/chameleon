@@ -74,6 +74,13 @@
       && canvas.width >= 1 && canvas.height >= 1 && canvas.width <= 8192 && canvas.height <= 8192
       && canvas.width * canvas.height <= 20000000;
   }
+  function gentleTarget(canvas) {
+    const portrait = canvas.height > canvas.width, landscape = canvas.width > canvas.height;
+    return {
+      width: Math.max(1, Math.round(canvas.width * (portrait ? 0.9 : 0.95))),
+      height: Math.max(1, Math.round(canvas.height * (landscape ? 0.9 : 0.95))),
+    };
+  }
   function validateRequestPolicy(policy) {
     if (!policy || typeof policy !== 'object' || Array.isArray(policy)
       || !['studio_timeout_ms', 'benchmark_timeout_ms'].every(key => Number.isInteger(policy[key]) && policy[key] > 0 && policy[key] <= 2100000)
@@ -201,6 +208,10 @@
     $('run').formNoValidate = false;
   }
   function syncPreset() {
+    const near = state.task && gentleTarget(state.task.source.canvas);
+    if (near && near.width === Number($('width').value) && near.height === Number($('height').value)) {
+      $('preset').value = 'gentle'; return;
+    }
     const match = state.targets.find(t => t.width === Number($('width').value) && t.height === Number($('height').value));
     $('preset').value = match ? match.id : 'custom';
   }
@@ -220,7 +231,7 @@
     syncSourceURL();
     resize();
   }
-  async function loadPoster(id, {preserveTarget = true} = {}) {
+  async function loadPoster(id, {preserveTarget = Boolean(state.task) && $('preset').value !== 'gentle'} = {}) {
     const poster = state.posters.find(item => item.id === id);
     if (!poster?.ready) { errorMessage(new Error('This poster needs import support. See the poster library for its notes.')); return; }
     const loadVersion = ++state.loadVersion;
@@ -236,6 +247,7 @@
       bundle.attribution ||= {text: poster.attribution_text || poster.author, author: poster.author,
         source_url: poster.source_url, license_id: poster.license_id, license_url: poster.license_url,
         original_sha256: poster.original_sha256, source_note: poster.source_note};
+      if (!preserveTarget) bundle.target_canvas = gentleTarget(bundle.source.canvas);
       setTask(bundle, poster.title, {preserveTarget}); syncSourceURL('poster', id); loaded = true;
     } catch (error) {
       if (loadVersion === state.loadVersion && state.controller === controller) {
@@ -508,7 +520,8 @@
     }
   });
   $('preset').addEventListener('change', () => {
-    const target = state.targets.find(item => item.id === $('preset').value);
+    const target = $('preset').value === 'gentle' && state.task
+      ? gentleTarget(state.task.source.canvas) : state.targets.find(item => item.id === $('preset').value);
     if (target) { $('width').value = target.width; $('height').value = target.height; markDirty(); }
   });
   for (const id of ['width', 'height']) $(id).addEventListener('input', () => { syncPreset(); markDirty(); });
@@ -557,7 +570,8 @@
     try {
       const [meta, library] = await Promise.all([requestJSON('/api/samples'), requestJSON('/api/posters').catch(() => ({examples: []}))]);
       if (!meta || !Array.isArray(meta.samples) || !Array.isArray(meta.targets)) throw new Error('The engine returned an incomplete design catalogue. Retry connection.');
-      state.samples = meta.samples; state.targets = meta.targets; state.posters = Array.isArray(library?.examples) ? library.examples : [];
+      state.samples = meta.samples.filter(item => !/^chameleon_sample_level[123](?:_|$)/.test(item.id));
+      state.targets = meta.targets; state.posters = Array.isArray(library?.examples) ? library.examples : [];
       $('sample').replaceChildren(...state.samples.map(item => new Option(item.label, item.id)));
       if (state.imported) { $('sample').add(new Option('Imported design', 'imported')); $('sample').value = 'imported'; }
       for (const [split, label] of [['reviewed', 'Open posters · reviewed'], ['reserve', 'Open posters · personal tests']]) {
@@ -570,15 +584,25 @@
         }
         $('sample').append(group);
       }
-      $('preset').replaceChildren(new Option('Custom dimensions', 'custom'), ...state.targets.map(item => new Option(`${item.label} · ${item.width} × ${item.height}`, item.id)));
+      $('preset').replaceChildren(new Option('Near original · gentle resize', 'gentle'), new Option('Custom dimensions', 'custom'), ...state.targets.map(item => new Option(`${item.label} · ${item.width} × ${item.height}`, item.id)));
       $('sample').disabled = state.busy;
       $('preset').disabled = $('run').disabled = false;
       if (state.task) { syncPreset(); return; }
-      if (!state.samples.length) throw new Error('No bundled samples were found. Import a task JSON to start.');
       const query = new URLSearchParams(location.search);
       const requestedPoster = query.get('poster');
-      if (loadVersion === state.loadVersion && state.posters.some(item => item.id === requestedPoster && item.ready)) {
-        $('sample').value = `poster:${requestedPoster}`; await loadPoster(requestedPoster, {preserveTarget: false}); return;
+      const defaultPoster = state.posters.find(item => item.ready && item.split === 'reviewed') || state.posters.find(item => item.ready);
+      const poster = state.posters.find(item => item.id === requestedPoster && item.ready)
+        || (!state.samples.length ? defaultPoster : null);
+      if (loadVersion === state.loadVersion && poster) {
+        $('sample').value = `poster:${poster.id}`; await loadPoster(poster.id, {preserveTarget: false}); return;
+      }
+      if (!state.samples.length) {
+        $('sample').replaceChildren(new Option('No posters available', ''));
+        $('sample').disabled = !state.imported;
+        $('sourceSummary').textContent = 'Import your own design JSON to start.';
+        $('taskName').textContent = 'Choose a design';
+        $('status').textContent = 'Import a design JSON to start. The poster library is currently unavailable.';
+        return;
       }
       const requestedSample = query.get('sample');
       const sample = state.samples.find(item => item.id === requestedSample) || state.samples[Math.min(1, state.samples.length - 1)];

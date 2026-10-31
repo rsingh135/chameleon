@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Chameleon Viewer</title><link rel="stylesheet" href="./style.css"></head>
+<body><main>
+  <header><span class="brand-mark" aria-hidden="true">Ch</span><div><p class="eyebrow">CHAMELEON</p><h1>Design viewer</h1></div></header>
+  <p class="intro">Compare the original design with the engine’s resized result. Export the JSON and full-resolution PNG, or place the PNG in Adobe Express.</p>
+  <section aria-labelledby="source-heading"><h2 id="source-heading">1. Open a design</h2>
+    <label>Sample task<select id="sample"><option value="">Choose a sample…</option><option value="chameleon_sample_level1_warmup">Level 1 · Warm-up</option><option value="chameleon_sample_level2_core">Level 2 · Core</option><option value="chameleon_sample_level3_advanced">Level 3 · Advanced</option></select></label>
+    <label class="file-control">Open task JSON<input id="task-file" type="file" accept=".json,application/json"></label>
+    <p id="summary">No source loaded.</p>
+    <label class="file-control">Open engine result<input id="result-file" type="file" accept=".json,application/json"></label>
+    <p class="hint">An engine-result bundle opens the original, result, and downloads without a connection to localhost.</p>
+  </section>
+  <form id="reflow"><section aria-labelledby="target-heading"><h2 id="target-heading">2. Choose a canvas</h2>
+    <label>Format<select id="preset"><option value="custom">Custom size</option><option value="1080,1080">Instagram Post · 1080 × 1080</option><option value="1080,1920">Instagram Story · 1080 × 1920</option><option value="1280,720">YouTube Thumbnail · 1280 × 720</option><option value="1600,400">Wide Banner · 1600 × 400</option><option value="728,90">Leaderboard · 728 × 90</option></select></label>
+    <div class="dimensions"><label>Width<input id="width" type="number" min="1" max="8192" step="1" value="1080" required></label><span aria-hidden="true">×</span><label>Height<input id="height" type="number" min="1" max="8192" step="1" value="1350" required></label></div>
+    <details><summary>Local engine connection</summary><label>Engine URL<input id="engine" type="url" value="http://127.0.0.1:8765" required></label><p class="hint">Run the Chameleon engine locally. The browser may request local-network access. If the host blocks it, open an engine-result bundle instead.</p></details>
+    <button id="resize" type="submit" disabled>Generate resized design</button><button id="cancel" type="button" class="secondary" hidden>Cancel</button>
+  </section></form>
+  <p id="status" role="status" aria-live="polite">Ready to open a design.</p><p id="error" role="alert" hidden></p>
+  <section id="comparison" aria-labelledby="comparison-heading" hidden><div class="section-heading"><h2 id="comparison-heading">3. Compare and export</h2><span id="result-size" class="tag"></span></div>
+    <div class="previews"><figure><img id="source-image" alt="Original design rendered with the supplied assets and fonts"><figcaption>Original <span id="source-size"></span></figcaption></figure><figure><img id="result-image" alt="Resized design rendered by the Chameleon engine"><figcaption>Resized <span id="preview-state"></span></figcaption></figure></div>
+    <p id="warnings" class="hint" hidden></p>
+    <div class="downloads"><button id="download-json" type="button" class="secondary" disabled>Download JSON</button><button id="download-png" type="button" class="secondary" disabled>Download PNG</button></div>
+    <button id="place" type="button" disabled>Add PNG to Express</button><p id="host-status" class="hint">Connecting to Adobe Express… Downloads are available independently.</p>
+    <details><summary>Element list</summary><ol id="elements"></ol></details>
+  </section>
+  <footer><details><summary>About this viewer</summary><p>This stage-one viewer displays the engine’s real JSON and PNG outputs. Adding the PNG places a rendered image; it does not create editable text or shapes.</p><p>Task imports use the engine’s supplied brand-kit assets and fonts. Missing artwork uses the documented placeholder. Custom resource packages belong to the separate native development integration.</p><p>Local quality checks are diagnostics, not the official competition score.</p></details></footer>
+</main><script type="module" src="./main.js"></script></body></html>

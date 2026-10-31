@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local source-aware comparison review for Chameleon.">
+  <title>Chameleon · Human review</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#review">Skip to comparison</a>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">Ch</span>Chameleon</a>
+    <span class="workspace-name">Human review</span>
+    <span class="local-badge"><span aria-hidden="true"></span>Local workspace</span>
+  </header>
+  <main id="review">
+    <div id="collectionNote" class="collection-note" hidden></div>
+    <section class="review-heading" aria-labelledby="reviewTitle">
+      <div><p class="eyebrow">Source-aware comparison</p><h1 id="reviewTitle">Which adaptation works better?</h1><p class="intro">Compare hierarchy, readability, grouping and balance with the original design.</p></div>
+      <div class="review-meta"><span id="targetSize" class="target-size">Loading target…</span><span id="progress">Preparing pairs</span><span id="poolName"></span></div>
+    </section>
+    <div id="error" class="error" role="alert" hidden></div>
+    <button id="reload" class="secondary reload" type="button" hidden>Reload review</button>
+    <p id="loading" class="loading" role="status">Loading the local review collection…</p>
+    <section id="artboards" class="artboards" aria-label="Original and two adaptations" hidden>
+      <article class="artboard source-board">
+        <div class="board-heading"><h2>Original</h2><a id="sourceLink" target="_blank" rel="noopener">Open image <span aria-hidden="true">↗</span></a></div>
+        <div class="image-stage"><img id="sourceImage" alt="Original source design"></div>
+        <p class="board-caption">The source is the reference.</p>
+      </article>
+      <article class="artboard" id="boardA">
+        <div class="board-heading"><h2><span class="option-mark">A</span>Adaptation A</h2><a id="aLink" target="_blank" rel="noopener">Open image <span aria-hidden="true">↗</span></a></div>
+        <div class="image-stage"><img id="aImage" alt="Adaptation A at the requested target size"></div>
+        <p class="board-caption">Preserve the source's intent on the new canvas.</p>
+      </article>
+      <article class="artboard" id="boardB">
+        <div class="board-heading"><h2><span class="option-mark">B</span>Adaptation B</h2><a id="bLink" target="_blank" rel="noopener">Open image <span aria-hidden="true">↗</span></a></div>
+        <div class="image-stage"><img id="bImage" alt="Adaptation B at the requested target size"></div>
+        <p class="board-caption">Same source. Same target.</p>
+      </article>
+    </section>
+    <section id="complete" class="complete" hidden aria-labelledby="completeTitle">
+      <span class="complete-mark" aria-hidden="true">✓</span><h2 id="completeTitle" tabindex="-1">This review is complete</h2><p>Your feedback is saved locally. No more unreviewed pairs remain for this annotator.</p>
+    </section>
+    <form id="feedback" hidden>
+      <div class="feedback-main">
+        <fieldset class="decision-field"><legend id="judgmentLegend" tabindex="-1">Your judgment</legend><div class="decisions" role="group" aria-label="Choose a judgment">
+          <button type="button" data-decision="A" aria-pressed="false"><span>A is better</span><kbd>A</kbd></button>
+          <button type="button" data-decision="B" aria-pressed="false"><span>B is better</span><kbd>B</kbd></button>
+          <button type="button" data-decision="tie" aria-pressed="false"><span>About equal</span><kbd>T</kbd></button>
+          <button type="button" data-decision="neither" aria-pressed="false"><span>Neither works</span><kbd>N</kbd></button>
+          <button type="button" data-decision="abstain" aria-pressed="false"><span>Can't judge</span><kbd>X</kbd></button>
+        </div></fieldset>
+        <div class="save-area"><label for="annotator">Annotator</label><input id="annotator" type="text" readonly required><button id="save" class="primary" type="submit" disabled>Save and continue <span aria-hidden="true">→</span></button></div>
+      </div>
+      <div class="feedback-detail">
+        <details id="observations"><summary>Add observations <span>Optional</span></summary>
+          <div class="issue-controls"><label>Candidate<select id="issueCandidate"><option value="">Choose an option</option><option value="A">Adaptation A</option><option value="B">Adaptation B</option></select></label><label>Observation<select id="issueCode"><option value="">Choose an observation</option></select></label><label>Element<select id="issueElement"><option value="">Whole composition</option></select></label><button id="addIssue" class="secondary" type="button">Add</button></div>
+          <ul id="issues" class="issues" aria-label="Recorded observations"></ul>
+        </details>
+        <p id="saveStatus" role="status" aria-live="polite">Choose a judgment, then save. Nothing is selected for you.</p>
+      </div>
+    </form>
+  </main>
+  <footer><span>Chameleon · Preference research</span><span>Artwork stays unchanged. Feedback stays on this computer.</span></footer>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "fonts": [
+    {
+      "font_family": "OpenSans-Regular",
+      "postscript_name": "OpenSans-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "c0c9780e88c88f43.ttf"
+    },
+    {
+      "font_family": "SourceSansPro-Regular",
+      "postscript_name": "SourceSansPro-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "b6df0df16bea64c1.ttf"
+    },
+    {
+      "font_family": "SourceSansPro-Light",
+      "postscript_name": "SourceSansPro-Light",
+      "weight": "regular",
+      "style": "normal",
+      "file": "ef790b1935a30628.ttf"
+    }
+  ]
+}

@@ -6,8 +6,10 @@ that would be thrown out by the structural check.
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from dataclasses import dataclass
+from numbers import Real
 
 from engine.eval.context import EDGE_SLACK, Context, build_context
 from engine.eval.geometry import canvas_box, contains, element_box
@@ -23,8 +25,19 @@ REQUIRED_BY_TYPE = {
     "image": ("asset_id",),
     "shape": ("shape_type", "fill_color"),
 }
-# Fields the engine may not change. Position, size and (for text) font_size
-# are the only knobs; everything else is the design's identity.
+NUMERIC_GEOMETRY = (
+    "x",
+    "y",
+    "width",
+    "height",
+    "font_size",
+    "rotation",
+    "corner_radius",
+    "stroke_width",
+)
+# Fields the engine may not change: everything that is the design's identity
+# rather than its geometry. Position, size, font_size, and the px-valued shape
+# geometry (`corner_radius`, `stroke_width`) may scale with the element.
 FROZEN_FIELDS = (
     "type",
     "content",
@@ -36,12 +49,13 @@ FROZEN_FIELDS = (
     "line_height",
     "letter_spacing",
     "style_runs",
+    "native_text_effects",
+    "source_art",
     "asset_id",
     "fit",
     "shape_type",
     "fill_color",
     "stroke_color",
-    "corner_radius",
     "group_id",
     "z_index",
     "opacity",
@@ -58,6 +72,15 @@ class Violation:
     def __str__(self) -> str:
         where = f"[{self.element_id}] " if self.element_id else ""
         return f"{self.code}: {where}{self.message}"
+
+
+def _finite_real(value) -> bool:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def check_contract(
@@ -93,6 +116,7 @@ def check_contract(
     context = context or build_context(source)
     cbox = canvas_box(canvas)
     measurer = get_measurer(context.fonts_dir)
+    scene = None
 
     for el in candidate["elements"]:
         eid = el["id"]
@@ -104,9 +128,52 @@ def check_contract(
             out.append(Violation("missing_field", eid, f"missing {missing}"))
             continue
 
+        invalid = [f for f in NUMERIC_GEOMETRY if f in el and not _finite_real(el[f])]
+        if invalid:
+            out.extend(
+                Violation("invalid_geometry", eid, f"{f} must be a finite real number: {el[f]!r}")
+                for f in invalid
+            )
+            # Authored off-canvas content may retain its crop, but invalid
+            # numbers never reach bounds, aspect ratios or text measurement.
+            continue
+
+        cover, support = False, False
+        if el["type"] == "image" and src.get("fit") == "fill":
+            from engine.scene import analyze_scene, approved_cover, approved_support
+
+            if scene is None:
+                scene = analyze_scene(
+                    source, assets_dir=context.assets_dir, fonts_dir=context.fonts_dir
+                )
+            cover = approved_cover(scene, el, canvas)
+            support = approved_support(scene, el, canvas)
+        if el["type"] == "image" and ("image_position" in el or "image_position" in src):
+            from engine.image_viewport import image_position
+
+            try:
+                image_position(el.get("image_position"))
+            except ValueError as exc:
+                out.append(Violation("invalid_image_position", eid, str(exc)))
+            permitted_position = cover and any(
+                r["element_id"] == eid and r.get("allow_crop_position")
+                for r in (scene or {}).get("images", [])
+            )
+            if el.get("image_position") != src.get("image_position") and not permitted_position:
+                out.append(
+                    Violation(
+                        "unapproved_image_position",
+                        eid,
+                        "Only a source-verified background may change its crop viewport position.",
+                    )
+                )
         for f in FROZEN_FIELDS:
             if f in src and el.get(f) != src[f]:
-                out.append(Violation("frozen_field_changed", eid, f"{f}: {src[f]!r} -> {el[f]!r}"))
+                if f == "fit" and cover:
+                    continue
+                out.append(
+                    Violation("frozen_field_changed", eid, f"{f}: {src[f]!r} -> {el.get(f)!r}")
+                )
 
         if el["width"] <= 0 or el["height"] <= 0:
             out.append(Violation("degenerate_size", eid, f"{el['width']}x{el['height']}"))
@@ -122,7 +189,11 @@ def check_contract(
                 )
             )
 
-        if el["type"] == "image" and src.get("fit", "contain") != "cover":
+        if (
+            el["type"] == "image"
+            and src.get("fit", "contain") != "cover"
+            and not (cover or support)
+        ):
             src_ratio = src["width"] / src["height"] if src["height"] else 0
             if src_ratio:
                 drift = abs(el["width"] / el["height"] - src_ratio) / src_ratio

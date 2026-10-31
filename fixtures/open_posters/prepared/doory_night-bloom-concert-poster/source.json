@@ -1,0 +1,555 @@
+{
+  "canvas": {
+    "width": 1728,
+    "height": 2304
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 1728,
+      "height": 2304,
+      "fill_color": "rgba(21,20,16,1)",
+      "id": "page-background:e6d82601-6c38-4282-a38f-6ee4904b4c9d",
+      "z_index": 0
+    },
+    {
+      "x": 96.0,
+      "y": 96.0,
+      "width": 420.0,
+      "height": 84.524,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "NIGHT BLOOM\nNIGHT BLOOM",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "left",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "2798a641-181a-441c-9310-ec81ad0e6565",
+      "z_index": 1
+    },
+    {
+      "x": 1212.0,
+      "y": 96.0,
+      "width": 420.0,
+      "height": 84.524,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "NIGHT BLOOM\nNIGHT BLOOM",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "right",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "88f417ce-3ff3-4518-8341-bf7eafc34a1f",
+      "z_index": 2
+    },
+    {
+      "x": 96.0,
+      "y": 210.0,
+      "width": 420.0,
+      "height": 84.524,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "TOUR\n2027",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "left",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "bd2b9c4a-3200-406f-b331-ce2959315337",
+      "z_index": 3
+    },
+    {
+      "x": 1212.0,
+      "y": 210.0,
+      "width": 420.0,
+      "height": 84.524,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "TOUR\n2027",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "right",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "c63c35b5-f140-4320-a4e0-1984aa5881aa",
+      "z_index": 4
+    },
+    {
+      "x": 96.0,
+      "y": 860.0,
+      "width": 420.0,
+      "height": 169.048,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "LIVE\nLIVE\nLIVE\nLIVE",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "left",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "fb73ba31-e44d-4d77-94d0-282f54c68ac1",
+      "z_index": 5
+    },
+    {
+      "x": 1212.0,
+      "y": 860.0,
+      "width": 420.0,
+      "height": 169.048,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "LIVE\nLIVE\nLIVE\nLIVE",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 34.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "right",
+      "line_height": 1.2429999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "5ccf2bbd-0b27-4e73-8300-fb2c567c6f7c",
+      "z_index": 6
+    },
+    {
+      "x": 0.0,
+      "y": 330.0,
+      "width": 1728.0,
+      "height": 176.28,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "NIGHT BLOOM",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 130.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(0,0,0,0)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0,
+        "outline": {
+          "color": "rgba(159,180,255,1)",
+          "width_em": 0.023076923076923078,
+          "fill": false
+        }
+      },
+      "id": "9105b039-fe33-48c9-b3f0-0ad800ea7893",
+      "z_index": 7
+    },
+    {
+      "x": 80.0,
+      "y": 530.0,
+      "width": 1568.0,
+      "height": 409.851,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "MARLOW &\nTHE ECHOES",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 186.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,226,122,1)",
+      "text_align": "center",
+      "line_height": 1.0735,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": -20
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": -0.02,
+        "gradient": {
+          "x1": 0.5,
+          "y1": 0,
+          "x2": 0.5,
+          "y2": 1,
+          "stops": [
+            {
+              "offset": 0,
+              "color": "rgba(255,226,122,1)"
+            },
+            {
+              "offset": 1,
+              "color": "rgba(244,166,64,1)"
+            }
+          ],
+          "height_factor": 1.0
+        }
+      },
+      "id": "4babf9e6-8da6-4810-a2a2-6577b42f1495",
+      "z_index": 8
+    },
+    {
+      "x": 0.0,
+      "y": 960.0,
+      "width": 1728.0,
+      "height": 176.28,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "NIGHT BLOOM",
+      "font_family": "ArchivoSemiBold-Bold",
+      "font_size": 130.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(0,0,0,0)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Archivo\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0,
+        "outline": {
+          "color": "rgba(159,180,255,1)",
+          "width_em": 0.023076923076923078,
+          "fill": false
+        }
+      },
+      "id": "80e27e62-80b3-4267-9292-74235e9d1dac",
+      "z_index": 9
+    },
+    {
+      "type": "image",
+      "x": 120,
+      "y": 1190,
+      "width": 1488,
+      "height": 640,
+      "asset_id": "doory-92ebd767a1db792eb4c2.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "9d2c6afe-94fa-4fd5-afac-88c8882f3fb3",
+        "original_sha256": "2fde84fde6f63620d12e1863dc6131021b23e7b57828156b560ce00780131a57",
+        "native_type": "rect",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "9d2c6afe-94fa-4fd5-afac-88c8882f3fb3",
+      "z_index": 10
+    },
+    {
+      "x": 150.0,
+      "y": 1226.0,
+      "width": 1428.0,
+      "height": 169.5,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "RIVERSIDE PARK",
+      "font_family": "Oswald-Bold",
+      "font_size": 150.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(21,20,16,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Oswald\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 40
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.04
+      },
+      "id": "68f5e582-a1ed-457e-bfbc-791cdfc1369c",
+      "z_index": 11
+    },
+    {
+      "x": 150.0,
+      "y": 1396.0,
+      "width": 1428.0,
+      "height": 117.52,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "THE OPEN AIR STAGE",
+      "font_family": "Oswald-Bold",
+      "font_size": 104.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(21,20,16,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Oswald\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 40
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.04
+      },
+      "id": "079974f6-7a14-4382-8f8c-a61fdc0c51e1",
+      "z_index": 12
+    },
+    {
+      "x": 150.0,
+      "y": 1524.0,
+      "width": 1428.0,
+      "height": 169.5,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "NIGHT 07/18",
+      "font_family": "Oswald-Bold",
+      "font_size": 150.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(21,20,16,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Oswald\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 40
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.04
+      },
+      "id": "d263ef7a-8707-492c-9f9c-9774329e48ca",
+      "z_index": 13
+    },
+    {
+      "x": 150.0,
+      "y": 1690.0,
+      "width": 1428.0,
+      "height": 126.56,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "SAT 13 JUNE 2027",
+      "font_family": "Oswald-Bold",
+      "font_size": 112.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(21,20,16,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Oswald\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 40
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.04
+      },
+      "id": "71077eed-602d-4830-b06b-c47730e8630f",
+      "z_index": 14
+    },
+    {
+      "x": 0.0,
+      "y": 1872.0,
+      "width": 1728.0,
+      "height": 97.632,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "with very special guest",
+      "font_family": "GreatVibes-Regular",
+      "font_size": 72.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(207,199,174,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Great Vibes\", cursive",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "3cd0f972-6d21-4ed9-bf7b-b5cb867a5af8",
+      "z_index": 15
+    },
+    {
+      "type": "image",
+      "x": 120,
+      "y": 1990,
+      "width": 1488,
+      "height": 200,
+      "asset_id": "doory-a8e31e78a9f1c012d37b.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "db7488e5-4647-4cdd-904b-e2ce83c4753d",
+        "original_sha256": "2fde84fde6f63620d12e1863dc6131021b23e7b57828156b560ce00780131a57",
+        "native_type": "rect",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "db7488e5-4647-4cdd-904b-e2ce83c4753d",
+      "z_index": 16
+    },
+    {
+      "x": 150.0,
+      "y": 2014.0,
+      "width": 1428.0,
+      "height": 149.16,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "PAPER TIGERS",
+      "font_family": "Oswald-Bold",
+      "font_size": 132.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(21,20,16,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Oswald\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 300
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.3
+      },
+      "id": "a63d0369-533a-4286-a05b-d323da566c26",
+      "z_index": 17
+    }
+  ]
+}

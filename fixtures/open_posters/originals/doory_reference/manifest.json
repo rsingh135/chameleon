@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "references": [
+    {
+      "id": "doory_bold-sale-announcement",
+      "path": "originals/doory_reference/bold-sale-announcement.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/bold-sale-announcement.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "5126e278b8cbf1aaac3daa0f2d62fe637397068232163e9e9fc2e39155268ea6",
+      "width": 720,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_bold-youtube-thumbnail",
+      "path": "originals/doory_reference/bold-youtube-thumbnail.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/bold-youtube-thumbnail.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "55789bcdf6b963c59138f8825f2fe7a09665bc2294009083eb04b3ce70edabd4",
+      "width": 720,
+      "height": 405,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_botanical-celebration-invitation",
+      "path": "originals/doory_reference/botanical-celebration-invitation.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/botanical-celebration-invitation.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "f8b8af158043501c5f8bd07ab41b5eb320ddd957e1f87ad9c27b13fc30954eda",
+      "width": 514,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_clean-business-card",
+      "path": "originals/doory_reference/clean-business-card.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/clean-business-card.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "116e874b668cd5fa47998ae5c11453c2a6e20d3655942ed38e61e87f3c25244e",
+      "width": 720,
+      "height": 411,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_grand-opening-flyer",
+      "path": "originals/doory_reference/grand-opening-flyer.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/grand-opening-flyer.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "e9721e5e99809810c42ea9217c286bf61e44e4f6d5f04801174e86b9edd19e8e",
+      "width": 556,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_modern-pitch-deck",
+      "path": "originals/doory_reference/modern-pitch-deck.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/modern-pitch-deck.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "fe3aa275513e319d51edd03d0a2c47c5a14b3a84396ced8e715901a8b0b7c788",
+      "width": 720,
+      "height": 405,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_modern-resume",
+      "path": "originals/doory_reference/modern-resume.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/modern-resume.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "9bfda7d39f33abae4716eb71909c96053ec159edfca26d90fcd3aec105393299",
+      "width": 509,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_night-bloom-concert-poster",
+      "path": "originals/doory_reference/night-bloom-concert-poster.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/night-bloom-concert-poster.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "2b9f17784d407392e1f1a5e264fd525287773a34736a30301f9d917ba7541721",
+      "width": 540,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_rooftop-event-story",
+      "path": "originals/doory_reference/rooftop-event-story.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/rooftop-event-story.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "74853ed4caa13f81ecccdadb3d1391e564225592c7ad6cfe2aa214c516356a28",
+      "width": 405,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    },
+    {
+      "id": "doory_serif-quote-card",
+      "path": "originals/doory_reference/serif-quote-card.webp",
+      "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/thumbs/serif-quote-card.webp",
+      "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+      "sha256": "63a87f1c5e4bd0990f4131d37b94c1d9fcd9a3cfdde44dc5465eff69460cc090",
+      "width": 720,
+      "height": 720,
+      "role": "Upstream author-provided native app thumbnail, independent of Chameleon importer; not a full-resolution reference; page coverage must be checked",
+      "license_id": "LicenseRef-Doory-AAL",
+      "license_path": "licenses/doory-LICENSE"
+    }
+  ]
+}

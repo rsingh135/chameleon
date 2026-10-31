@@ -20,9 +20,10 @@ from engine.eval.geometry import (
     overlap_fraction,
     rotated_aabb,
 )
-from engine.eval.text import DEFAULT_FONTS_DIR, TextLayout, get_measurer
-
-DEFAULT_ASSETS_DIR = Path("brand_kit/assets")
+from engine.eval.text import DEFAULT_FONTS_DIR as DEFAULT_FONTS_DIR
+from engine.eval.text import TextLayout, get_measurer
+from engine.resources import DEFAULT_ASSETS_DIR as DEFAULT_ASSETS_DIR
+from engine.resources import using_resources
 
 # An element covering at least this much of the canvas is treated as a
 # background plate: it is expected to sit under everything else.
@@ -93,10 +94,10 @@ def _asset_stats(assets_dir: Path, asset_id: str) -> AssetStats | None:
         return AssetStats(rgba.width, rgba.height, alpha, busyness)
 
 
-def build_context(
+def _build_context(
     source: dict,
-    assets_dir: str | Path = DEFAULT_ASSETS_DIR,
-    fonts_dir: str | Path = DEFAULT_FONTS_DIR,
+    assets_dir: Path,
+    fonts_dir: Path,
 ) -> Context:
     canvas = canvas_box(source["canvas"])
     elements = source["elements"]
@@ -167,3 +168,13 @@ def build_context(
         fonts_dir=str(fonts_dir),
         notes=notes,
     )
+
+
+def build_context(
+    source: dict,
+    assets_dir: str | Path | None = None,
+    fonts_dir: str | Path | None = None,
+) -> Context:
+    """Capture absolute document resources along with the original design analysis."""
+    with using_resources(assets_dir, fonts_dir) as resources:
+        return _build_context(source, resources.assets_dir, resources.fonts_dir)

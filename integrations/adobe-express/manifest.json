@@ -1,0 +1,16 @@
+{
+  "testId": "chameleon-design-viewer",
+  "name": "Chameleon Design Viewer",
+  "version": "1.0.0",
+  "manifestVersion": 2,
+  "requirements": {
+    "apps": [{"name": "Express", "apiVersion": 1}],
+    "supportsTouch": false
+  },
+  "entryPoints": [{
+    "type": "panel",
+    "id": "chameleon-panel",
+    "main": "ui/index.html",
+    "permissions": {"sandbox": ["allow-downloads"]}
+  }]
+}

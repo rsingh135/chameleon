@@ -1,0 +1,122 @@
+{
+  "canvas": {
+    "width": 2268,
+    "height": 6047
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0.18744666881821104,
+      "y": -0.0006399741819222982,
+      "width": 2267.6248933376364,
+      "height": 6047.000319987092,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "fill_color": "rgba(109,167,65,1)",
+      "corner_radius": 0.0,
+      "id": "svg-n00080",
+      "z_index": 0
+    },
+    {
+      "type": "image",
+      "x": 1511,
+      "y": 189,
+      "width": 568,
+      "height": 356,
+      "asset_id": "svg-n00086.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_key": "n00086",
+        "source_node_id": "g7761",
+        "reference_bounds": [
+          1511,
+          189,
+          2079,
+          545
+        ],
+        "curve_editable": false
+      },
+      "id": "svg-n00086",
+      "z_index": 1
+    },
+    {
+      "type": "text",
+      "x": 187.39746239500982,
+      "y": 5579.39746239501,
+      "width": 1893.6924743652344,
+      "height": 424.3974623950098,
+      "content": "www.opensuse.org",
+      "font_family": "OpenSans-Regular",
+      "font_size": 212.1987311975049,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "line_height": 1.0,
+      "letter_spacing": 0.0,
+      "text_align": "left",
+      "color": "rgba(255,255,255,1)",
+      "max_lines": 1,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "svg_font_family": "'Open Sans'",
+      "svg_font_weight": "normal",
+      "svg_font_style": "normal",
+      "id": "svg-run00000",
+      "z_index": 2
+    },
+    {
+      "type": "image",
+      "x": 189,
+      "y": 1932,
+      "width": 1890,
+      "height": 1848,
+      "asset_id": "svg-n00111.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_key": "n00111",
+        "source_node_id": "g8967",
+        "reference_bounds": [
+          189,
+          1932,
+          2079,
+          3780
+        ],
+        "curve_editable": false
+      },
+      "id": "svg-n00111",
+      "z_index": 3,
+      "group_id": "svg-group-n00110"
+    },
+    {
+      "type": "text",
+      "x": 374.4346514143426,
+      "y": 1239.4346514143426,
+      "width": 1539.9643936157227,
+      "height": 640.4346514143426,
+      "content": "WE BELIEVE",
+      "font_family": "SourceSansPro-Light",
+      "font_size": 320.2173257071713,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "line_height": 1.0,
+      "letter_spacing": 0.0,
+      "text_align": "left",
+      "color": "rgba(255,255,255,1)",
+      "max_lines": 1,
+      "rotation": 0.0,
+      "opacity": 0.98999999,
+      "svg_font_family": "'Source Sans Pro'",
+      "svg_font_weight": "300",
+      "svg_font_style": "normal",
+      "id": "svg-run00001",
+      "z_index": 4,
+      "group_id": "svg-group-n00110"
+    }
+  ]
+}

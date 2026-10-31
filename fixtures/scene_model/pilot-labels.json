@@ -1,0 +1,592 @@
+{
+  "schema_version": 1,
+  "scope": "Small development-only scene-role pilot; no reserve sources, renders, weights or account-specific paths.",
+  "supervision_origin": "agent_visual_review",
+  "human_review_occurred": false,
+  "role_names": [
+    "background",
+    "product",
+    "logo",
+    "foreground",
+    "unknown"
+  ],
+  "role_policy": "Background includes native local copy-support paint fields as well as document backgrounds. A semantic background label NEVER grants crop or deformation authority; source evidence and the immutable asset contract remain authoritative. Foreground includes inset editorial photography, QR codes, icons and botanical ornament.",
+  "limitations": [
+    "Only one distinct foreground-product asset family (the supplied SOLSTICE package graphic); repeated Core/Warmup identities do not create independent product examples.",
+    "Validation has no independent positive product family. Report no held-out product recall or broad product/background generalization claim.",
+    "All openSUSE identity sources share one validation family; SOLSTICE source/asset reuse stays in one training family.",
+    "CLIP role classification does not localize faces or products. No fabricated protected regions are supplied.",
+    "Grand Opening has no image elements and supplies a source-only negative control, not a classifier record.",
+    "Botanical fine print is 9px in the authored source; reduced-size readability is an explicit stress condition, not a silently waived check."
+  ],
+  "counts": {
+    "sources": 10,
+    "image_labels": 34,
+    "by_split": {
+      "train": {
+        "foreground": 2,
+        "background": 6,
+        "logo": 2,
+        "product": 1
+      },
+      "validation": {
+        "background": 9,
+        "foreground": 5,
+        "logo": 9
+      }
+    }
+  },
+  "sources": [
+    {
+      "source_id": "doory_bold-sale-announcement",
+      "family_id": "doory_bold-sale-announcement",
+      "split": "validation",
+      "source_path": "fixtures/open_posters/prepared/doory_bold-sale-announcement/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/doory_bold-sale-announcement/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/doory_bold-sale-announcement/resources/fonts",
+      "source_digest": "59ce7783f6b12b850f91dbe761ecf4222890c64415629939af035504ac6b4107",
+      "scene_digest_at_review": "50e1e22998f6830bc2201e30c6de6ec5d69bfe7dbe592d0432b8ee3a7268ad3f",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/doory_bold-sale-announcement/native.png",
+      "images": [
+        {
+          "element_id": "5df7e9c2-b169-4470-8fbf-c7dd3d7618e7",
+          "asset_sha256": "778a8292f94672374265252cd6ff40c2df615b0a075612a9b7a51e0e62adfc71",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Orange curved color field supports the inset fashion photograph; it is not a pictured sale product.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "be525a4e-d843-456c-bff0-9ada402bfda1",
+          "asset_sha256": "c092de1c0adce27e010adf085628abc1d2b7caf4b32382d52b0db15cc5970350",
+          "confidence": 0.9,
+          "protected_regions": [],
+          "rationale": "Bounded editorial photograph of a shopper and shopping bags. No single commercial product is unambiguously selected; do not grant document-background crop authority.",
+          "proposed_role": "foreground"
+        },
+        {
+          "element_id": "f389dfca-cb4f-4fc2-afdf-a985ea9906b8",
+          "asset_sha256": "7817e1ba3750e9d6808bb874561a207ac64bedb2002be3c907f1985e4d645a46",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Navy wave is a supporting lower copy field, not a pictured object. This label does not authorize arbitrary raster deformation.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "1e44d08d-95e8-4cda-808d-eed7d640a2b5",
+          "asset_sha256": "ed981bac0e33eda78f07110c4ab4f16bdfa5cb2d74f883d33b49ac2231240128",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Promotional discount badge circle belongs to its 30 percent label and must remain a complete attached badge.",
+          "proposed_role": "foreground"
+        },
+        {
+          "element_id": "abc52d29-f18e-447b-b0fe-8526313d6313",
+          "asset_sha256": "c4de37109ea650af6bd9731957bce98f9a7e75361eb933d677e0e54f97638837",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Small phone pictogram supports the contact information; it is not a product photograph.",
+          "proposed_role": "foreground"
+        }
+      ],
+      "license": {
+        "license_id": "LicenseRef-Doory-AAL",
+        "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/bold-sale-announcement.json",
+        "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+        "sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "license_path": "fixtures/open_posters/licenses/doory-LICENSE",
+        "notice_path": "fixtures/open_posters/licenses/doory-NOTICE",
+        "third_party_path": "fixtures/open_posters/licenses/doory-THIRD_PARTY.md",
+        "original_path": "fixtures/open_posters/originals/doory_bold-sale-announcement.json"
+      }
+    },
+    {
+      "source_id": "doory_botanical-celebration-invitation",
+      "family_id": "doory_botanical-celebration-invitation",
+      "split": "train",
+      "source_path": "fixtures/open_posters/prepared/doory_botanical-celebration-invitation/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/doory_botanical-celebration-invitation/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/doory_botanical-celebration-invitation/resources/fonts",
+      "source_digest": "277214588fd4bd8740bf1777958c9a18742b92b923578d04c92e97bb0ba49161",
+      "scene_digest_at_review": "4ab67e8ee888daf8539b149d244c7915d9a5464662c38d4ebca7e6bcce3ea6e5",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/doory_botanical-celebration-invitation/native.png",
+      "images": [
+        {
+          "element_id": "8b329c30-7723-4d81-aac5-8776b9c8b162",
+          "asset_sha256": "86c1fe36acd2314f5e85bcf05f04f814f28d9d57c330d5196ba005392394e473",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin botanical stem is part of the ornament above the couple names, not a commercial product.",
+          "proposed_role": "foreground"
+        },
+        {
+          "element_id": "56fc17b4-8416-432b-bad5-78ca0f5aa84b",
+          "asset_sha256": "97cc2c1caa0160b4b65e22a3623fe8d2b42b6a438a78f851ec76eeb1f619966e",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Botanical leaves form a decorative ornament physically associated with the names; preserve the whole ornament.",
+          "proposed_role": "foreground"
+        }
+      ],
+      "license": {
+        "license_id": "LicenseRef-Doory-AAL",
+        "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/botanical-celebration-invitation.json",
+        "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+        "sha256": "fec3d8d3aede3fca8655f93c9932b80e46c7e80a8451909975b05f4641b6b2e2",
+        "license_path": "fixtures/open_posters/licenses/doory-LICENSE",
+        "notice_path": "fixtures/open_posters/licenses/doory-NOTICE",
+        "third_party_path": "fixtures/open_posters/licenses/doory-THIRD_PARTY.md",
+        "original_path": "fixtures/open_posters/originals/doory_botanical-celebration-invitation.json"
+      }
+    },
+    {
+      "source_id": "doory_grand-opening-flyer",
+      "family_id": "doory_grand-opening-flyer",
+      "split": "train",
+      "source_path": "fixtures/open_posters/prepared/doory_grand-opening-flyer/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/doory_grand-opening-flyer/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/doory_grand-opening-flyer/resources/fonts",
+      "source_digest": "489fbc4db78dd8a7630683b5339e22b721bc0306cdfb22441970b65110b73f60",
+      "scene_digest_at_review": "2b9c97c4635f905f1949d9050e9e7db0ec55739e539d8cc22e336deff3bf4d95",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/doory_grand-opening-flyer/native.png",
+      "images": [],
+      "license": {
+        "license_id": "LicenseRef-Doory-AAL",
+        "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/grand-opening-flyer.json",
+        "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+        "sha256": "e88fd34e24684a28856601000f257c6bd5bd7e932f62ca5f9c9caed04958ea15",
+        "license_path": "fixtures/open_posters/licenses/doory-LICENSE",
+        "notice_path": "fixtures/open_posters/licenses/doory-NOTICE",
+        "third_party_path": "fixtures/open_posters/licenses/doory-THIRD_PARTY.md",
+        "original_path": "fixtures/open_posters/originals/doory_grand-opening-flyer.json"
+      }
+    },
+    {
+      "source_id": "doory_night-bloom-concert-poster",
+      "family_id": "doory_night-bloom-concert-poster",
+      "split": "train",
+      "source_path": "fixtures/open_posters/prepared/doory_night-bloom-concert-poster/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/doory_night-bloom-concert-poster/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/doory_night-bloom-concert-poster/resources/fonts",
+      "source_digest": "69d5d344975f44aa0ae913a2fd6fef995ea97fd4414fcb1ea128b054c3e58287",
+      "scene_digest_at_review": "80196475f4459f75afd384ea1bf91a54eae75202a5080c18770fa7447583e3f3",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/doory_night-bloom-concert-poster/native.png",
+      "images": [
+        {
+          "element_id": "9d2c6afe-94fa-4fd5-afac-88c8882f3fb3",
+          "asset_sha256": "bfe1ecfdc4086c606c19a0078e2206e2eace5d132a4faa513c881cc1405b03e3",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Orange-to-yellow native rectangle is the venue/date copy plate. It is paint support, not a photograph or product.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "db7488e5-4647-4cdd-904b-e2ce83c4753d",
+          "asset_sha256": "dbf5e6df94640566aa89bc87ff5a82f628fa15c3e81515814aa342dd802dad54",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Lilac-to-blue native rectangle supports the guest name; no pictured object is present.",
+          "proposed_role": "background"
+        }
+      ],
+      "license": {
+        "license_id": "LicenseRef-Doory-AAL",
+        "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/night-bloom-concert-poster.json",
+        "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+        "sha256": "2fde84fde6f63620d12e1863dc6131021b23e7b57828156b560ce00780131a57",
+        "license_path": "fixtures/open_posters/licenses/doory-LICENSE",
+        "notice_path": "fixtures/open_posters/licenses/doory-NOTICE",
+        "third_party_path": "fixtures/open_posters/licenses/doory-THIRD_PARTY.md",
+        "original_path": "fixtures/open_posters/originals/doory_night-bloom-concert-poster.json"
+      }
+    },
+    {
+      "source_id": "doory_rooftop-event-story",
+      "family_id": "doory_rooftop-event-story",
+      "split": "train",
+      "source_path": "fixtures/open_posters/prepared/doory_rooftop-event-story/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/doory_rooftop-event-story/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/doory_rooftop-event-story/resources/fonts",
+      "source_digest": "d0a77ba3b439c15ad9a374a374ed70e68655a95fd265044798af3ff61b63b7c2",
+      "scene_digest_at_review": "e20ea9a1ce65e8ab045828cdb0f7399e05715865cabf113278607632628175a0",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/doory_rooftop-event-story/native.png",
+      "images": [
+        {
+          "element_id": "fa08147f-5b0b-4c46-ad0c-ec02cfb5e65c",
+          "asset_sha256": "44d7f9ee58e948e4f2f695aeaf0a027c408a83fc33b0c97f92b9d03d0cc25b99",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Full-bleed event photograph carries the poster behind header and lower captions. Prepared pixels already contain the authored portrait crop.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "99aca3f3-3431-4a4a-bddb-1905cdff01a1",
+          "asset_sha256": "92085b97cc0194db679ee4d9a27af5b09a6ec47b93878df5bfdb960678ec6f3e",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Monotone dark fade is a native rectangle paint field behind the lower copy; it is not an independent product.",
+          "proposed_role": "background"
+        }
+      ],
+      "license": {
+        "license_id": "LicenseRef-Doory-AAL",
+        "source_url": "https://raw.githubusercontent.com/shaongitbd/doory/2fb4d0297ec4c6e417b5225215502f8217c2a4dc/backend/data/templates/rooftop-event-story.json",
+        "source_commit": "2fb4d0297ec4c6e417b5225215502f8217c2a4dc",
+        "sha256": "ca9b7d38d9a6701fed7f4f4ae737bee6dc0d237ce3c86102cd90aab0f249e91f",
+        "license_path": "fixtures/open_posters/licenses/doory-LICENSE",
+        "notice_path": "fixtures/open_posters/licenses/doory-NOTICE",
+        "third_party_path": "fixtures/open_posters/licenses/doory-THIRD_PARTY.md",
+        "original_path": "fixtures/open_posters/originals/doory_rooftop-event-story.json"
+      }
+    },
+    {
+      "source_id": "opensuse_trifold_front",
+      "family_id": "opensuse-identity-series",
+      "split": "validation",
+      "source_path": "fixtures/open_posters/prepared/opensuse_trifold_front/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/opensuse_trifold_front/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/opensuse_trifold_front/resources/fonts",
+      "source_digest": "1512f9404e4e07293e1e3b0d00911baf860da1f65d7251485755cff59335e3ee",
+      "scene_digest_at_review": "6ee9783c930991e6dcbaafe2776f8a72511242d1db8611dc7df211141436f4bf",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/opensuse_trifold_front/native.png",
+      "images": [
+        {
+          "element_id": "svg-n00117",
+          "asset_sha256": "702d4f6b53aa35ec37645567149c2762c905a0db258abdaa2f5ced78b09ad898",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "QR code beside Telegram label; preserve its complete machine-readable geometry.",
+          "proposed_role": "foreground"
+        },
+        {
+          "element_id": "svg-n00118",
+          "asset_sha256": "a2ac8d5687eb141963690e00b2c1028952bbfd360f5c715389c03620a01866b3",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "QR code beside Universe label; preserve its complete machine-readable geometry.",
+          "proposed_role": "foreground"
+        },
+        {
+          "element_id": "svg-n00194",
+          "asset_sha256": "c8600aab8279356003e42b70c9727c4e22a576a9934d6d798933f812eb4c48e4",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "MicroOS circular software identity mark above the named MicroOS section.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00271",
+          "asset_sha256": "f332ead8b70d23e4bf35062309e0f9ffae3738f3ef45a9ff02a2f0ec44acd86a",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "openSUSE chameleon and wordmark identity in the right panel.",
+          "proposed_role": "logo"
+        }
+      ],
+      "license": {
+        "license_id": "CC-BY-SA-3.0",
+        "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/flyers/trifold/openSUSE%20Trifold%20front.svg",
+        "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
+        "sha256": "158de66eced214cd33a14bc4c872821e5ada59ab0c0a8ec0f970afa4622c5862",
+        "license_path": "fixtures/open_posters/licenses/opensuse-CC-BY-SA-3.0.txt",
+        "original_path": "fixtures/open_posters/originals/opensuse_trifold_front.svg"
+      }
+    },
+    {
+      "source_id": "opensuse_booth_poster",
+      "family_id": "opensuse-identity-series",
+      "split": "validation",
+      "source_path": "fixtures/open_posters/prepared/opensuse_booth_poster/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/opensuse_booth_poster/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/opensuse_booth_poster/resources/fonts",
+      "source_digest": "fb89f57f983ecde3dd4f6e3537abfa98c8c4675316746843841d1f2e16d06730",
+      "scene_digest_at_review": "0c1c8deca511dd400471f8bd8459164f5d01f7cd83898991bf469970b91fe6f9",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/opensuse_booth_poster/native.png",
+      "images": [
+        {
+          "element_id": "svg-n00039",
+          "asset_sha256": "93f8679c2c48abb2361292624ce1085dc36327f8dae97c0f1337a1c5aa70b4e9",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "The openSUSE wordmark is an identity mark, not a commercial product cutout.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00051",
+          "asset_sha256": "ea9b75af75a12abdd2d4d09cb0080f9f4760b835d78a026fb20a8c6dbed25985",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Gear-like Kalpa software identity icon next to its named distribution description.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00052",
+          "asset_sha256": "028f1e2e5aa18e256663257d0f0349c46b77a1effcb1d0d4e3fd9f69a6350e1f",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Tumbleweed software identity icon next to its named description.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00053",
+          "asset_sha256": "caaa5fe5a23df1d9df11588118d2ef288dd1f4ecca8497f98247e002636d92c7",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "MicroOS software identity icon next to its named description.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00055",
+          "asset_sha256": "9ed1ddf44240a4ba7ec7e0fdb3b967b46a79986a46b29948960c229a4635392f",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Slowroll software identity icon next to its named description.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00056",
+          "asset_sha256": "93eaa927c6f7aff4b7e9bd10010969724db0c590438f3684b9ddc10bdd299bf6",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Leap software identity icon next to its named description.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "svg-n00085",
+          "asset_sha256": "8df994a40c25999a2004842bd0ab336fec24b94435d99564394363a195b99b41",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "The large green chameleon emblem is the openSUSE identity mark.",
+          "proposed_role": "logo"
+        }
+      ],
+      "license": {
+        "license_id": "CC-BY-SA-3.0",
+        "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/posters/booth%20design%205x2.svg",
+        "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
+        "sha256": "97c4318f601a4e8601dbf59dbfbfe70f3f737345292c00a8394a61d566a7a639",
+        "license_path": "fixtures/open_posters/licenses/opensuse-CC-BY-SA-3.0.txt",
+        "original_path": "fixtures/open_posters/originals/opensuse_booth_poster.svg"
+      }
+    },
+    {
+      "source_id": "opensuse_cheatsheet",
+      "family_id": "opensuse-identity-series",
+      "split": "validation",
+      "source_path": "fixtures/open_posters/prepared/opensuse_cheatsheet/source.json",
+      "source_pointer": "",
+      "assets_dir": "fixtures/open_posters/prepared/opensuse_cheatsheet/resources/assets",
+      "fonts_dir": "fixtures/open_posters/prepared/opensuse_cheatsheet/resources/fonts",
+      "source_digest": "83f005acfb5c951fadf54499ceae8c482d70ecea042a92b686729603f1012105",
+      "scene_digest_at_review": "761fee3d57c91aeba28c5ab427816dc224c99fdeb57cf226650468d7a55660a3",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Native authored reference and converted editable source visually reviewed; source/resource hashes retained.",
+      "native_reference_path": "fixtures/open_posters/prepared/opensuse_cheatsheet/native.png",
+      "images": [
+        {
+          "element_id": "svg-n00069",
+          "asset_sha256": "fd246b03050439a08f42947c38eaec395eb391c372cab31cc083de4bcee61612",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00071",
+          "asset_sha256": "93457ed5e21e0c0575c27de8d0af362aacdb344472ecd0f3ac1328bb8b88d6a5",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00073",
+          "asset_sha256": "66aa518f47d084950ffb54a1998d0d2d4a6af7234a77fd496c0c269848d39b08",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00075",
+          "asset_sha256": "a181d63b996fbee7643c3946cc3aa79ceaeb7ed5b5c1e254e0f3f15dd03ac0fb",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00077",
+          "asset_sha256": "8706c8f4e4d376cc4f53c4038f22aec32e2926bdd88a1340712d8a034f7f6d22",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00079",
+          "asset_sha256": "87ab24d3ac399ea5ed2ecb0aecc759013ba9ce50a7357e5c27cfd8620e5a767a",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "svg-n00081",
+          "asset_sha256": "4934aa63eeff0a89ec8252fc4f775cc38905be5bc2b94fd6e378a3d821d2690f",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Thin rectangular card border/header paint behind separate live command text. This container support is not a product and semantic labeling grants no crop permission.",
+          "proposed_role": "background"
+        }
+      ],
+      "license": {
+        "license_id": "CC-BY-SA-3.0",
+        "source_url": "https://raw.githubusercontent.com/openSUSE/artwork/f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb/flyers/cheatsheet/en/openSUSE-Cheat-Sheet-BG_en.svg",
+        "source_commit": "f9ef4460f8bac3e29ed7fc7e1ac6a1320a765dfb",
+        "sha256": "5025f41fe6d540d5db280467d7540e39008a4830e5bcdb44dcd9d5f6cf6ec915",
+        "license_path": "fixtures/open_posters/licenses/opensuse-CC-BY-SA-3.0.txt",
+        "original_path": "fixtures/open_posters/originals/opensuse_cheatsheet.svg"
+      }
+    },
+    {
+      "source_id": "warmup_01",
+      "family_id": "solstice-brand-assets",
+      "split": "train",
+      "source_path": "input/chameleon_sample_level1_warmup.json",
+      "source_pointer": "/source",
+      "assets_dir": "brand_kit/assets",
+      "fonts_dir": "brand_kit/fonts",
+      "source_digest": "54d046462c813ffa3adcff7852b67e2755cfc8dd28ce15d1f1fe6e3ac1dbaaa7",
+      "scene_digest_at_review": "231ea112f9c7faee0038649cc57dcf67a6db81b47a3fd9542ba32e6a0cf24fed",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Original supplied source JSON, asset pixels and fresh default-renderer source visually reviewed; no Adobe-host parity claim.",
+      "native_reference_path": null,
+      "images": [
+        {
+          "element_id": "bg",
+          "asset_sha256": "7ebf18d2a0d4b487cdf30578e4d6123e59e81502d78e55087768bfc5a465faeb",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Full-canvas abstract gradient and bokeh field behind the supplied brand composition.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "logo",
+          "asset_sha256": "3a443c106090e7b043d85d553280e464b313d893baebafe6765fd3df1022f049",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Sun symbol and SOLSTICE wordmark are the visible brand identity lockup.",
+          "proposed_role": "logo"
+        }
+      ],
+      "license": {
+        "license_id": "user-provided-challenge-assets",
+        "provenance_refs": [
+          "Final Chameleon Challenge - Adobe cloud storage.pdf",
+          "RULES.md",
+          "README.md"
+        ],
+        "rights_basis": "User-provided challenge materials used for the explicitly requested local development experiment; no external redistribution permission is inferred."
+      }
+    },
+    {
+      "source_id": "core_01",
+      "family_id": "solstice-brand-assets",
+      "split": "train",
+      "source_path": "input/chameleon_sample_level2_core.json",
+      "source_pointer": "/source",
+      "assets_dir": "brand_kit/assets",
+      "fonts_dir": "brand_kit/fonts",
+      "source_digest": "738b42662c37a19ff6e052101d5f1752be426ca2bcd8eefd73478488b3a8058e",
+      "scene_digest_at_review": "0ee7e3e8237a5aa685599eb2e21a0b87555136721e18d236a0e7b90c6a86f789",
+      "supervision_origin": "agent_visual_review",
+      "reviewed_by": "Codex agent /root/cluster_hierarchy",
+      "source_parity_reviewed": true,
+      "source_parity_basis": "Original supplied source JSON, asset pixels and fresh default-renderer source visually reviewed; no Adobe-host parity claim.",
+      "native_reference_path": null,
+      "images": [
+        {
+          "element_id": "bg",
+          "asset_sha256": "7ebf18d2a0d4b487cdf30578e4d6123e59e81502d78e55087768bfc5a465faeb",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Full-canvas abstract gradient and bokeh field behind the supplied brand composition.",
+          "proposed_role": "background"
+        },
+        {
+          "element_id": "logo",
+          "asset_sha256": "3a443c106090e7b043d85d553280e464b313d893baebafe6765fd3df1022f049",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Sun symbol and SOLSTICE wordmark are the visible brand identity lockup.",
+          "proposed_role": "logo"
+        },
+        {
+          "element_id": "product",
+          "asset_sha256": "a9bea75d9592cee51bd1ee56e043662091326c612fc8c208eee3872c216aa053",
+          "confidence": 0.98,
+          "protected_regions": [],
+          "rationale": "Central isolated orange SOLSTICE package graphic depicts the promoted sparkling-infusion product; protect its complete visible silhouette.",
+          "proposed_role": "product"
+        }
+      ],
+      "license": {
+        "license_id": "user-provided-challenge-assets",
+        "provenance_refs": [
+          "Final Chameleon Challenge - Adobe cloud storage.pdf",
+          "RULES.md",
+          "README.md"
+        ],
+        "rights_basis": "User-provided challenge materials used for the explicitly requested local development experiment; no external redistribution permission is inferred."
+      }
+    }
+  ],
+  "excluded_sources": [
+    {
+      "source_id": "advanced_01",
+      "source_path": "input/chameleon_sample_level3_advanced.json",
+      "reason": "The untouched original intentionally references a missing holiday asset. Keep as a source/functional guard case; do not invent bytes, drop the node, or train on its placeholder."
+    }
+  ],
+  "reserve_policy": "All ten catalogue entries with split=reserve remain outside role annotation, training, model inference and resize targets. The loader may consult their exclusion identity hashes only."
+}

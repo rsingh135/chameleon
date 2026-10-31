@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Chameleon · Batch benchmark</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23eb383b'/%3E%3Cpath d='M23 9a10 10 0 1 0 0 14' fill='none' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/benchmark.css">
+<script src="/benchmark.js" defer></script>
+</head>
+<body class="benchmark-ui">
+<a class="skip-link" href="#resultsHeading">Skip to results</a>
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">Ch</span><span>Chameleon</span></a>
+  <nav class="mode-nav" aria-label="Testing interface"><a href="/">Single scene</a><a href="/benchmark.html" aria-current="page">Batch benchmark</a></nav>
+  <div class="header-right"><button id="retryConnection" class="secondary" type="button" hidden>Reconnect</button><span id="connection" class="connection" role="status">Connecting to engine</span><label class="theme-control" for="theme"><span class="sr-only">Appearance</span><select id="theme" class="theme-select"><option value="dark">Dark</option><option value="light">Light</option></select></label></div>
+</header>
+<main class="benchmark-layout">
+  <aside class="batch-setup" aria-label="Benchmark setup">
+    <details open id="batchSetup">
+      <summary>Benchmark setup</summary>
+      <form id="batchForm">
+        <fieldset id="batchSettings">
+          <legend>Scenes, method and shared targets</legend>
+          <section class="batch-section">
+            <h1>Test across scenes</h1>
+            <p class="field-help">Apply one frozen method to every scene and target. Compare real renders before drawing conclusions about design quality.</p>
+            <label for="sceneFiles">Add multiple designs or images</label>
+            <input id="sceneFiles" type="file" multiple accept=".json,.png,.jpg,.jpeg,application/json,image/png,image/jpeg">
+            <p class="field-help">JSON tasks and portable JSON bundles retain editable elements. PNG/JPEG files remain one flat image; they test fitting, not element reflow. Up to 8 scenes.</p>
+            <button id="addSamples" class="secondary" type="button">Add bundled smoke scenes</button>
+            <p class="field-help">Bundled examples share a campaign. Add different source families to investigate generalization.</p>
+            <button id="loadReviewed" class="secondary" type="button">Browse reviewed posters</button>
+            <div id="reviewedPicker" class="reviewed-picker" hidden>
+              <label for="reviewedPosters">Reviewed, editable posters</label>
+              <select id="reviewedPosters" multiple size="5" aria-describedby="reviewedHelp"></select>
+              <p id="reviewedHelp" class="field-help">Select up to 4. Use Ctrl or Command to select several. Reserved and unprepared sources are excluded.</p>
+              <div class="poster-actions"><button id="addReviewed" class="secondary" type="button">Add selected posters</button><button id="addReviewedPack" class="secondary" type="button">Add first 4 available</button></div>
+              <p id="reviewedStatus" class="field-help" role="status"></p>
+            </div>
+            <ul id="sceneList" class="scene-list" aria-label="Queued scenes"></ul>
+          </section>
+          <section class="batch-section">
+            <h2>Same method</h2>
+            <p id="methodName">Loading method identity…</p>
+            <p id="methodDigest" class="field-help fingerprint"></p>
+            <p id="methodPolicy" class="field-help">Current deterministic engine. Vision analyzer and learned critic are off. No model is downloaded or trained here.</p>
+          </section>
+          <section class="batch-section">
+            <h2>Resize comparison</h2>
+            <label for="comparisonMode">Comparison mode</label>
+            <select id="comparisonMode"><option value="shared">Shared target sizes</option><option value="two-level">Two levels: resolution + aspect ratio</option></select>
+            <p id="levelOneHelp" class="field-help" hidden>Level 1 requests 50% and 25% of each original canvas, rounded to whole pixels. Level 2 uses the shared sizes below. Every job starts from the original; results are never resized again.</p>
+            <button id="twoLevelPreset" class="secondary" type="button">Use two-level comparison</button>
+            <label id="targetSizesLabel" for="targetSizes">Shared width × height, one per line</label>
+            <textarea id="targetSizes" rows="3" required spellcheck="false">1080x1080
+1600x900</textarea>
+            <p id="targetPlanHelp" class="field-help">Up to 4 targets and 16 total jobs. Each target is applied to every scene. Maximum 8192 px per side and 20 MP.</p>
+            <label for="evaluationUse">Evaluation purpose</label>
+            <select id="evaluationUse"><option value="exploration">Exploration</option><option value="declared-holdout">Declared holdout</option></select>
+            <p class="field-help">This records your intent. It does not verify that scenes were excluded from training.</p>
+            <button id="runBatch" class="primary" type="submit" disabled>Run benchmark <span aria-hidden="true">↗</span></button>
+          </section>
+        </fieldset>
+      </form>
+    </details>
+    <p class="batch-local field-help">Local CPU testing · exact source assets · no Brev usage</p>
+  </aside>
+  <section class="batch-main" aria-labelledby="resultsHeading">
+    <div class="batch-heading"><div><h2 id="resultsHeading" tabindex="-1">Scene comparison</h2><p id="runIdentity" class="field-help">No benchmark run yet</p></div><div class="batch-actions"><button id="stopBatch" class="secondary" type="button" hidden>Stop after current job</button><a id="downloadReport" class="secondary" aria-disabled="true" tabindex="-1">Download run report ↓</a></div></div>
+    <p id="batchStatus" class="status" role="status" aria-live="polite">Add scenes to start. Existing Studio results are kept separately.</p>
+    <progress id="batchProgress" max="1" value="0" aria-label="Completed benchmark jobs" hidden></progress>
+    <div id="batchError" class="error" role="alert" hidden></div>
+    <div id="batchSummary" class="batch-summary" hidden></div>
+    <div id="familySummary" class="family-summary" hidden></div>
+    <div id="batchResults" class="batch-results"><div class="batch-empty"><h3>One method. Different scenes.</h3><p>Load editable designs to compare hierarchy, framing and space usage. Each result includes its original render, target size, source identity and checks.</p><p>Automated checks describe structure. Visual quality stays unreviewed until a person evaluates the renders.</p></div></div>
+    <footer><span>Chameleon · Batch benchmark</span><span>Exploratory results are not proof of unseen-scene generalization.</span></footer>
+  </section>
+</main>
+</body>
+</html>

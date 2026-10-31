@@ -1,0 +1,39 @@
+{
+  "fonts": [
+    {
+      "font_family": "OpenSans-Regular",
+      "postscript_name": "OpenSans-Regular",
+      "weight": "regular",
+      "style": "normal",
+      "file": "c0c9780e88c88f43.ttf"
+    },
+    {
+      "font_family": "OpenSans-SemiBold",
+      "postscript_name": "OpenSans-SemiBold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "99cc46d467789364.ttf"
+    },
+    {
+      "font_family": "DejaVuSans-Bold",
+      "postscript_name": "DejaVuSans-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "e6476c1b80502924.ttf"
+    },
+    {
+      "font_family": "OpenSans-Bold",
+      "postscript_name": "OpenSans-Bold",
+      "weight": "regular",
+      "style": "normal",
+      "file": "9f3811befae030ac.ttf"
+    },
+    {
+      "font_family": "DejaVuSans",
+      "postscript_name": "DejaVuSans",
+      "weight": "regular",
+      "style": "normal",
+      "file": "7da195a74c55bef9.ttf"
+    }
+  ]
+}

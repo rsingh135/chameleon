@@ -13,6 +13,7 @@ from PIL import Image
 from engine.eval.context import Context, build_context
 from engine.eval.contract import check_contract
 from engine.eval.metrics import compute_metrics
+from engine.resources import using_resources
 
 WEIGHTS: dict[str, float] = {
     "collision_free": 3.0,
@@ -23,12 +24,15 @@ WEIGHTS: dict[str, float] = {
     "hierarchy": 1.0,
     "containment": 1.5,
     "group_integrity": 1.5,
-    "hero": 1.0,
-    "scale_consistency": 0.75,
+    # Product prominence and use of the new canvas must outweigh the appeal
+    # of shrinking the entire old composition into a small central island.
+    "hero": 3.0,
+    "scale_consistency": 1.5,
+    "position_affinity": 1.0,
     "alignment": 0.75,
     "balance": 0.5,
     "margin": 0.75,
-    "coverage": 0.5,
+    "coverage": 1.0,
 }
 
 
@@ -46,11 +50,12 @@ def score(
     what sits under the text. Pass nothing to get JSON-only metrics.
     """
     context = context or build_context(source)
-    violations = check_contract(source, candidate, target_canvas, context)
-    if violations:
-        return {"violations": violations, "metrics": {}, "total": 0.0}
+    with using_resources(context.assets_dir, context.fonts_dir):
+        violations = check_contract(source, candidate, target_canvas, context)
+        if violations:
+            return {"violations": violations, "metrics": {}, "total": 0.0}
 
-    metrics = compute_metrics(source, candidate, context, plate=rendered)
-    weighted = [(WEIGHTS[k], v) for k, v in metrics.items() if k in WEIGHTS]
-    total = sum(w * v for w, v in weighted) / sum(w for w, _ in weighted) if weighted else 0.0
-    return {"violations": [], "metrics": metrics, "total": round(total, 4)}
+        metrics = compute_metrics(source, candidate, context, plate=rendered)
+        weighted = [(WEIGHTS[k], v) for k, v in metrics.items() if k in WEIGHTS]
+        total = sum(w * v for w, v in weighted) / sum(w for w, _ in weighted) if weighted else 0.0
+        return {"violations": [], "metrics": metrics, "total": round(total, 4)}

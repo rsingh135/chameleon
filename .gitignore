@@ -23,5 +23,60 @@ output/*
 
 # Tooling caches
 .ruff_cache/
+/tmp/
 eval_out/
 eval/cases/
+
+# Optional vision-critic experiments: version manifests/configs, not weights or runs.
+/local_models/
+/training_runs/
+/datasets/vision_critic/generated/
+/datasets/vision_critic/cache/
+/.venv-vision/
+/.venv-vision-cpu/
+/local_backups/
+
+# Internal research, training plans and evaluation reports stay local.
+# Keep public setup/API guides and asset/font license documentation tracked.
+/reports/
+/internal.md
+/PLAN.md
+/docs/ADVANCED_LAYOUTS.md
+/docs/COMPOSITION_REFLOW_RESEARCH.md
+/docs/FOCAL_REFLOW_RESEARCH.md
+/docs/FRONTEND_DESIGN_RESEARCH.md
+/docs/MODEL_VALIDATION_2026-10-31.md
+/docs/OPEN_POSTER_LAYOUT_FAILURES.md
+/docs/ORGANIZER_TRAINING_DATA_RESEARCH.md
+/docs/REFLOW_EXPERIMENT.md
+/docs/RESIZE_DESIGN_PRINCIPLES.md
+/docs/RESIZE_MODEL_ITERATION_PLAN.md
+/docs/RESIZE_PERFORMANCE.md
+/docs/SCENE_MODEL_RESIZE_VALIDATION.md
+/docs/SCENE_MODEL_TRAINING_PLAN.md
+/docs/SCENE_PRODUCT_DATA_SOURCES.md
+/docs/SEMANTIC_REFLOW_TRAINING_PLAN.md
+/docs/VISION_BACKEND_HANDOFF.md
+/docs/VISUAL_ADAPTER_OFFLINE_PACKAGING.md
+/docs/BREV_BUDGET_SAFETY_RESEARCH.md
+/docs/BREV_SESSION_STATUS.md
+/docs/FORK_IDEAS_AUDIT.md
+/docs/HACKATHON_AI_AND_IMPROVEMENTS.md
+/docs/LOCAL_MODEL_FRAMEWORK.md
+/docs/LOCAL_VISION_MODEL_RESEARCH.md
+/docs/VISION_CRITIC_IMPLEMENTATION_PLAN.md
+/docs/VISION_DESIGN_TRAINING_PLAN.md
+/docs/*_REPORT*.md
+
+# Ship the compact default model; keep experimental checkpoints local.
+/models/*
+!/models/fit_policy/
+/models/fit_policy/*
+!/models/fit_policy/default.json
+
+# Machine-local environment and the supplied challenge handout.
+/vision-env.sh
+/.env
+/.env.*
+!/.env.example
+/Final Chameleon Challenge - Adobe cloud storage.pdf

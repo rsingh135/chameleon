@@ -1,0 +1,510 @@
+{
+  "canvas": {
+    "width": 1080,
+    "height": 1080
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 1080,
+      "height": 1080,
+      "fill_color": "rgba(227,38,47,1)",
+      "id": "page-background:2c22ef5b-597c-4704-b505-83f2c3d74c56",
+      "z_index": 0
+    },
+    {
+      "type": "image",
+      "x": 451,
+      "y": 0,
+      "width": 629,
+      "height": 742,
+      "asset_id": "doory-c3d63731302b5e0e4923.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "5df7e9c2-b169-4470-8fbf-c7dd3d7618e7",
+        "original_sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "native_type": "path",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "5df7e9c2-b169-4470-8fbf-c7dd3d7618e7",
+      "z_index": 1
+    },
+    {
+      "type": "image",
+      "x": 520,
+      "y": 0,
+      "width": 560,
+      "height": 700,
+      "asset_id": "doory-5c1900d35179611d36e6.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "masked-photo",
+        "source_format": "doory-json",
+        "node_id": "be525a4e-d843-456c-bff0-9ada402bfda1",
+        "original_sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "native_type": "image",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "be525a4e-d843-456c-bff0-9ada402bfda1",
+      "z_index": 2
+    },
+    {
+      "type": "image",
+      "x": 0,
+      "y": 546,
+      "width": 1080,
+      "height": 534,
+      "asset_id": "doory-9b1d1d0a0c58ae86bb9a.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "f389dfca-cb4f-4fc2-afdf-a985ea9906b8",
+        "original_sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "native_type": "path",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "f389dfca-cb4f-4fc2-afdf-a985ea9906b8",
+      "z_index": 3
+    },
+    {
+      "x": 62.0,
+      "y": 62.0,
+      "width": 68.0,
+      "height": 68.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "ellipse",
+      "fill_color": "rgba(255,255,255,1)",
+      "id": "54e55156-f229-41be-9e10-7c82ec4feb73",
+      "z_index": 4
+    },
+    {
+      "x": 62.0,
+      "y": 70.0,
+      "width": 68.0,
+      "height": 45.2,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "L",
+      "font_family": "Poppins-Bold",
+      "font_size": 40.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(227,38,47,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "891cd5d2-e536-4b15-8e00-8b2e96bdf48a",
+      "z_index": 5
+    },
+    {
+      "x": 146.0,
+      "y": 78.0,
+      "width": 300.0,
+      "height": 40.68,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Lumen Store",
+      "font_family": "Poppins-Bold",
+      "font_size": 30.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "ea78475f-0c0f-4c11-be30-5e2b9973d945",
+      "z_index": 6
+    },
+    {
+      "x": 64.0,
+      "y": 280.0,
+      "width": 460.0,
+      "height": 94.92,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Super offer",
+      "font_family": "GreatVibes-Regular",
+      "font_size": 84.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Great Vibes\", cursive",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "1faeccdb-ff1c-4668-ae20-6dd743e1e25c",
+      "z_index": 7
+    },
+    {
+      "x": 60.0,
+      "y": 372.0,
+      "width": 520.0,
+      "height": 113.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "WEEKEND",
+      "font_family": "Poppins-Bold",
+      "font_size": 100.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "d0768c25-56c3-4bce-a04e-2f8fe2785788",
+      "z_index": 8
+    },
+    {
+      "x": 60.0,
+      "y": 630.0,
+      "width": 560.0,
+      "height": 113.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "FASHION",
+      "font_family": "Poppins-Bold",
+      "font_size": 100.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,154,31,1)",
+      "text_align": "left",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "05ac11a1-49d0-4625-903e-3e3a8ce7609f",
+      "z_index": 9
+    },
+    {
+      "x": 60.0,
+      "y": 734.0,
+      "width": 560.0,
+      "height": 113.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "BIG SALE",
+      "font_family": "Poppins-Bold",
+      "font_size": 100.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "b4d7c695-b0ce-472c-a0ae-d08082649086",
+      "z_index": 10
+    },
+    {
+      "x": 682.0,
+      "y": 622.0,
+      "width": 236.0,
+      "height": 236.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "ellipse",
+      "fill_color": "rgba(255,198,41,1)",
+      "id": "7fa04119-bdc2-4dd6-b0be-c1d4d8f6876f",
+      "z_index": 11
+    },
+    {
+      "type": "image",
+      "x": 698,
+      "y": 638,
+      "width": 204,
+      "height": 204,
+      "asset_id": "doory-21b273c8036ea8fedd2b.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "1e44d08d-95e8-4cda-808d-eed7d640a2b5",
+        "original_sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "native_type": "ellipse",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "1e44d08d-95e8-4cda-808d-eed7d640a2b5",
+      "z_index": 12
+    },
+    {
+      "x": 690.0,
+      "y": 680.0,
+      "width": 220.0,
+      "height": 81.36,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "30%",
+      "font_family": "Poppins-Bold",
+      "font_size": 72.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(15,23,41,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "e90e4b11-a3db-4283-909d-df2c2cd2999e",
+      "z_index": 13
+    },
+    {
+      "x": 690.0,
+      "y": 756.0,
+      "width": 220.0,
+      "height": 58.76,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "OFF",
+      "font_family": "Poppins-Bold",
+      "font_size": 52.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(15,23,41,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "e0fcb2a5-e49b-4ed2-a0ee-94d1dbac6c2a",
+      "z_index": 14
+    },
+    {
+      "type": "image",
+      "x": 77,
+      "y": 934,
+      "width": 26,
+      "height": 44,
+      "asset_id": "doory-0e42587d549aff6aca1b.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_format": "doory-json",
+        "node_id": "abc52d29-f18e-447b-b0fe-8526313d6313",
+        "original_sha256": "7e87a1fc4cdd868f601771af80670b9c803bf5c40d5e21bba752d74fd8b31402",
+        "native_type": "path",
+        "curve_editable": false,
+        "original_object_retained": true
+      },
+      "id": "abc52d29-f18e-447b-b0fe-8526313d6313",
+      "z_index": 15
+    },
+    {
+      "x": 132.0,
+      "y": 924.0,
+      "width": 520.0,
+      "height": 37.968,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "lumenstore.example",
+      "font_family": "Poppins-Regular",
+      "font_size": 28.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "4a6abc9d-cab5-437f-80ce-b2292e887e58",
+      "z_index": 16
+    },
+    {
+      "x": 132.0,
+      "y": 960.0,
+      "width": 520.0,
+      "height": 54.24,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "+1 555 0148",
+      "font_family": "Poppins-Bold",
+      "font_size": 40.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(255,255,255,1)",
+      "text_align": "left",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "15333721-d7a8-4928-90de-a37d851a7541",
+      "z_index": 17
+    },
+    {
+      "x": 744.0,
+      "y": 936.0,
+      "width": 272.0,
+      "height": 72.0,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "shape",
+      "shape_type": "rectangle",
+      "fill_color": "rgba(255,198,41,1)",
+      "corner_radius": 12.0,
+      "id": "5c8dee74-4735-49e2-a12c-48ded1d5d83f",
+      "z_index": 18
+    },
+    {
+      "x": 744.0,
+      "y": 954.0,
+      "width": 272.0,
+      "height": 43.391999999999996,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "SHOP NOW",
+      "font_family": "Poppins-Bold",
+      "font_size": 32.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(15,23,41,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Poppins\", sans-serif",
+        "weight": 700,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "275669f8-5428-4f8b-b13c-39322767cf28",
+      "z_index": 19
+    }
+  ]
+}

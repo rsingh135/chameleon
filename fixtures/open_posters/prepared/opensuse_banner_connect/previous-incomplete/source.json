@@ -1,0 +1,96 @@
+{
+  "canvas": {
+    "width": 2268,
+    "height": 6047
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0.18744666881821104,
+      "y": -0.0006399741819222982,
+      "width": 2267.6248933376364,
+      "height": 6047.000319987092,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "fill_color": "rgba(23,63,79,1)",
+      "corner_radius": 0.0,
+      "id": "svg-n00080",
+      "z_index": 0
+    },
+    {
+      "type": "image",
+      "x": 1511,
+      "y": 189,
+      "width": 568,
+      "height": 356,
+      "asset_id": "svg-n00086.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_key": "n00086",
+        "source_node_id": "g7761",
+        "reference_bounds": [
+          1511,
+          189,
+          2079,
+          545
+        ],
+        "curve_editable": false
+      },
+      "id": "svg-n00086",
+      "z_index": 1
+    },
+    {
+      "type": "text",
+      "x": 187.39746239500982,
+      "y": 5579.39746239501,
+      "width": 1893.6924743652344,
+      "height": 424.3974623950098,
+      "content": "www.opensuse.org",
+      "font_family": "OpenSans-Regular",
+      "font_size": 212.1987311975049,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "line_height": 1.0,
+      "letter_spacing": 0.0,
+      "text_align": "left",
+      "color": "rgba(255,255,255,1)",
+      "max_lines": 1,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "svg_font_family": "'Open Sans'",
+      "svg_font_weight": "normal",
+      "svg_font_style": "normal",
+      "id": "svg-run00000",
+      "z_index": 2
+    },
+    {
+      "type": "image",
+      "x": 205,
+      "y": 1468,
+      "width": 1874,
+      "height": 3007,
+      "asset_id": "svg-n00110.png",
+      "fit": "fill",
+      "rotation": 0,
+      "opacity": 1,
+      "source_art": {
+        "kind": "svg-nontext",
+        "source_key": "n00110",
+        "source_node_id": "g7914",
+        "reference_bounds": [
+          205,
+          1468,
+          2079,
+          4475
+        ],
+        "curve_editable": false
+      },
+      "id": "svg-n00110",
+      "z_index": 3
+    }
+  ]
+}

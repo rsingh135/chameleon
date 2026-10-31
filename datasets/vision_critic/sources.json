@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "sources": [],
+  "notes": "Intentionally empty. Catalogue review/reserve labels do not establish training rights, source parity approval, human preferences, or family-disjoint experiment splits."
+}

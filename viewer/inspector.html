@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chameleon Viewer</title>
+<style>
+  :root { --bg: #f4f0ea; --ink: #1c1018; --muted: #6b5f66; --line: #d8d0c6; --text: #2b6cb0; --image: #b7791f; --shape: #2f855a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+  header { display: flex; gap: 16px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; }
+  label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+  label input[type=file] { max-width: 220px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-height: 200px; min-width: 0; }
+  section h2 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  canvas { width: 100%; height: auto; background: #fff; border: 1px solid var(--line); }
+  #inspector { grid-column: 1 / -1; font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-left: auto; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border: 2px solid; vertical-align: -1px; }
+  .import-error { margin: 16px; padding: 12px; color: #842b24; background: #fbeae7; border: 1px solid #d8b8b1; border-radius: 8px; }
+  .preview-note { margin: 12px 16px 0; color: var(--muted); }
+  .element-picker { display: flex; margin: 12px 0; }
+  .element-picker select { min-width: 0; max-width: 100%; }
+  :focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+  a { color: var(--text); }
+  @media (max-width: 480px) { header { gap: 12px; } header > label { flex-wrap: wrap; max-width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Chameleon Viewer</h1>
+  <a href="/">Studio</a>
+  <label>task JSON <input id="task" type="file" accept=".json"></label>
+  <label>output JSON <input id="output" type="file" accept=".json"></label>
+  <label>output PNG <input id="png" type="file" accept=".png"></label>
+  <label><input id="showText" type="checkbox" checked> draw text</label>
+  <span class="legend">
+    <span><i style="border-color: var(--text)"></i>text</span>
+    <span><i style="border-color: var(--image)"></i>image</span>
+    <span><i style="border-color: var(--shape)"></i>shape</span>
+  </span>
+</header>
+<p id="importError" class="import-error" role="alert" hidden></p>
+<p class="preview-note">File inspector · Boxes and fallback text are schematic, not native artwork renders. Imported PNG identity is unverified; matching dimensions alone do not establish a matching design.</p>
+<main>
+  <section><h2 id="srcTitle">Source</h2><label class="element-picker" for="sourceElement">Source element <select id="sourceElement" disabled><option value="">Load a source first</option></select></label><canvas id="src" aria-label="Schematic source element boxes"></canvas></section>
+  <section><h2 id="outTitle">Output</h2><label class="element-picker" for="outputElement">Output element <select id="outputElement" disabled><option value="">Load an output first</option></select></label><canvas id="out" aria-label="Schematic output element boxes with optional imported PNG"></canvas></section>
+  <section id="inspector" aria-live="polite">Load a task JSON, then the matching output JSON. Choose an element or hover a box for its properties. Select a rendered PNG with the output's exact dimensions to place it under the boxes.</section>
+</main>
+<script>
+(() => {
+  const COLORS = { text: "#2b6cb0", image: "#b7791f", shape: "#2f855a" };
+  const state = { source: null, output: null, png: null };
+  const $ = (id) => document.getElementById(id);
+  const versions = { task: 0, output: 0, png: 0 };
+
+  function showError(message) {
+    $("importError").textContent = message;
+    $("importError").hidden = false;
+  }
+  function clearError() {
+    $("importError").textContent = "";
+    $("importError").hidden = true;
+  }
+  function validateCanvas(canvas, label) {
+    if (!canvas || !Number.isInteger(canvas.width) || !Number.isInteger(canvas.height) || canvas.width < 1 || canvas.height < 1 || canvas.width > 8192 || canvas.height > 8192 || canvas.width * canvas.height > 20000000) {
+      throw new Error(`${label} needs whole-number canvas dimensions from 1 to 8192, at most 20 megapixels.`);
+    }
+  }
+  function finiteTree(value, depth = 0) {
+    if (depth > 40) throw new Error("JSON nesting is too deep.");
+    if (typeof value === "number" && !Number.isFinite(value)) throw new Error("JSON numbers must be finite.");
+    if (value && typeof value === "object") for (const child of Object.values(value)) finiteTree(child, depth + 1);
+  }
+  function validateDesign(design) {
+    finiteTree(design);
+    if (!design || !Array.isArray(design.elements) || !design.elements.length || design.elements.length > 200) {
+      throw new Error("A design needs a canvas and 1–200 elements.");
+    }
+    validateCanvas(design.canvas, "The design");
+    const ids = new Set();
+    for (const [index, el] of design.elements.entries()) {
+      if (!el || !["text", "image", "shape"].includes(el.type) || typeof el.id !== "string" || !el.id || el.id.length > 200 || ids.has(el.id)) {
+        throw new Error(`Element ${index + 1} needs a unique nonempty id (at most 200 characters) and a text, image, or shape type.`);
+      }
+      ids.add(el.id);
+      if (!["x", "y", "width", "height"].every(key => Number.isFinite(el[key])) || Math.abs(el.x) > 32768 || Math.abs(el.y) > 32768 || el.width < 0.001 || el.height < 0.001 || el.width > 8192 || el.height > 8192 || el.width * el.height > 20000000 || (el.rotation !== undefined && (!Number.isFinite(el.rotation) || Math.abs(el.rotation) > 3600))) {
+        throw new Error(`Element '${el.id}' has invalid position, size, or rotation values.`);
+      }
+      if ((el.opacity !== undefined && (!Number.isFinite(el.opacity) || el.opacity < 0 || el.opacity > 1)) || (el.z_index !== undefined && !Number.isInteger(el.z_index)) || (el.line_height !== undefined && (!Number.isFinite(el.line_height) || el.line_height < 0.01 || el.line_height > 10))) {
+        throw new Error(`Element '${el.id}' has invalid opacity, paint order, or line height.`);
+      }
+      if (el.type === "text" && (typeof el.content !== "string" || el.content.length > 20000 || !Number.isFinite(el.font_size) || el.font_size < 1 || el.font_size > 8192)) {
+        throw new Error(`Text element '${el.id}' needs text content and a positive font size.`);
+      }
+    }
+  }
+  const readJSON = async (file) => {
+    if (file.size > 24 * 1024 * 1024) throw new Error("JSON files must be at most 24 MiB.");
+    let content;
+    try { content = await file.text(); }
+    catch { throw new Error("The selected file could not be read."); }
+    try { return JSON.parse(content); }
+    catch { throw new Error("The selected file does not contain valid JSON."); }
+  };
+  const readImage = (file) => new Promise((resolve, reject) => {
+    if (file.size > 8 * 1024 * 1024) { reject(new Error("PNG files must be at most 8 MiB.")); return; }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    let timer;
+    const finish = (error) => {
+      clearTimeout(timer); URL.revokeObjectURL(url); img.onload = img.onerror = null;
+      if (error) { img.src = ""; reject(error); } else resolve(img);
+    };
+    img.onload = () => finish();
+    img.onerror = () => finish(new Error("The selected file could not be decoded as an image. Choose a valid PNG."));
+    timer = setTimeout(() => finish(new Error("PNG loading timed out. Select the image again to retry.")), 30000);
+    img.src = url;
+  });
+
+  $("task").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const version = ++versions.task;
+    try {
+      const doc = await readJSON(file);
+      const source = doc && (doc.source || doc);
+      validateDesign(source);
+      if (doc.target_canvas) validateCanvas(doc.target_canvas, "The target");
+      if (version !== versions.task) return;
+      state.source = source;
+      state.target = doc.target_canvas || null;
+      state.output = state.png = null;
+      ++versions.output; ++versions.png;
+      $("output").value = $("png").value = "";
+      $("inspector").textContent = "Source loaded. Load its matching output JSON next; prior output and PNG were cleared.";
+      draw(); clearError();
+    } catch (error) { if (version === versions.task) showError(`Cannot load task JSON. ${error.message}`); }
+    finally { if (version === versions.task) e.target.value = ""; }
+  });
+  $("output").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const version = ++versions.output;
+    try {
+      const doc = await readJSON(file);
+      const design = doc && (doc.source || doc);
+      validateDesign(design);
+      if (version !== versions.output) return;
+      state.output = design;
+      state.png = null; ++versions.png;
+      $("png").value = "";
+      $("inspector").textContent = "Output loaded. Any prior PNG was cleared; select the matching native render if needed.";
+      draw(); clearError();
+    } catch (error) { if (version === versions.output) showError(`Cannot load output JSON. ${error.message}`); }
+    finally { if (version === versions.output) e.target.value = ""; }
+  });
+  $("png").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const version = ++versions.png;
+    const outputVersion = versions.output;
+    try {
+      if (!state.output) throw new Error("Load the output JSON before its PNG.");
+      const image = await readImage(file);
+      if (version !== versions.png || outputVersion !== versions.output) return;
+      if (image.naturalWidth !== state.output.canvas.width || image.naturalHeight !== state.output.canvas.height) throw new Error("PNG dimensions do not match the output JSON canvas. The image was not applied.");
+      state.png = image;
+      draw(); clearError();
+    } catch (error) { if (version === versions.png) showError(`Cannot load output PNG. ${error.message}`); }
+    finally { if (version === versions.png) e.target.value = ""; }
+  });
+  $("showText").addEventListener("change", draw);
+  for (const [id, key, title] of [["sourceElement", "source", "Source"], ["outputElement", "output", "Output"]]) {
+    $(id).addEventListener("change", () => {
+      const element = state[key]?.elements.find(el => el.id === $(id).value);
+      $("inspector").textContent = element ? `${title}: ${JSON.stringify(element, null, 1)}` : "Choose an element to inspect its JSON properties.";
+    });
+  }
+
+  function drawDesign(canvasEl, design, title, bitmap) {
+    if (!design) { canvasEl.width = canvasEl.height = 0; canvasEl.onmousemove = null; return; }
+    const { width, height } = design.canvas;
+    const scale = Math.min(1, 900 / Math.max(width, height));
+    canvasEl.width = Math.max(1, Math.round(width * scale));
+    canvasEl.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvasEl.getContext("2d");
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, width, height);
+    if (bitmap) ctx.drawImage(bitmap, 0, 0, width, height);
+    const els = [...design.elements].sort((a, b) => (a.z_index ?? 0) - (b.z_index ?? 0));
+    const drawText = $("showText").checked;
+    for (const el of els) {
+      ctx.save();
+      ctx.globalAlpha = el.opacity ?? 1;
+      ctx.translate(el.x + el.width / 2, el.y + el.height / 2);
+      ctx.rotate(((el.rotation ?? 0) * Math.PI) / 180);
+      ctx.translate(-el.width / 2, -el.height / 2);
+      if (el.type === "shape" && !bitmap) {
+        ctx.fillStyle = el.fill_color || "rgba(0,0,0,0.1)";
+        if (el.shape_type === "ellipse") {
+          ctx.beginPath(); ctx.ellipse(el.width / 2, el.height / 2, el.width / 2, el.height / 2, 0, 0, Math.PI * 2); ctx.fill();
+        } else { ctx.fillRect(0, 0, el.width, el.height); }
+      }
+      if (el.type === "text" && drawText && !bitmap) {
+        ctx.fillStyle = el.color || "#000";
+        ctx.font = `${el.font_weight === "bold" ? "bold " : ""}${el.font_style === "italic" ? "italic " : ""}${el.font_size}px ${/serif/i.test(el.font_family) && !/sans/i.test(el.font_family) ? "Georgia, serif" : "Helvetica, Arial, sans-serif"}`;
+        ctx.textAlign = el.text_align || "left";
+        const x = el.text_align === "center" ? el.width / 2 : el.text_align === "right" ? el.width : 0;
+        wrap(ctx, el.content, el.width).forEach((line, i) => ctx.fillText(line, x, el.font_size * (0.85 + i * (el.line_height ?? 1.2))));
+      }
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COLORS[el.type] || "#555";
+      ctx.lineWidth = 2 / scale;
+      ctx.strokeRect(0, 0, el.width, el.height);
+      ctx.fillStyle = COLORS[el.type] || "#555";
+      ctx.font = `${12 / scale}px ui-monospace, monospace`;
+      ctx.textAlign = "left";
+      ctx.fillText(el.id, 2 / scale, 12 / scale);
+      ctx.restore();
+    }
+    canvasEl.onmousemove = (ev) => {
+      const r = canvasEl.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * width;
+      const py = ((ev.clientY - r.top) / r.height) * height;
+      const hit = [...els].reverse().find((el) => {
+        const angle = -(el.rotation || 0) * Math.PI / 180;
+        const dx = px - el.x - el.width / 2, dy = py - el.y - el.height / 2;
+        const x = dx * Math.cos(angle) - dy * Math.sin(angle);
+        const y = dx * Math.sin(angle) + dy * Math.cos(angle);
+        return Math.abs(x) <= el.width / 2 && Math.abs(y) <= el.height / 2;
+      });
+      $("inspector").textContent = hit ? `${title}: ${JSON.stringify(hit, null, 1)}` : "";
+      $(title === "Source" ? "sourceElement" : "outputElement").value = hit?.id || "";
+    };
+    return `${title} ${width}×${height}`;
+  }
+
+  function wrap(ctx, text, maxWidth) {
+    const lines = [];
+    for (const para of String(text).split("\n")) {
+      let line = "";
+      for (const word of para.split(" ")) {
+        const probe = line ? `${line} ${word}` : word;
+        if (ctx.measureText(probe).width > maxWidth && line) { lines.push(line); line = word; } else { line = probe; }
+      }
+      lines.push(line);
+    }
+    return lines;
+  }
+
+  function draw() {
+    for (const [id, design] of [["sourceElement", state.source], ["outputElement", state.output]]) {
+      const selected = $(id).value;
+      $(id).replaceChildren(new Option("Choose an element", ""), ...(design?.elements || []).map(el => new Option(`${el.id} · ${el.type}`, el.id)));
+      $(id).disabled = !design;
+      if (design?.elements.some(el => el.id === selected)) $(id).value = selected;
+    }
+    const t = state.target ? ` → target ${state.target.width}×${state.target.height}` : "";
+    $("srcTitle").textContent = (drawDesign($("src"), state.source, "Source") || "Source") + t;
+    $("outTitle").textContent = drawDesign($("out"), state.output, "Output", state.png) || "Output";
+  }
+})();
+</script>
+</body>
+</html>

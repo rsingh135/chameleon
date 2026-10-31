@@ -1,0 +1,842 @@
+{
+  "schema_version": 1,
+  "provenance_note": "Pinned exact named families and faces from Fontsource, full upstream Google Fonts Cantarell, and official DejaVu2.37. Original font bytes retained with hashes/licenses. Doory dynamically resolved font versions and saved no build hashes, so historical byte equality with author thumbnails is unknown. FontsourceTTFs are container conversions, not family substitutions.",
+  "faces": [
+    {
+      "family": "Anton",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "anton",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/anton@5.3.0/files/anton-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/anton/anton-latin-400-normal.woff2",
+      "source_sha256": "d0fa07ff63dd60cbc0e2f58e29c802dca2a5ae0276c999f59c6111ab7bbaec3b",
+      "path": "fonts/anton/anton-latin-400-normal.ttf",
+      "sha256": "9ba8080062d3209e8be54d4dcdec54a5c65275a8c24429785352bde7930e0947",
+      "postscript_name": "Anton-Regular",
+      "name_table_families": [
+        "Anton"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/anton@5.3.0/LICENSE",
+      "license_path": "fonts/anton/OFL.txt"
+    },
+    {
+      "family": "Archivo",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "archivo",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/archivo@5.3.0/files/archivo-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/archivo/archivo-latin-700-normal.woff2",
+      "source_sha256": "abada6cd4c92a9a706f6d7ed3189f322ff43dd78b9402c7d1137465b861d2a04",
+      "path": "fonts/archivo/archivo-latin-700-normal.ttf",
+      "sha256": "4b6456b3118165a08df867bebdf6343c549362885ad8a8caa32025de462219b5",
+      "postscript_name": "ArchivoSemiBold-Bold",
+      "name_table_families": [
+        "Archivo SemiBold"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/archivo@5.3.0/LICENSE",
+      "license_path": "fonts/archivo/OFL.txt"
+    },
+    {
+      "family": "Crimson Text",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "crimson-text",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/files/crimson-text-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/crimson-text/crimson-text-latin-400-normal.woff2",
+      "source_sha256": "538c7067580f457dd3dd98ebaabeb19405c12bdd01674d3db8fd9948ee73c862",
+      "path": "fonts/crimson-text/crimson-text-latin-400-normal.ttf",
+      "sha256": "22e68bc7ec059d0751a4c35c86d2ad73296978723a8aea055e4eda3edc1567d3",
+      "postscript_name": "CrimsonText-Regular",
+      "name_table_families": [
+        "Crimson Text"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/LICENSE",
+      "license_path": "fonts/crimson-text/OFL.txt"
+    },
+    {
+      "family": "Great Vibes",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "great-vibes",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/great-vibes@5.3.0/files/great-vibes-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/great-vibes/great-vibes-latin-400-normal.woff2",
+      "source_sha256": "c59dc73d29daf142ef2431f455d21464172374aa750d793a79d608735db2d856",
+      "path": "fonts/great-vibes/great-vibes-latin-400-normal.ttf",
+      "sha256": "f0a40f8842ff57c386bb3d12c16606e5a1b97120e9435ab194a043399e46e57f",
+      "postscript_name": "GreatVibes-Regular",
+      "name_table_families": [
+        "Great Vibes"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/great-vibes@5.3.0/LICENSE",
+      "license_path": "fonts/great-vibes/OFL.txt"
+    },
+    {
+      "family": "Inter",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "inter",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.3.0/files/inter-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/inter/inter-latin-400-normal.woff2",
+      "source_sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
+      "path": "fonts/inter/inter-latin-400-normal.ttf",
+      "sha256": "8d7a8f4e6f56792a2a715a4d8ee86bae83756817f788240928c140c9e4656607",
+      "postscript_name": "Inter-Regular",
+      "name_table_families": [
+        "Inter"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.3.0/LICENSE",
+      "license_path": "fonts/inter/OFL.txt"
+    },
+    {
+      "family": "Inter",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "inter",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.3.0/files/inter-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/inter/inter-latin-700-normal.woff2",
+      "source_sha256": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491",
+      "path": "fonts/inter/inter-latin-700-normal.ttf",
+      "sha256": "b8d78b3f175cd3117754cdddadac843c34677d6671477486799d93bc80301b08",
+      "postscript_name": "Inter-Bold",
+      "name_table_families": [
+        "Inter"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/inter@5.3.0/LICENSE",
+      "license_path": "fonts/inter/OFL.txt"
+    },
+    {
+      "family": "Josefin Sans",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "josefin-sans",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/josefin-sans@5.3.0/files/josefin-sans-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/josefin-sans/josefin-sans-latin-400-normal.woff2",
+      "source_sha256": "242e98782313218a60ac5397a94a49bbe4cf3dbf4ca31039acacd801d957b13a",
+      "path": "fonts/josefin-sans/josefin-sans-latin-400-normal.ttf",
+      "sha256": "7de1908cdd15590ca15e9dbd05cb3d30f6789580cf9fe973f0fc742b2edf3844",
+      "postscript_name": "JosefinSansThin-Regular",
+      "name_table_families": [
+        "Josefin Sans Thin"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/josefin-sans@5.3.0/LICENSE",
+      "license_path": "fonts/josefin-sans/OFL.txt"
+    },
+    {
+      "family": "Manrope",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "manrope",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.3.0/files/manrope-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/manrope/manrope-latin-400-normal.woff2",
+      "source_sha256": "849290ef12a2eeb9af5c11924120d11aa4ae8b435ed3347d7fc8bc240c293ca3",
+      "path": "fonts/manrope/manrope-latin-400-normal.ttf",
+      "sha256": "f922f070bbd68d0ce8740b8996a4108495ce29f8e18490764fcee61d3c44b7c3",
+      "postscript_name": "ManropeExtraLight-Regular",
+      "name_table_families": [
+        "Manrope ExtraLight"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.3.0/LICENSE",
+      "license_path": "fonts/manrope/OFL.txt"
+    },
+    {
+      "family": "Manrope",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "manrope",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.3.0/files/manrope-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/manrope/manrope-latin-700-normal.woff2",
+      "source_sha256": "d2a12c85a831e4b5db341767d0347fa3d1361d22a1fcb3e361a16b6c90080f71",
+      "path": "fonts/manrope/manrope-latin-700-normal.ttf",
+      "sha256": "296851a65c3201ef136b8db6ed076a2c82ba5a26dae014c7ee46acd995840001",
+      "postscript_name": "ManropeExtraLight-Bold",
+      "name_table_families": [
+        "Manrope ExtraLight"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/manrope@5.3.0/LICENSE",
+      "license_path": "fonts/manrope/OFL.txt"
+    },
+    {
+      "family": "Oswald",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "oswald",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/oswald@5.3.0/files/oswald-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/oswald/oswald-latin-700-normal.woff2",
+      "source_sha256": "aae665c75af89ea7cb7d8ccc8b0911ea72267442ebcd84f6e3efa041ad3b3c16",
+      "path": "fonts/oswald/oswald-latin-700-normal.ttf",
+      "sha256": "dd66ac35da26beb13e6b432f7860d95fdb20e761b5658c38a8066118a6e422c7",
+      "postscript_name": "Oswald-Bold",
+      "name_table_families": [
+        "Oswald"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/oswald@5.3.0/LICENSE",
+      "license_path": "fonts/oswald/OFL.txt"
+    },
+    {
+      "family": "Pinyon Script",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "pinyon-script",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/pinyon-script@5.3.0/files/pinyon-script-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/pinyon-script/pinyon-script-latin-400-normal.woff2",
+      "source_sha256": "3e1f69a201572cad4aabea7ccf720f093a7dbc005380b2a1b89e0b94476d3e42",
+      "path": "fonts/pinyon-script/pinyon-script-latin-400-normal.ttf",
+      "sha256": "1ccaca2a1df88bf4c880f79a4ffcdbd01f7664789c4e6c9c3b5c6ec765409323",
+      "postscript_name": "PinyonScript-Regular",
+      "name_table_families": [
+        "Pinyon Script"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/pinyon-script@5.3.0/LICENSE",
+      "license_path": "fonts/pinyon-script/OFL.txt"
+    },
+    {
+      "family": "Playfair Display",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "playfair-display",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.3.0/files/playfair-display-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/playfair-display/playfair-display-latin-400-normal.woff2",
+      "source_sha256": "1fe9ad5d8b2ebd8ecb8fbd05bed1e3fdfa52dae3f1a04e1c219918442fe9394d",
+      "path": "fonts/playfair-display/playfair-display-latin-400-normal.ttf",
+      "sha256": "0162694567a318e5e27c528025870fb4499a33ef6e1fcf7943d3a3cb5e9e660f",
+      "postscript_name": "PlayfairDisplay-Regular",
+      "name_table_families": [
+        "Playfair Display"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/playfair-display@5.3.0/LICENSE",
+      "license_path": "fonts/playfair-display/OFL.txt"
+    },
+    {
+      "family": "Poppins",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "poppins",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.3.0/files/poppins-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/poppins/poppins-latin-400-normal.woff2",
+      "source_sha256": "7d93459d86585bfcdbb7e0376056226adb25821ee54b96236fe2123e9560929f",
+      "path": "fonts/poppins/poppins-latin-400-normal.ttf",
+      "sha256": "cd8b531933ba2a4be7056b3ce618997f39b4f2b592dfce09b73423a57852373d",
+      "postscript_name": "Poppins-Regular",
+      "name_table_families": [
+        "Poppins"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.3.0/LICENSE",
+      "license_path": "fonts/poppins/OFL.txt"
+    },
+    {
+      "family": "Poppins",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "poppins",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.3.0/files/poppins-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/poppins/poppins-latin-700-normal.woff2",
+      "source_sha256": "9338e65fc077355c7a87ae0d64cc101e23b9bf8ad78ae65f0f319c857311b526",
+      "path": "fonts/poppins/poppins-latin-700-normal.ttf",
+      "sha256": "8a7336fb50ce5ce933789f7676bf488df4a7f0ff364d96f2871c18a50b8f85a6",
+      "postscript_name": "Poppins-Bold",
+      "name_table_families": [
+        "Poppins"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.3.0/LICENSE",
+      "license_path": "fonts/poppins/OFL.txt"
+    },
+    {
+      "family": "Open Sans",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "open-sans",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/files/open-sans-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/open-sans/open-sans-latin-400-normal.woff2",
+      "source_sha256": "0e44026ad31376af1b56593cd4acb4f353f8e8789c51759e18f64578e4ef296a",
+      "path": "fonts/open-sans/open-sans-latin-400-normal.ttf",
+      "sha256": "c0c9780e88c88f43ac71ae8bb54d4ec0803aa0ff923d96d59be5f2d2ac0b0db2",
+      "postscript_name": "OpenSans-Regular",
+      "name_table_families": [
+        "Open Sans"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/LICENSE",
+      "license_path": "fonts/open-sans/OFL.txt"
+    },
+    {
+      "family": "Open Sans",
+      "weight": "600",
+      "style": "normal",
+      "fontsource_id": "open-sans",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/files/open-sans-latin-600-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/open-sans/open-sans-latin-600-normal.woff2",
+      "source_sha256": "a97a6ed7ef9f75c495e9224f5c59b2271d826e4a4345b738b390b0c76cc9f412",
+      "path": "fonts/open-sans/open-sans-latin-600-normal.ttf",
+      "sha256": "99cc46d4677893645f15c0419d69c91a03422d4552fc5a833f064b0b623e8315",
+      "postscript_name": "OpenSans-SemiBold",
+      "name_table_families": [
+        "Open Sans",
+        "Open Sans SemiBold"
+      ],
+      "name_table_subfamilies": [
+        "Regular",
+        "SemiBold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/LICENSE",
+      "license_path": "fonts/open-sans/OFL.txt"
+    },
+    {
+      "family": "Open Sans",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "open-sans",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/files/open-sans-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/open-sans/open-sans-latin-700-normal.woff2",
+      "source_sha256": "594a622208d1dad5d1dd58aef74f212ce7132d8f0aa5bacea6cfeb86d308c17a",
+      "path": "fonts/open-sans/open-sans-latin-700-normal.ttf",
+      "sha256": "9f3811befae030acb7e0db63d017b8afb990fc85953d9c89b7c04692a5354b62",
+      "postscript_name": "OpenSans-Bold",
+      "name_table_families": [
+        "Open Sans"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/LICENSE",
+      "license_path": "fonts/open-sans/OFL.txt"
+    },
+    {
+      "family": "Source Sans Pro",
+      "weight": "300",
+      "style": "normal",
+      "fontsource_id": "source-sans-pro",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/files/source-sans-pro-latin-300-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/source-sans-pro/source-sans-pro-latin-300-normal.woff2",
+      "source_sha256": "c3de27b2cbd6deda629c9b442700cf54c0dda74e494b1c75a57d822068a047f8",
+      "path": "fonts/source-sans-pro/source-sans-pro-latin-300-normal.ttf",
+      "sha256": "ef790b1935a30628b8a60d0777478d96bb2e8cd8238c8218823d3149e37daf37",
+      "postscript_name": "SourceSansPro-Light",
+      "name_table_families": [
+        "Source Sans Pro Light"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/LICENSE",
+      "license_path": "fonts/source-sans-pro/OFL.txt"
+    },
+    {
+      "family": "Source Sans Pro",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "source-sans-pro",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/files/source-sans-pro-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/source-sans-pro/source-sans-pro-latin-400-normal.woff2",
+      "source_sha256": "7b348b30ea1fe43857e68fc462c29e5c6e63c97666af75135c4396a272e54762",
+      "path": "fonts/source-sans-pro/source-sans-pro-latin-400-normal.ttf",
+      "sha256": "b6df0df16bea64c12d636cc5bf4fa250e67da0ccce7c578b70d077ad973eccb5",
+      "postscript_name": "SourceSansPro-Regular",
+      "name_table_families": [
+        "Source Sans Pro"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/source-sans-pro@5.3.0/LICENSE",
+      "license_path": "fonts/source-sans-pro/OFL.txt"
+    },
+    {
+      "family": "Carlito",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "carlito",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/carlito@5.3.0/files/carlito-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/carlito/carlito-latin-400-normal.woff2",
+      "source_sha256": "a29c4a4e61863753cf6a10831efaa05f849dcaa8f580422dbc41bc058c3b6b64",
+      "path": "fonts/carlito/carlito-latin-400-normal.ttf",
+      "sha256": "e78d34afd5cfdd2bacd598f5063d4c0b38f6492865d2e8794b6e42d811774807",
+      "postscript_name": "Carlito-Regular",
+      "name_table_families": [
+        "Carlito"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/carlito@5.3.0/LICENSE",
+      "license_path": "fonts/carlito/OFL.txt"
+    },
+    {
+      "family": "Inconsolata",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "inconsolata",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/inconsolata@5.3.0/files/inconsolata-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/inconsolata/inconsolata-latin-400-normal.woff2",
+      "source_sha256": "9d5a0480d2bd3e43b124bf8f36782c8fc079f9f8b023c672bff67e9ceffc236b",
+      "path": "fonts/inconsolata/inconsolata-latin-400-normal.ttf",
+      "sha256": "a96d81f5285e24f97095de178985a3c05932745a31bfd9ebb5b815a9b7500d3b",
+      "postscript_name": "Inconsolata-Regular",
+      "name_table_families": [
+        "Inconsolata"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/inconsolata@5.3.0/LICENSE",
+      "license_path": "fonts/inconsolata/OFL.txt"
+    },
+    {
+      "family": "Inconsolata",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "inconsolata",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/inconsolata@5.3.0/files/inconsolata-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/inconsolata/inconsolata-latin-700-normal.woff2",
+      "source_sha256": "a9d822c4d749ab072f3715224311da3c8302b070a8df41d477090c145a361017",
+      "path": "fonts/inconsolata/inconsolata-latin-700-normal.ttf",
+      "sha256": "268c1564be5385ec2e1d94ad64fef716d2dcccc983fc0155f1918930951522f4",
+      "postscript_name": "Inconsolata-Bold",
+      "name_table_families": [
+        "Inconsolata"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/inconsolata@5.3.0/LICENSE",
+      "license_path": "fonts/inconsolata/OFL.txt"
+    },
+    {
+      "family": "SUSE",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "suse",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/suse@5.3.0/files/suse-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/suse/suse-latin-700-normal.woff2",
+      "source_sha256": "f4b2ba14d5cfff8d6b8f3f921c5a98a608f17c9a6339b9ba9c3b8c1458882477",
+      "path": "fonts/suse/suse-latin-700-normal.ttf",
+      "sha256": "725a13cedff7929fab6c75c8b2fc7c8ed67dc926a4b6a01b6dce01357e129b6d",
+      "postscript_name": "SUSEThin-Bold",
+      "name_table_families": [
+        "SUSE Thin"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/suse@5.3.0/LICENSE",
+      "license_path": "fonts/suse/OFL.txt"
+    },
+    {
+      "family": "DejaVu Sans",
+      "weight": "400",
+      "style": "normal",
+      "version": "2.37",
+      "source_url": "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-2.37.zip",
+      "archive_sha256": "7576310b219e04159d35ff61dd4a4ec4cdba4f35c00e002a136f00e96a908b0a",
+      "archive_member": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans.ttf",
+      "path": "fonts/dejavu-sans/DejaVuSans.ttf",
+      "sha256": "7da195a74c55bef988d0d48f9508bd5d849425c1770dba5d7bfc6ce9ed848954",
+      "postscript_name": "DejaVuSans",
+      "name_table_families": [
+        "DejaVu Sans"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "LicenseRef-Bitstream-Vera-and-DejaVu",
+      "license_url": "https://dejavu-fonts.github.io/License.html",
+      "license_path": "fonts/dejavu-sans/LICENSE.txt",
+      "source_commit": "version_2_37"
+    },
+    {
+      "family": "DejaVu Sans",
+      "weight": "700",
+      "style": "normal",
+      "version": "2.37",
+      "source_url": "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-2.37.zip",
+      "archive_sha256": "7576310b219e04159d35ff61dd4a4ec4cdba4f35c00e002a136f00e96a908b0a",
+      "archive_member": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf",
+      "path": "fonts/dejavu-sans/DejaVuSans-Bold.ttf",
+      "sha256": "e6476c1b80502924294eed40894c5b18e06c181444ca953e5334262df9c27724",
+      "postscript_name": "DejaVuSans-Bold",
+      "name_table_families": [
+        "DejaVu Sans"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "LicenseRef-Bitstream-Vera-and-DejaVu",
+      "license_url": "https://dejavu-fonts.github.io/License.html",
+      "license_path": "fonts/dejavu-sans/LICENSE.txt",
+      "source_commit": "version_2_37"
+    },
+    {
+      "family": "DejaVu Sans Mono",
+      "weight": "400",
+      "style": "normal",
+      "version": "2.37",
+      "source_url": "https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-fonts-ttf-2.37.zip",
+      "archive_sha256": "7576310b219e04159d35ff61dd4a4ec4cdba4f35c00e002a136f00e96a908b0a",
+      "archive_member": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansMono.ttf",
+      "path": "fonts/dejavu-sans/DejaVuSansMono.ttf",
+      "sha256": "b4a6c3e4faab8773f4ff761d56451646409f29abedd68f05d38c2df667d3c582",
+      "postscript_name": "DejaVuSansMono",
+      "name_table_families": [
+        "DejaVu Sans Mono"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "LicenseRef-Bitstream-Vera-and-DejaVu",
+      "license_url": "https://dejavu-fonts.github.io/License.html",
+      "license_path": "fonts/dejavu-sans/LICENSE.txt",
+      "source_commit": "version_2_37"
+    },
+    {
+      "family": "Open Sans Condensed",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "open-sans-condensed",
+      "npm_version": "4.5.5",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/open-sans-condensed@4.5.5/files/open-sans-condensed-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/open-sans-condensed/open-sans-condensed-latin-700-normal.woff2",
+      "source_sha256": "68116287d6b99feff98ad41fa01cdc251f12b52e253bab507ed2eaa7a363e2b5",
+      "path": "fonts/open-sans-condensed/open-sans-condensed-latin-700-normal.ttf",
+      "sha256": "b0e15600198ff879810151231434b2d61623fa9e99ee46e2f5b6aed63f9d4043",
+      "postscript_name": "OpenSansCondensed-Bold",
+      "name_table_families": [
+        "Open Sans Condensed"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "Apache-2.0",
+      "license_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "license_path": "fonts/open-sans-condensed/Apache-2.0.txt",
+      "copyright_path": "fonts/open-sans-condensed/COPYRIGHT.txt",
+      "license_evidence": "Original font name table ID14 is http://www.apache.org/licenses/LICENSE-2.0, ID0 credits Google 2010-2011. npm package MIT describes packaging, not font rights."
+    },
+    {
+      "family": "Cantarell",
+      "weight": "400",
+      "style": "normal",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/Cantarell-Regular.ttf",
+      "source_commit": "9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0",
+      "source_format": "ttf",
+      "path": "fonts/cantarell-full/Cantarell-Regular.ttf",
+      "sha256": "840a255779258a2b24b5e3d1f32a821ed641fdd5ef1e47c4dc180064db9ccfa1",
+      "postscript_name": "Cantarell-Regular",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "OFL-1.1",
+      "license_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/OFL.txt",
+      "license_path": "fonts/cantarell-full/OFL.txt",
+      "selection_note": "Full upstream face preserves encoded U+FB00/U+FB01 present in author copy; Latin-subset Fontsource files omitted these codepoints. No copy normalization or glyph substitution."
+    },
+    {
+      "family": "Cantarell",
+      "weight": "700",
+      "style": "normal",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/Cantarell-Bold.ttf",
+      "source_commit": "9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0",
+      "source_format": "ttf",
+      "path": "fonts/cantarell-full/Cantarell-Bold.ttf",
+      "sha256": "1b15d4acd20df636755bafa1e026e73fb277740aa27442198795fcf0d1cb9818",
+      "postscript_name": "Cantarell-Bold",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "OFL-1.1",
+      "license_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/OFL.txt",
+      "license_path": "fonts/cantarell-full/OFL.txt",
+      "selection_note": "Full upstream face preserves encoded U+FB00/U+FB01 present in author copy; Latin-subset Fontsource files omitted these codepoints. No copy normalization or glyph substitution."
+    },
+    {
+      "family": "Cantarell",
+      "weight": "400",
+      "style": "italic",
+      "source_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/Cantarell-Italic.ttf",
+      "source_commit": "9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0",
+      "source_format": "ttf",
+      "path": "fonts/cantarell-full/Cantarell-Italic.ttf",
+      "sha256": "113797007a0baa9eaba2688de40b51f1d907f5c4f2add61cfd25a5e626153613",
+      "postscript_name": "Cantarell-Italic",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Italic"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "license_id": "OFL-1.1",
+      "license_url": "https://raw.githubusercontent.com/google/fonts/9862abc066c9b83bf84c3e8ed1fc2d8d48f9bbf0/ofl/cantarell/OFL.txt",
+      "license_path": "fonts/cantarell-full/OFL.txt",
+      "selection_note": "Full upstream face preserves encoded U+FB00/U+FB01 present in author copy; Latin-subset Fontsource files omitted these codepoints. No copy normalization or glyph substitution."
+    },
+    {
+      "family": "Crimson Text",
+      "weight": "400",
+      "style": "italic",
+      "fontsource_id": "crimson-text",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/files/crimson-text-latin-400-italic.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/crimson-text/crimson-text-latin-400-italic.woff2",
+      "source_sha256": "ded83489adaeec098ee0d639252e72be7de219f759b939ba4b2e606e5e68b272",
+      "path": "fonts/crimson-text/crimson-text-latin-400-italic.ttf",
+      "sha256": "ecc3408be9c0debbe6c0a986570d7e92a2028ce2d6e9a2d0d77f3ca0b25e3b49",
+      "postscript_name": "CrimsonText-Italic",
+      "name_table_families": [
+        "Crimson Text"
+      ],
+      "name_table_subfamilies": [
+        "Italic"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/crimson-text@5.3.0/LICENSE",
+      "license_path": "fonts/crimson-text/OFL.txt"
+    }
+  ],
+  "errors": [],
+  "superseded_sources": [
+    {
+      "family": "Cantarell",
+      "weight": "400",
+      "style": "normal",
+      "fontsource_id": "cantarell",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/files/cantarell-latin-400-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/cantarell/cantarell-latin-400-normal.woff2",
+      "source_sha256": "b2a3c29f26a1966cc1241fc5e22fae97dd82447aec55b99ff5637ed012ba2298",
+      "path": "fonts/cantarell/cantarell-latin-400-normal.ttf",
+      "sha256": "a3ed681cad05fd240e03fb6f379a7cd949a01ff0d528c235b18ad548498fe36b",
+      "postscript_name": "Cantarell-Regular",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Regular"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/LICENSE",
+      "license_path": "fonts/cantarell/OFL.txt",
+      "reason": "Latin subset omitted U+FB00/U+FB01 used by original source"
+    },
+    {
+      "family": "Cantarell",
+      "weight": "700",
+      "style": "normal",
+      "fontsource_id": "cantarell",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/files/cantarell-latin-700-normal.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/cantarell/cantarell-latin-700-normal.woff2",
+      "source_sha256": "298f6ec1b9034ddefe6a8a80872b68f2e13785956bc5f514c9404dcfc0a9d4ff",
+      "path": "fonts/cantarell/cantarell-latin-700-normal.ttf",
+      "sha256": "c306c645978a411bb6581dce2d568866d2fd016b0883ce1a0edd24a0db9738cb",
+      "postscript_name": "Cantarell-Bold",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Bold"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/LICENSE",
+      "license_path": "fonts/cantarell/OFL.txt",
+      "reason": "Latin subset omitted U+FB00/U+FB01 used by original source"
+    },
+    {
+      "family": "Cantarell",
+      "weight": "400",
+      "style": "italic",
+      "fontsource_id": "cantarell",
+      "npm_version": "5.3.0",
+      "source_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/files/cantarell-latin-400-italic.woff2",
+      "source_format": "woff2",
+      "source_path": "fonts/cantarell/cantarell-latin-400-italic.woff2",
+      "source_sha256": "531be302a72e7394696318ffa8375ff94125106e0856857f77185c41b9a01be0",
+      "path": "fonts/cantarell/cantarell-latin-400-italic.ttf",
+      "sha256": "afd0ce2147dba793883fd78d641d8dcab3778a3505b3b2fdc386705827c41497",
+      "postscript_name": "Cantarell-Italic",
+      "name_table_families": [
+        "Cantarell"
+      ],
+      "name_table_subfamilies": [
+        "Italic"
+      ],
+      "resolution": "exact_named_family_weight_style",
+      "conversion": "WOFF2 decompressed to sfnt TTF by fontTools; original WOFF2 retained",
+      "license_id": "OFL-1.1",
+      "license_url": "https://cdn.jsdelivr.net/npm/@fontsource/cantarell@5.3.0/LICENSE",
+      "license_path": "fonts/cantarell/OFL.txt",
+      "reason": "Latin subset omitted U+FB00/U+FB01 used by original source"
+    }
+  ]
+}

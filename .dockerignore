@@ -1,0 +1,33 @@
+# The image contains the runtime, schema, original resources and compact fit model.
+.git
+.github
+.agents
+.codex
+.venv*
+.ruff_cache
+.pytest_cache
+**/__pycache__
+**/*.pyc
+docs
+fixtures
+integrations
+viewer
+tests
+tools
+experiments
+configs
+datasets
+# The default source-controlled fit ranker is part of the engine. Exclude
+# experimental weights while allowing precisely its small JSON artifact.
+models/*
+!models/fit_policy/
+models/fit_policy/*
+!models/fit_policy/default.json
+local_backups
+tmp
+eval
+eval_out*
+output
+input
+ci_output
+*.pdf

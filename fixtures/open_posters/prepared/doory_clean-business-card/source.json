@@ -1,0 +1,112 @@
+{
+  "canvas": {
+    "width": 336,
+    "height": 192
+  },
+  "elements": [
+    {
+      "type": "shape",
+      "shape_type": "rectangle",
+      "x": 0,
+      "y": 0,
+      "width": 336,
+      "height": 192,
+      "fill_color": "rgba(46,45,43,1)",
+      "id": "page-background:e4d387bf-c21c-4c49-8488-54eade4e4ae1",
+      "z_index": 0
+    },
+    {
+      "x": 0.0,
+      "y": 20.0,
+      "width": 336.0,
+      "height": 144.64,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "Jordan",
+      "font_family": "GreatVibes-Regular",
+      "font_size": 128.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(61,60,57,1)",
+      "text_align": "center",
+      "line_height": 1.13,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Great Vibes\", cursive",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 0
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.0
+      },
+      "id": "17090abf-f6de-4b23-9ab2-85f296bd9ea7",
+      "z_index": 1
+    },
+    {
+      "x": 0.0,
+      "y": 80.0,
+      "width": 336.0,
+      "height": 27.12,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "JORDAN ELLIS",
+      "font_family": "CrimsonText-Regular",
+      "font_size": 20.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(233,230,224,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Crimson Text\", serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 300
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.3
+      },
+      "id": "4c408f3b-e9eb-457a-8aa2-949e402ba7be",
+      "z_index": 2
+    },
+    {
+      "x": 0.0,
+      "y": 110.0,
+      "width": 336.0,
+      "height": 10.847999999999999,
+      "rotation": 0.0,
+      "opacity": 1.0,
+      "type": "text",
+      "content": "OWNER OF YOUR STUDIO NAME",
+      "font_family": "CrimsonText-Regular",
+      "font_size": 8.0,
+      "font_weight": "regular",
+      "font_style": "normal",
+      "color": "rgba(185,181,173,1)",
+      "text_align": "center",
+      "line_height": 1.3559999999999999,
+      "letter_spacing": 0,
+      "doory_font": {
+        "family": "\"Crimson Text\", serif",
+        "weight": 400,
+        "style": "normal",
+        "char_spacing_per_thousand_em": 300
+      },
+      "native_text_effects": {
+        "version": 1,
+        "baseline_em": 0.8791399999999999,
+        "tracking_em": 0.3
+      },
+      "id": "817714b7-dcf8-4fd1-ba91-a349ea9ab0d5",
+      "z_index": 3
+    }
+  ]
+}

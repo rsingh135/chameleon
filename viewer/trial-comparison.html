@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Chameleon · Open comparison</title></head>
+<body><p>Review desk is now the studio's comparison mode. <a href="/?view=compare">Open comparison</a>.</p>
+<script>
+const query = new URLSearchParams(location.search);
+const destination = new URL('/?view=compare', location.href);
+if (query.has('poster')) destination.searchParams.set('poster', query.get('poster'));
+location.replace(destination.href);
+</script></body></html>

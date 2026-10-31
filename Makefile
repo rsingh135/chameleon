@@ -1,4 +1,4 @@
-.PHONY: setup lint fmt test check run eval docker-build docker-run clean
+.PHONY: setup lint fmt test check run eval serve verify-local docker-build docker-run clean
 
 PY ?= .venv/bin/python
 
@@ -21,6 +21,12 @@ check: lint test  ## everything CI runs, locally
 
 run:              ## resize every input/*.json -> output/
 	$(PY) -m engine.main
+
+serve:            ## run the local studio on 127.0.0.1:8765
+	$(PY) -m viewer.server --port 8765
+
+verify-local:     ## verify an already-running local studio over HTTP
+	$(PY) -m tools.verify_local
 
 eval:             ## score samples + 20 synthetic tasks, write eval_out/report.md + sheets
 	$(PY) -m tools.harness --synth 20 --seed 0

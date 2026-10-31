@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Chameleon · Open studio</title></head>
+<body><p>The selected workspace is now the default GUI. <a href="/">Open Chameleon</a>.</p>
+<script>
+const query = new URLSearchParams(location.search);
+const destination = new URL('/', location.href);
+if (query.get('variant') === 'B') destination.searchParams.set('view', 'compare');
+if (query.has('poster')) destination.searchParams.set('poster', query.get('poster'));
+location.replace(destination.href);
+</script></body></html>

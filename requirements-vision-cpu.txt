@@ -1,0 +1,3 @@
+# Optional local collection/annotation/ranker framework; no GPU libraries.
+Pillow>=10.0
+numpy>=1.26,<3

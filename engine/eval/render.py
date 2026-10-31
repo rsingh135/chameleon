@@ -14,26 +14,29 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageStat
 
 from engine.eval.geometry import Box
-from renderer.converter.convert import _get_renderer, convert_chameleon_to_crello
+from engine.resources import get_renderer, native_render_example, render_input, using_resources
+from renderer.converter.convert import convert_chameleon_to_crello
 
 
 def render_image(
     design: dict,
-    assets_dir: str | Path,
+    assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
     max_size: int | None = None,
 ) -> Image.Image:
-    assets_dir = str(assets_dir)
-    fonts = str(fonts_dir) if fonts_dir is not None else str(Path(assets_dir).parent / "fonts")
-    renderer = _get_renderer(fonts)
-    example, _warnings = convert_chameleon_to_crello(design, renderer.font_manager, assets_dir)
-    png = renderer.render(example, max_size=max_size, format="png")
-    return Image.open(io.BytesIO(png)).convert("RGBA")
+    with using_resources(assets_dir, fonts_dir) as resources:
+        renderer = get_renderer(resources.fonts_dir)
+        example, _warnings = convert_chameleon_to_crello(
+            render_input(design), renderer.font_manager, str(resources.assets_dir)
+        )
+        example = native_render_example(example, design)
+        png = renderer.render(example, max_size=max_size, format="png")
+        return Image.open(io.BytesIO(png)).convert("RGBA")
 
 
 def render_plate(
     design: dict,
-    assets_dir: str | Path,
+    assets_dir: str | Path | None = None,
     fonts_dir: str | Path | None = None,
     max_size: int | None = None,
 ) -> Image.Image:

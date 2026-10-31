@@ -76,13 +76,33 @@ def test_native_alpha_translation_maps_back_to_source_coordinates(native_fonts):
 
 def test_equivalent_proportional_text_retains_ink_geometry_with_raster_tolerance(native_fonts):
     element = _text()
+    original = deepcopy(element)
+    scale_factor = 2
     first = semantic_ink.element_ink_bounds(element, fonts_dir=native_fonts)
     doubled = deepcopy(element)
     for key in ("x", "y", "width", "height", "font_size"):
-        doubled[key] *= 2
+        doubled[key] *= scale_factor
+    doubled_original = deepcopy(doubled)
     second = semantic_ink.element_ink_bounds(doubled, fonts_dir=native_fonts)
     assert first["provenance"] == second["provenance"] == "native_alpha"
-    assert second["box"] == pytest.approx([value * 2 for value in first["box"]], abs=2)
+    assert first["raster_scale"] == second["raster_scale"] == 1
+    assert first["confidence"] == second["confidence"] == 1
+    assert element == original and doubled == doubled_original
+    assert all(result["box"][2] > 0 and result["box"][3] > 0 for result in (first, second))
+
+    def edges(box):
+        x, y, width, height = box
+        return x, y, x + width, y + height
+
+    # The original edge has one raster pixel of uncertainty, scaled to the
+    # result coordinates; the separately painted result has one more pixel.
+    # Compare edges because opposing edge errors accumulate in width/height.
+    pixel_quantization_budget = scale_factor / first["raster_scale"] + 1 / second["raster_scale"]
+    assert edges(second["box"]) == pytest.approx(
+        [value * scale_factor for value in edges(first["box"])],
+        abs=pixel_quantization_budget,
+        rel=0,
+    )
 
 
 def test_native_outline_effect_is_included_without_changing_the_descriptor(native_fonts):

@@ -255,10 +255,12 @@ automatically and cannot enlarge the independent-source count.
 The exported [purpose question](../output/semantic-analysis-data-v1/element-purpose-question-v1.json)
 uses twelve purpose classes and one-letter answers. The primary
 `experiments/visual_finetune/data.py` currently maps purposes to ten word aliases.
-These contracts differ. This plan chooses neither mapping: the primary owner
-must record and freeze the exact label mapping, prompt, tokenizer, masks and
-evaluation decoding together. Scores from different mappings are not directly
-comparable. Eligible training has no `corner_marker`, `footer_legal` or `unknown`
+These contracts differ. The primary training owner has selected the ten-word
+contract for its current purpose pilot; the twelve-letter question remains an
+unconsumed alternative. Record the actual label mapping, prompt, tokenizer,
+masks and evaluation decoding together in each frozen recipe. Scores from
+different mappings are not directly comparable. Eligible reviewed training has
+no `corner_marker`, `footer_legal` or `unknown`
 examples; those behaviors cannot be claimed as learned from this corpus.
 
 **Expand labels at the right level after the bounded pilot.** The earlier 34
@@ -279,15 +281,16 @@ relationship in held-out data blocks a claim about that behavior. The existing
 reserves and the manual acceptance case remain excluded. Group-aware splitting
 prevents group overlap; see [the official GroupKFold contract](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html).
 
-**Primary experiment and ownership.** The fresh user-authorized local bounded
-Qwen VLM run is the primary experiment, using the primary training chat's exact
-cached Qwen3-VL-2B base and frozen adapter recipe. Final qualification and a
+**Primary experiment and ownership.** The bounded local Qwen VLM pilot uses the
+primary training chat's exact cached Qwen3-VL-2B base and frozen adapter recipe.
+Subsequent compute uses that chat's freshly verified configuration and budget
+guard, including the newly authorized Brev direction. Final qualification and a
 deployed adapter remain pending. Data readiness or optimizer steps alone
 establish no task benefit. Keep source-only analysis, organization and
 verification on the existing shared contracts described in
 [the pipeline guide](IMAGE_REASONING_PIPELINE.md) and
 [the training plan](SCENE_MODEL_TRAINING_PLAN.md). The primary training chat owns
-the local RTX 4070, memory/offload scheduling, checkpoints and adapter-backed
+GPU and cloud scheduling, budget/stop verification, checkpoints and adapter-backed
 role configuration. Supporting chats provide artifacts, review and verification;
 they start no competing model/GPU work. This document creates no new GPU job,
 cloud session, download, time allowance or budget authorization. Historical
@@ -305,9 +308,62 @@ reports base `21/48` versus adapter `23/48`: original-source cases `17/39` to
 `18/39`, blank controls `3/6` to `4/6`, and source-swapped cases `1/3` unchanged.
 This is a compatibility and weak public-development result under that run's
 contract, not qualified design fidelity, generalization or a completed full
-validation of all 166 held-out elements. It does not resolve the twelve-letter
-versus ten-alias contract difference or establish learned relationship/anchor
+validation of all 166 held-out elements. It uses the primary word-label task,
+not the alternative twelve-letter question, and establishes no learned relationship/anchor
 execution. The separate optional blank-control export is still opt-in.
+
+**Critic training evidence is separate.** The frozen
+[critic-v1 manifest](../output/critic-pair-training-v1/manifest.json), SHA-256
+`1bba2ce4d27338d8be38e32443c7871fa615f268ae265fd214e78e1fffb729bd`,
+contains 15 unique pairs and 30 counterbalanced A/B/NEITHER records from the
+same five training works. All 97 output hashes were checked. Each source uses
+one hard-valid saved fit and two deliberately invalid native transformations;
+labels are algorithmic weak supervision, not designer preferences. The first
+negative views are often blank, so this is an easy compatibility curriculum.
+Keep its training-only manifest separate from untouched evaluation; do not move
+validation families into training to satisfy a loader's two-split requirement.
+Harder negatives and source-mismatch controls belong to a new immutable version.
+
+The [frozen critic-v2 manifest](../output/critic-pair-training-v2/manifest.json),
+SHA-256 `1c042e89c33c84ccaaa76f0d9a31d3a992e6454e72148cf042a28c752941fc5a`,
+retains five train families and 30 balanced records, with 103 verified files.
+Its five new misfits retain recognizable artwork/copy, and two real other-train-source
+mismatch controls plus their swaps declare false source-render parity. Some
+inherited occlusion views remain blank. These are controlled weak comparisons,
+not learned taste or independent resizing qualification.
+
+## Three-view perception experiment
+
+The acknowledged input order is **original scene, target context, isolated
+original layer**. The [native evidence manifest](../output/semantic-purpose-input-v3-evidence/run-2/manifest.json)
+has SHA-256 `001292824831719997a0f8c8ac7abf0cfedd4f00b38044efcc1f04473418fa61`.
+It preserves all 344 record identities, labels, splits and masks. There are 335
+available isolated views: 169 train and 166 validation; nine uncertain records
+remain masked and unrendered. The [separate final audit](../output/semantic-purpose-input-v3-evidence/final-audit.json)
+checks all 1,512 declared file hashes and unchanged parent source/context bytes.
+
+Each third view paints only the original element using its original resources,
+font face, style, opacity and effects. Native alpha bounds plus fixed padding
+produce a proportional thumbnail of at most 512 pixels; a separate transparent
+RGBA view and coordinate/raster receipts remain available for audit. Every class
+uses the same checker. White glyphs have low contrast on this light checker,
+especially at 256 pixels; this representation limit is recorded separately.
+An isolated layer is not its design intent: retain the complete source and
+neighbor context. Never treat these thumbnails as replacement output assets.
+
+The primary worker owns the explicit three-view loader and prompt. Its planned
+matched runs keep the same sample IDs, labels and optimization recipe: R1 uses
+the 256-pixel preprocessing budget; R2 changes only that budget to 512. Compare
+an unchanged base and adapter under each exact input/prompt contract. Keep new
+product/art family expansion as a separate experiment. An unavailable third
+view must be reported and excluded consistently or fail the matched run; no
+silent two-view fallback is allowed. Blank diagnostics blank all three views;
+mismatch diagnostics retain explicit provenance for each view.
+
+Keep saved adapter precision consistent during reload checks. A rounded reload
+must not be accepted by weakening the equality threshold. Execution, nonzero
+updates and successful reload are compatibility checks, separate from measured
+purpose accuracy, visual discrimination and actual resized-render improvement.
 
 **Optional conservative CPU baseline.** Retain the small descriptor-head
 experiment as a control, not a prohibition on the authorized VLM work. Freeze

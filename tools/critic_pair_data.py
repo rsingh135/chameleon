@@ -189,6 +189,32 @@ def _rights(value, catalogue_entry):
         raise ValueError("License/source authority differs from the original catalogue")
 
 
+def _owner_rights(value, owner):
+    if owner.get("authority_kind") == "project_synthetic_internal_training":
+        from tools.project_critic_authority import validate_rights
+
+        validate_rights(value)
+        if value != owner["receipt"]["rights"]:
+            raise ValueError("Project internal rights differ from the admitted source authority")
+    else:
+        _rights(value, owner["receipt"]["catalogue_entry"])
+
+
+def _owner_legal(owner, catalogue_root):
+    if owner.get("authority_kind") == "project_synthetic_internal_training":
+        root = owner["legal_root"]
+        hashes = {
+            name: data._sha(safe_artifact_path(root, name))
+            for name in owner["receipt"]["legal_files_sha256"]
+        }
+    else:
+        root = catalogue_root
+        hashes = data._legal_receipts(owner["receipt"]["catalogue_entry"], root)
+    if hashes != owner["receipt"]["legal_files_sha256"]:
+        raise ValueError("Source license/notice bytes differ from frozen authority")
+    return hashes, root
+
+
 def _generation(path, input_path, raw, split_manifest, source_manifest, snapshots):
     if path is None:
         raise ValueError("A bound generation receipt is required for a training corpus")
@@ -235,6 +261,7 @@ def freeze_pairs(
     source_manifest=DEFAULT_SOURCE_MANIFEST,
     swap=False,
     generation_receipt=None,
+    project_source_authority=None,
 ):
     """Verify source+A+B evidence, then publish a portable train-only weak corpus."""
     input, split_manifest, out = (
@@ -250,6 +277,18 @@ def freeze_pairs(
             raise ValueError("Output overlaps an immutable evidence/source root")
     snapshots = {str(path): data._sha(path) for path in (input, split_manifest, source_manifest)}
     frozen, authority = _authority(source_manifest, split_manifest)
+    project = None
+    if project_source_authority is not None:
+        from tools.project_critic_authority import load_project_authority
+
+        project = load_project_authority(project_source_authority)
+        project_root = project["manifest_path"].parent
+        if out.is_relative_to(project_root) or project_root.is_relative_to(out):
+            raise ValueError("Output overlaps immutable project source authority")
+        if set(project["owners"]) & set(authority):
+            raise ValueError("Project authority cannot override a curated source")
+        authority.update(project["owners"])
+        snapshots.update(project["snapshots"])
     for owner in authority.values():
         snapshots.update(owner["files"])
     raw = data._read(input)
@@ -267,6 +306,17 @@ def freeze_pairs(
     generation = _generation(
         generation_receipt, input, raw, split_manifest, source_manifest, snapshots
     )
+    if project is not None:
+        receipt = generation["receipt"]
+        if (
+            receipt.get("project_source_authority_sha256")
+            != snapshots[str(project["manifest_path"])]
+            or safe_artifact_path(input.parent, receipt.get("project_source_authority"))
+            != project["manifest_path"]
+            or receipt.get("parent_native_generation_receipt_sha256")
+            != project["document"]["generation_receipt"]["sha256"]
+        ):
+            raise ValueError("Generation receipt does not bind the optional project authority")
     catalogue_root = ROOT / "fixtures/open_posters"
     catalogue_path = catalogue_root / "catalogue.json"
     snapshots[str(catalogue_path)] = data._sha(catalogue_path)
@@ -281,6 +331,9 @@ def freeze_pairs(
         for item in authority.values()
         if item["split"]["split"] != "train"
     }
+    if project is not None:
+        forbidden_hashes.update(project["forbidden_source_hashes"])
+        forbidden_render_hashes.update(project["forbidden_render_hashes"])
     for entry in catalogue["examples"]:
         if (entry["split"] == "reserve" or entry["id"] in data.FORBIDDEN_SOURCES) and entry.get(
             "prepared_path"
@@ -359,7 +412,7 @@ def freeze_pairs(
                 )
         elif row.get("control") == "source_mismatch":
             raise ValueError("Source mismatch control needs explicit mismatch provenance")
-        _rights(row["rights"], owner["receipt"]["catalogue_entry"])
+        _owner_rights(row["rights"], owner)
         target = _canvas(row["target_canvas"])
         source = _artifact(
             input.parent,
@@ -384,6 +437,15 @@ def freeze_pairs(
                 raise ValueError("A validation/reserved original entered candidate evidence")
             if candidate["metadata"]["render_sha256"] in forbidden_render_hashes:
                 raise ValueError("A validation/reserved source PNG entered candidate evidence")
+            if owner.get("authority_kind") == "project_synthetic_internal_training":
+                binding = owner["candidate_bindings"].get(candidate["metadata"]["design_sha256"])
+                if (
+                    binding is None
+                    or binding["render_sha256"] != candidate["metadata"]["render_sha256"]
+                ):
+                    raise ValueError(
+                        "Project candidate is not bound to its audited parent/native render"
+                    )
         if identity not in source_resources:
             roots = _object(raw["resource_roots"].get(identity), {"assets_dir", "fonts_dir"})
             assets_dir, fonts_dir = (
@@ -403,13 +465,9 @@ def freeze_pairs(
                 raise ValueError(
                     "Source asset/font bytes differ from the frozen training authority"
                 )
-            legal = data._legal_receipts(owner["receipt"]["catalogue_entry"], catalogue_root)
-            if legal != owner["receipt"]["legal_files_sha256"]:
-                raise ValueError(
-                    "Original source license/notice bytes differ from frozen authority"
-                )
+            legal, legal_root = _owner_legal(owner, catalogue_root)
             for name, value in legal.items():
-                snapshots[str(safe_artifact_path(catalogue_root, name))] = value
+                snapshots[str(safe_artifact_path(legal_root, name))] = value
             for kind, folder in (("assets", assets_dir), ("fonts", fonts_dir)):
                 for name, value in resources[kind].items():
                     snapshots[str(safe_artifact_path(folder, name))] = value
@@ -417,6 +475,7 @@ def freeze_pairs(
                 "roots": {"assets": assets_dir, "fonts": fonts_dir},
                 "hashes": resources,
                 "legal": legal,
+                "legal_root": legal_root,
             }
         resource = source_resources[identity]
         with using_resources(
@@ -453,13 +512,9 @@ def freeze_pairs(
                 raise ValueError(
                     "Mismatched-source diagnostics may use only another frozen TRAIN family"
                 )
-        displayed_legal = data._legal_receipts(
-            displayed["receipt"]["catalogue_entry"], catalogue_root
-        )
-        if displayed_legal != displayed["receipt"]["legal_files_sha256"]:
-            raise ValueError("Displayed source license/notice bytes differ from frozen authority")
+        displayed_legal, displayed_legal_root = _owner_legal(displayed, catalogue_root)
         for name, value in displayed_legal.items():
-            snapshots[str(safe_artifact_path(catalogue_root, name))] = value
+            snapshots[str(safe_artifact_path(displayed_legal_root, name))] = value
         prepared.append(
             {
                 "row": deepcopy(row),
@@ -468,6 +523,7 @@ def freeze_pairs(
                 "displayed": displayed,
                 "source_render_parity": not mismatch,
                 "displayed_legal": displayed_legal,
+                "displayed_legal_root": displayed_legal_root,
             }
         )
     if sum(Path(path).stat().st_size for path in snapshots) > data.MAX_TOTAL_BYTES:
@@ -492,6 +548,31 @@ def freeze_pairs(
     try:
         generation_copy = copy(generation["path"], "producer-evidence") if generation else None
         input_copy = copy(input, "producer-evidence")
+        project_copy = None
+        if project is not None:
+            project_root = project["manifest_path"].parent
+            for source in project["document"]["sources"]:
+                for relative in source["resource_roots"].values():
+                    safe_artifact_path(out / "project-authority", relative).mkdir(
+                        parents=True, exist_ok=True
+                    )
+            for name, expected in project["snapshots"].items():
+                path = Path(name)
+                relative = "project-authority/" + (
+                    path.relative_to(project_root).as_posix()
+                    if path.is_relative_to(project_root)
+                    else "repository-code/" + path.relative_to(ROOT).as_posix()
+                )
+                destination = out / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(path, destination)
+                if _snapshot_sha(destination) != expected:
+                    raise ValueError("Project authority changed while copying")
+                copied[relative] = expected
+            project_copy = {
+                "path": "project-authority/" + project["manifest_path"].name,
+                "sha256": snapshots[str(project["manifest_path"])],
+            }
         for item in prepared:
             row = item["row"]
             images = [copy(item["source"]["image_path"], "images")]
@@ -523,7 +604,13 @@ def freeze_pairs(
                 "displayed_source_family": item["displayed"]["split"]["family"],
                 "displayed_source_canvas": item["displayed"]["source"]["canvas"],
                 "displayed_source_render_sha256": item["source"]["metadata"]["render_sha256"],
-                "displayed_source_catalogue_entry": item["displayed"]["receipt"]["catalogue_entry"],
+                "displayed_source_catalogue_entry": item["displayed"]["receipt"].get(
+                    "catalogue_entry"
+                ),
+                "source_authority_kind": authority[row["source_id"]].get(
+                    "authority_kind", "curated_public"
+                ),
+                "displayed_source_rights": item["displayed"]["receipt"].get("rights"),
                 "source_original_ids": [e["id"] for e in item["source"]["design"]["elements"]],
                 "target_canvas": row["target_canvas"],
                 "designs": designs,
@@ -548,13 +635,16 @@ def freeze_pairs(
                     for kind, values in source_resources[row["source_id"]]["hashes"].items()
                 },
                 "legal_files": {
-                    name: copy(safe_artifact_path(catalogue_root, name), "licenses")
+                    name: copy(
+                        safe_artifact_path(source_resources[row["source_id"]]["legal_root"], name),
+                        "licenses",
+                    )
                     for name in source_resources[row["source_id"]]["legal"]
                 },
                 "human_preference": False,
                 "quality_approved": False,
                 "displayed_source_legal_files": {
-                    name: copy(safe_artifact_path(catalogue_root, name), "licenses")
+                    name: copy(safe_artifact_path(item["displayed_legal_root"], name), "licenses")
                     for name in item["displayed_legal"]
                 },
             }
@@ -603,6 +693,7 @@ def freeze_pairs(
             "records": records,
             "receipts": receipts,
             "source_manifest_sha256": snapshots[str(source_manifest)],
+            "project_source_authority": project_copy,
             "split_manifest_sha256": snapshots[str(split_manifest)],
             "frozen_split": frozen["frozen_split"],
             "input_sha256": snapshots[str(input)],
@@ -664,6 +755,7 @@ def main(argv=None):
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--swap", action="store_true")
     parser.add_argument("--generation-receipt", type=Path, required=True)
+    parser.add_argument("--project-source-authority", type=Path)
     args = parser.parse_args(argv)
     try:
         result = freeze_pairs(**vars(args))

@@ -504,7 +504,15 @@ def test_analyzer_rejects_unknown_ids_and_records_explicit_abstention(
     assert method["counts"]["abstain"] == int(abstain)
 
 
-def test_cli_writes_a_standalone_report_without_inference(frozen, capsys):
+def test_cli_writes_a_standalone_report_without_inference(frozen, capsys, monkeypatch):
+    original_import = builtins.__import__
+
+    def without_training_tools(name, *args, **kwargs):
+        if name == "tools.vision_lora_smoke":
+            raise AssertionError("The evaluation CLI must not require unpublished training tools")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", without_training_tools)
     row = transcript(frozen, validation_probes(frozen)[0], protocol="critic")
     transcripts = frozen.root / "supplied.jsonl"
     transcripts.write_text(json.dumps(row) + "\n", encoding="utf-8")

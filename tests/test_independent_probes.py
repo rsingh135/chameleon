@@ -405,3 +405,39 @@ def test_frozen_bundle_relocation_keeps_request_and_source_identities(collection
         image_path(relocated, request["source_render"]).is_file()
         for _, request in requests(relocated, bundle).values()
     )
+
+
+def test_optional_training_code_is_frozen_only_when_present(collection, tmp_path):
+    _, _, code_root = collection
+    optional = "experiments/vision_critic/dataset.py"
+    _, absent = prepare(collection, tmp_path / "absent")
+    key = "code/" + optional
+    assert key not in absent["snapshot"]["code_hashes"]
+    path = code_root / optional
+    path.parent.mkdir(parents=True)
+    path.write_text("# local training implementation\n", encoding="utf-8")
+    out, present = prepare(collection, tmp_path / "present")
+    assert present["snapshot"]["code_hashes"][key] == sha256_file(path)
+    assert (out / key).read_bytes() == path.read_bytes()
+
+
+def test_optional_training_code_cannot_appear_during_freezing(collection, tmp_path, monkeypatch):
+    _, _, code_root = collection
+    original = probes._copy_artifact
+
+    def introduce_training_code(*args, **kwargs):
+        path = code_root / "experiments/vision_critic/dataset.py"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# appeared during snapshot\n", encoding="utf-8")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(probes, "_copy_artifact", introduce_training_code)
+    with pytest.raises(ValueError, match="Input/code changed"):
+        prepare(collection, tmp_path)
+
+
+def test_missing_mandatory_evaluator_code_is_not_optional(collection, tmp_path):
+    _, _, code_root = collection
+    (code_root / "evaluator.py").unlink()
+    with pytest.raises(FileNotFoundError):
+        prepare(collection, tmp_path)

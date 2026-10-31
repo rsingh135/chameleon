@@ -32,8 +32,7 @@ CODE_FILES = (
     "tools/independent_model_eval.py",
     "tools/prepare_semantic_eval.py",
     "experiments/vision_critic/contracts.py",
-    "experiments/vision_critic/dataset.py",
-    "experiments/vision_critic/train_sft.py",
+    "experiments/vision_critic/verdict.py",
     "experiments/visual_planner/provider.py",
     "experiments/visual_planner/native.py",
     "experiments/visual_planner/worker.py",
@@ -41,7 +40,17 @@ CODE_FILES = (
     "engine/visual_analysis.py",
     "engine/visual_plan.py",
 )
+# Training experiments are optional in a runtime/evaluation checkout. When
+# present, their bytes still belong to the frozen evaluation provenance.
+OPTIONAL_CODE_FILES = (
+    "experiments/vision_critic/dataset.py",
+    "experiments/vision_critic/train_sft.py",
+)
 digest = canonical_json_sha256
+
+
+def _code_files():
+    return (*CODE_FILES, *(p for p in OPTIONAL_CODE_FILES if (ROOT / p).is_file()))
 
 
 def request_digest(value):
@@ -269,7 +278,8 @@ def prepare_collection(
     (out / "input").mkdir()
     (out / "input" / "collection.json").write_bytes(collection_bytes)
     code_hashes, originals = {}, {}
-    for relative in CODE_FILES:
+    code_files = _code_files()
+    for relative in code_files:
         path = ROOT / relative
         data = path.read_bytes()
         originals[relative] = hashlib.sha256(data).hexdigest()
@@ -448,8 +458,10 @@ def prepare_collection(
                 )
     if not probes:
         raise ValueError("No evaluable probes were generated")
-    if collection_path.read_bytes() != collection_bytes or any(
-        sha256_file(ROOT / relative) != expected for relative, expected in originals.items()
+    if (
+        _code_files() != code_files
+        or collection_path.read_bytes() != collection_bytes
+        or any(sha256_file(ROOT / relative) != expected for relative, expected in originals.items())
     ):
         raise ValueError("Input/code changed during freezing; use a fresh output directory")
     try:

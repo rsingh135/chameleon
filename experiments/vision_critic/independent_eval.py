@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -19,7 +20,7 @@ from .contracts import (
     safe_artifact_path,
     sha256_file,
 )
-from .train_sft import parse_model_verdict
+from .verdict import parse_model_verdict
 
 PROTOCOL = "chameleon-independent-eval-v1"
 CONDITIONS = {"original", "swapped", "blank_source", "replaced_source", "opaque_ids"}
@@ -922,10 +923,14 @@ def main(argv=None):
         args.recipe_freeze,
         args.include_test,
     )
-    from tools.vision_lora_smoke import write_json
-
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    write_json(args.out, report)
+    temporary = args.out.with_name(args.out.name + ".partial")
+    with temporary.open("w", encoding="utf-8") as stream:
+        json.dump(report, stream, indent=2, ensure_ascii=True, allow_nan=False)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(args.out)
     print(json.dumps(report, indent=2))
     return 0
 

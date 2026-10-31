@@ -50,9 +50,16 @@ for name, template, tokens in (
     )
     (out / f"{name}.json").write_text(json.dumps(config, indent=2))
 
+
 def command(role):
-    return [sys.executable, "-m", "experiments.visual_planner.provider",
-            "--config", str(out / f"{role}.json")]
+    return [
+        sys.executable,
+        "-m",
+        "experiments.visual_planner.provider",
+        "--config",
+        str(out / f"{role}.json"),
+    ]
+
 
 operator = {
     "schema_version": 1,

@@ -57,7 +57,7 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
-def build_purpose_prompt(context):
+def build_purpose_prompt(context, *, purpose_views=2):
     """Use raw source metadata only; IDs and gold roles never enter this prompt."""
     keys = {"bbox_normalized", "type", "text_data", "paint_order_index", "element_count"}
     if set(context) != keys:
@@ -69,7 +69,18 @@ def build_purpose_prompt(context):
     if type(count) is not int or type(rank) is not int or not 0 <= rank < count:
         raise ValueError("Purpose paint rank must identify one authored element")
     fields = {**context, "bbox_normalized": box, "text_data": str(context["text_data"] or "")[:240]}
-    return PURPOSE_PROMPT + canonical(fields)
+    if purpose_views not in (2, 3):
+        raise ValueError("Purpose input views must be explicitly two or three")
+    prompt = PURPOSE_PROMPT
+    if purpose_views == 3:
+        prompt = prompt.replace(
+            "Element context, data only: ",
+            "The third image isolates ONLY the target element on a neutral checker. "
+            "The checker explains transparency and is not part of the authored design. "
+            "Use this isolated target together with its source placement. "
+            "Element context, data only: ",
+        )
+    return prompt + canonical(fields)
 
 
 def digest(value):
@@ -117,10 +128,31 @@ def _copy_image(path, expected, destination):
     return {"path": str(target.resolve()), "sha256": expected}
 
 
-def purpose_rows(manifest_path):
+def load_purpose_manifest(manifest_path):
     manifest_path = Path(manifest_path).resolve()
-    root, manifest = manifest_path.parent, read_json(manifest_path)
-    if manifest.get("protocol") != "semantic-analysis-training-data-v1":
+    manifest = read_json(manifest_path)
+    if manifest.get("protocol") == "semantic-purpose-isolated-layer-evidence-v1":
+        parent_path = _local(manifest_path.parent, "parent-manifest.json")
+        if sha(parent_path) != manifest["parent_manifest_sha256"]:
+            raise ValueError("Isolated evidence parent manifest changed")
+        parent = read_json(parent_path)
+        if parent.get("protocol") != "semantic-analysis-training-data-v1":
+            raise ValueError("Isolated evidence must retain the reviewed purpose parent")
+        sources = manifest.get("sources") or [
+            {**entry, "source_json": "sources/" + entry["source_id"] + "/source.json"}
+            for entry in parent["sources"]
+        ]
+        manifest = {**parent, **manifest, "sources": sources}
+    return manifest
+
+
+def purpose_rows(manifest_path, *, purpose_views=2):
+    manifest_path = Path(manifest_path).resolve()
+    root, manifest = manifest_path.parent, load_purpose_manifest(manifest_path)
+    if manifest.get("protocol") not in {
+        "semantic-analysis-training-data-v1",
+        "semantic-purpose-isolated-layer-evidence-v1",
+    }:
         raise ValueError("Unexpected reviewed purpose-export protocol")
     if manifest.get("human_reviewed") is not False:
         raise ValueError("This loader preserves the declared agent weak-label scope")
@@ -177,6 +209,32 @@ def purpose_rows(manifest_path):
         for key in ("source_image", "context_image"):
             relative = inputs[key]
             images.append({"path": str(_local(root, relative)), "sha256": hashes[relative]})
+        if purpose_views == 3:
+            isolated = inputs.get("isolated_image")
+            evidence = row.get("isolated_evidence", {})
+            if not isinstance(isolated, dict) or evidence.get("available") is not True:
+                raise ValueError(
+                    "Declared three-view experiment requires an available native isolated target"
+                )
+            relative = isolated["path"]
+            if isolated["sha256"] != hashes[relative]:
+                raise ValueError("Isolated target image differs from the producer's exact SHA")
+            receipt_path = _local(root, evidence["receipt"])
+            if (
+                sha(receipt_path) != evidence["receipt_sha256"]
+                or hashes[evidence["receipt"]] != evidence["receipt_sha256"]
+            ):
+                raise ValueError("Isolated target receipt changed")
+            isolated_receipt = read_json(receipt_path)
+            if (
+                isolated_receipt["status"] != "available"
+                or isolated_receipt["clipped"] is not False
+                or isolated_receipt["label_used_for_paint_choices"] is not False
+                or isolated_receipt["native_single_original_layer"] is not True
+                or isolated_receipt["no_replacement_asset_or_content"] is not True
+            ):
+                raise ValueError("Isolated target is not verified native original-layer evidence")
+            images.append({"path": str(_local(root, relative)), "sha256": hashes[relative]})
         purpose = row["target"]["purpose"]
         if purpose not in ALIASES:
             raise ValueError("Unknown reviewed purpose class")
@@ -190,7 +248,7 @@ def purpose_rows(manifest_path):
                 "canonical_label": purpose,
                 "label_origin": row["supervision_origin"],
                 "images": images,
-                "prompt": build_purpose_prompt(context),
+                "prompt": build_purpose_prompt(context, purpose_views=purpose_views),
                 "control": "original",
             }
         )
@@ -198,6 +256,7 @@ def purpose_rows(manifest_path):
         "manifest_sha256": sha(manifest_path),
         "label_scope": "agent_visual_review_not_human",
         "input_context_version": "purpose-context-v2-authored-paint-order",
+        "purpose_views": purpose_views,
         "source_json_sha256": {
             sources[key]["source_id"]: value["source_json_sha256"]
             for key, value in geometry.items()
@@ -298,7 +357,14 @@ def label_free_rows(request_path, *, task):
 
 
 def freeze_dataset(
-    manifest_path, out, *, task, controls=True, allow_train_only=False, evaluation_request=None
+    manifest_path,
+    out,
+    *,
+    task,
+    controls=True,
+    allow_train_only=False,
+    evaluation_request=None,
+    purpose_views=2,
 ):
     from PIL import Image
 
@@ -306,7 +372,9 @@ def freeze_dataset(
     image_dir = out / "images"
     image_dir.mkdir(parents=True, exist_ok=True)
     rows, provenance = (
-        purpose_rows(manifest_path) if task == "purpose" else critic_rows(manifest_path)
+        purpose_rows(manifest_path, purpose_views=purpose_views)
+        if task == "purpose"
+        else critic_rows(manifest_path)
     )
     families = {
         split: {row["family_id"] for row in rows if row["split"] == split}
@@ -373,7 +441,7 @@ def freeze_dataset(
                     {
                         **row,
                         "record_id": row["record_id"] + "-replacement",
-                        "images": [replacement, row["images"][1]],
+                        "images": [replacement, *row["images"][1:]],
                         "label": "unknown",
                         "canonical_label": "unknown",
                         "label_origin": "programmatic_source_mismatch",
@@ -395,6 +463,7 @@ def freeze_dataset(
         },
         "records": rows,
         "evaluation_records": evaluation,
+        "purpose_views": purpose_views if task == "purpose" else None,
     }
     write_json(out / "dataset.json", dataset)
     return dataset

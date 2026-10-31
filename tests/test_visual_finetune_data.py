@@ -230,3 +230,118 @@ def test_portable_shells_have_lf_bytes_on_windows(tmp_path):
     script.write_bytes(b"#!/usr/bin/env bash\r\r\nset -euo pipefail\r\n")
     normalize_shell_scripts(tmp_path)
     assert script.read_bytes() == b"#!/usr/bin/env bash\nset -euo pipefail\n"
+
+
+def test_resident_adapter_is_upcast_before_saved_weights_are_loaded():
+    from experiments.visual_finetune.adapter_io import precast_then_load
+
+    calls = []
+
+    class Model:
+        base_model = None
+
+        def add_adapter(self, name, config):
+            calls.append("add")
+
+        def _cast_adapter_dtype(self, **kwargs):
+            calls.append("precast")
+
+        def load_adapter(self, *args, **kwargs):
+            assert calls == ["add", "precast"]
+            calls.append("load")
+
+        def set_adapter(self, name):
+            calls.append("activate")
+
+    model = Model()
+    model.base_model = model
+    precast_then_load(model, "checkpoint", "reload", object())
+    assert calls == ["add", "precast", "load", "activate"]
+
+
+def test_default_purpose_prompt_stays_two_views_and_third_view_is_explicit():
+    from experiments.visual_finetune.data import PURPOSE_PROMPT, build_purpose_prompt, canonical
+
+    context = {
+        "bbox_normalized": [0, 0, 1, 1],
+        "type": "shape",
+        "text_data": "",
+        "paint_order_index": 0,
+        "element_count": 2,
+    }
+    assert build_purpose_prompt(context) == PURPOSE_PROMPT + canonical(context)
+    assert "third image" in build_purpose_prompt(context, purpose_views=3)
+    with pytest.raises(ValueError, match="two or three"):
+        build_purpose_prompt(context, purpose_views=4)
+
+
+def test_wrong_purpose_view_contract_is_rejected_before_adapter_load(tmp_path):
+    from tools.evaluate_visual_adapter import prepare
+
+    training = tmp_path / "training"
+    training.mkdir()
+    write_json(
+        training / "data.json", {"task": "purpose", "classes": ["unknown"], "purpose_views": 3}
+    )
+    write_json(
+        training / "recipe.json",
+        {"dataset": str(training / "data.json"), "dataset_sha256": sha(training / "data.json")},
+    )
+    request = tmp_path / "request.json"
+    write_json(
+        request,
+        {
+            "protocol": "visual-adapter-label-free-evaluation-v1",
+            "task": "purpose",
+            "purpose_views": 2,
+            "records": [],
+        },
+    )
+    with pytest.raises(ValueError, match="view count"):
+        prepare(request, training, tmp_path / "unused", tmp_path / "out")
+
+
+def test_three_view_blank_controls_cannot_leak_the_isolated_target(tmp_path, monkeypatch):
+    from experiments.visual_finetune import data
+
+    rows = []
+    for split in ("train", "validation"):
+        for family_index in range(2):
+            refs = []
+            for view in range(3):
+                path = tmp_path / f"{split}-{family_index}-{view}.png"
+                Image.new("RGB", (16 + view, 20), (30 + 50 * family_index, 20 * view, 200)).save(
+                    path
+                )
+                refs.append({"path": str(path), "sha256": sha(path)})
+            for index in range(2):
+                rows.append(
+                    {
+                        "record_id": f"{split}-{family_index}-{index}",
+                        "family_id": f"{split}-{family_index}",
+                        "split": split,
+                        "label": "body",
+                        "canonical_label": "body",
+                        "images": refs,
+                        "prompt": "fixed",
+                        "control": "original",
+                        "label_origin": "unit_test_fixture",
+                    }
+                )
+    monkeypatch.setattr(data, "purpose_rows", lambda *args, **kwargs: (rows, {}))
+    dataset = data.freeze_dataset("unused", tmp_path / "out", task="purpose", purpose_views=3)
+    blank = [row for row in dataset["records"] if row["control"] == "both_blank"]
+    assert len(blank) == 8
+    for row in blank:
+        assert len(row["images"]) == 3
+        for ref in row["images"]:
+            with Image.open(ref["path"]) as picture:
+                assert picture.getextrema() == ((127, 127), (127, 127), (127, 127))
+    replacements = [row for row in dataset["records"] if row["control"] == "source_replaced"]
+    assert len(replacements) == 4
+    assert all(
+        len(row["images"]) == 3
+        and row["label_origin"] == "programmatic_source_mismatch"
+        and row["related_input_family"] != row["family_id"]
+        for row in replacements
+    )

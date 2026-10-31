@@ -24,9 +24,12 @@ def prepare(
     max_seconds=900,
     max_rss_mb=4096,
     deadline_utc="2026-10-31T05:01:00+00:00",
+    image_root=None,
 ):
     request_path, training_run, out = map(Path, (request_path, training_run, out))
     request = read_json(request_path)
+    if max_seconds <= 0 or max_rss_mb <= 0:
+        raise ValueError("Owned-worker resource limits must remain positive")
     if request.get("protocol") != "visual-adapter-label-free-evaluation-v1":
         raise ValueError("Unexpected independent evaluation protocol")
     training_recipe = read_json(training_run / "recipe.json")
@@ -38,25 +41,39 @@ def prepare(
     training_data = read_json(training_dataset)
     if request["task"] != training_data["task"]:
         raise ValueError("Probe task and adapter task differ")
+    purpose_views = training_data.get("purpose_views", 2)
+    if request["task"] == "purpose" and request.get("purpose_views", 2) != purpose_views:
+        raise ValueError("Purpose request view count differs from the trained input contract")
     if out.exists() and any(out.iterdir()):
         raise ValueError("Evaluation output must be empty")
     image_dir = out / "data" / "images"
     image_dir.mkdir(parents=True)
     records = []
     seen = set()
+    image_index = {}
+    if image_root is not None:
+        for path in Path(image_root).iterdir():
+            if path.is_file():
+                image_index.setdefault(path.stem, []).append(path)
     for original in request["records"]:
         if any(key in original for key in ("label", "target", "expected", "answer")):
             raise ValueError("Independent scoring must not receive sealed answers")
         if original["record_id"] in seen:
             raise ValueError("Duplicate independent probe ID")
         seen.add(original["record_id"])
-        if len(original["images"]) != (2 if request["task"] == "purpose" else 3):
+        if len(original["images"]) != (purpose_views if request["task"] == "purpose" else 3):
             raise ValueError("Probe image order/count differs from the trained task")
         refs = []
         for ref in original["images"]:
-            path = Path(ref["path"])
-            if not path.is_absolute():
-                path = request_path.parent / path
+            if image_root is not None:
+                matches = image_index.get(ref["sha256"], [])
+                if len(matches) != 1:
+                    raise ValueError("Cross-host image root needs one exact SHA-named input")
+                path = matches[0]
+            else:
+                path = Path(ref["path"])
+                if not path.is_absolute():
+                    path = request_path.parent / path
             refs.append(_copy_image(path, ref["sha256"], image_dir))
         records.append(
             {
@@ -76,6 +93,7 @@ def prepare(
         "classes": training_data["classes"],
         "records": records,
         "provenance": {"request_sha256": sha(request_path), "label_free": True},
+        "purpose_views": purpose_views if request["task"] == "purpose" else None,
     }
     write_json(out / "data" / "dataset.json", dataset)
     package = out / "code" / "experiments" / "visual_finetune"
@@ -162,6 +180,7 @@ def main():
     parser.add_argument("--inference-only", action="store_true")
     parser.add_argument("--base")
     parser.add_argument("--base-manifest")
+    parser.add_argument("--image-root", help="Resolve cross-host image refs by exact SHA filename")
     measured_python = "C:/Users/edmun/anaconda3/envs/acestep/python.exe"
     parser.add_argument(
         "--python",
@@ -197,6 +216,7 @@ def main():
         max_seconds=args.max_seconds,
         max_rss_mb=args.max_rss_mb,
         deadline_utc=args.deadline_utc,
+        image_root=args.image_root,
     )
     if args.prepare_only:
         print(str(out / "recipe.json"))

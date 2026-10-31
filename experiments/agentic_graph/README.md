@@ -101,6 +101,7 @@ After publishing a complete checkpoint, the trainer can call:
 
 ```python
 from tools.checkpoint_backup import backup_checkpoint
+
 receipt = backup_checkpoint(published_checkpoint)
 ```
 

@@ -17,6 +17,7 @@ from experiments.visual_finetune.data import (
     _local,
     critic_rows,
     label_free_rows,
+    load_purpose_manifest,
     read_json,
     sha,
     write_json,
@@ -41,8 +42,7 @@ def normalize_shell_scripts(directory):
 
 def portable_export(manifest_path, destination):
     manifest_path, destination = Path(manifest_path).resolve(), Path(destination)
-    original = read_json(manifest_path)
-    manifest = read_json(manifest_path)
+    manifest = load_purpose_manifest(manifest_path)
     root = manifest_path.parent
     destination.mkdir(parents=True, exist_ok=False)
     for relative, expected in manifest["files_sha256"].items():
@@ -72,7 +72,7 @@ def portable_export(manifest_path, destination):
         "original_manifest_sha256": sha(manifest_path),
         "source_json_copies_sha_verified": True,
         "absolute_receipt_paths": "historical_provenance_only_not_consumed_by_training_loader",
-        "original_human_reviewed": original["human_reviewed"],
+        "original_human_reviewed": manifest["human_reviewed"],
     }
     write_json(destination / "manifest.json", manifest)
     return manifest
@@ -117,7 +117,17 @@ def portable_critic_export(manifest_path, evaluation_request, destination):
     }
 
 
-def package(manifest_path, out, base_manifest, *, task="purpose", evaluation_request=None):
+def package(
+    manifest_path,
+    out,
+    base_manifest,
+    *,
+    task="purpose",
+    evaluation_request=None,
+    purpose_views=2,
+    max_pixels=None,
+    evaluation_limit=48,
+):
     root, out = Path(__file__).resolve().parents[1], Path(out).resolve()
     archive = out.with_suffix(".tar.gz")
     if out.exists() or archive.exists():
@@ -142,6 +152,7 @@ def package(manifest_path, out, base_manifest, *, task="purpose", evaluation_req
         "evaluate_visual_adapter.py",
         "package_visual_training.py",
         "prepare_visual_base.py",
+        "run_prepared_visual_adapter.py",
     ):
         shutil.copyfile(root / "tools" / name, out / "tools" / name)
     references = out / "references"
@@ -188,6 +199,9 @@ def package(manifest_path, out, base_manifest, *, task="purpose", evaluation_req
             "model_answers": list(PURPOSE_CLASSES),
             "canonical_role_to_answer": ALIASES,
             "answer_token_count": 1,
+            "purpose_views": purpose_views,
+            "ordered_images": ["source", "context"]
+            + (["isolated_target"] if purpose_views == 3 else []),
             "GUI_12_letter_taxonomy": "not_accepted_or_implicitly_mapped",
             "critic_A_B_N": "separate_task_and_adapter_not_a_purpose_mapping",
             "label_scope": "agent_visual_review_and_programmatic_controls_not_human",
@@ -212,8 +226,9 @@ def package(manifest_path, out, base_manifest, *, task="purpose", evaluation_req
         'python -m tools.train_visual_adapter --python "$(command -v python)" '
         '--manifest export/manifest.json --task purpose --base "$MODEL_BASE" '
         '--base-manifest references/base-identity.json --out "$RUN_OUT" '
-        "--steps 32 --evaluation-limit 48 --sampling balanced_class_cycle "
-        "--learning-rate 0.00002 --max-pixels 65536 --max-seconds 900 --max-rss-mb 16384 "
+        f"--steps 32 --evaluation-limit {evaluation_limit} --purpose-views {purpose_views} "
+        "--sampling balanced_class_cycle --learning-rate 0.00002 "
+        f"--max-pixels {max_pixels or 65536} --max-seconds 900 --max-rss-mb 16384 "
         "--deadline-utc 2026-10-31T05:01:00+00:00\n",
         encoding="utf-8",
     )
@@ -339,6 +354,9 @@ def main():
     parser.add_argument("--base-manifest", required=True)
     parser.add_argument("--task", choices=("purpose", "critic"), default="purpose")
     parser.add_argument("--validation-request")
+    parser.add_argument("--purpose-views", type=int, choices=(2, 3), default=2)
+    parser.add_argument("--max-pixels", type=int)
+    parser.add_argument("--evaluation-limit", type=int, default=48)
     args = parser.parse_args()
     import json
 
@@ -350,6 +368,9 @@ def main():
                 args.base_manifest,
                 task=args.task,
                 evaluation_request=args.validation_request,
+                purpose_views=args.purpose_views,
+                max_pixels=args.max_pixels,
+                evaluation_limit=args.evaluation_limit,
             ),
             indent=2,
         )

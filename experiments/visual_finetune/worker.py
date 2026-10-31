@@ -13,6 +13,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from .adapter_io import audit_saved_adapter, precast_then_load
 from .checkpoint import publish, staging_directory
 from .data import (
     BASE_MODEL_SHA256,
@@ -131,6 +132,9 @@ def main(recipe_path):
     label_index = {name: index for index, name in enumerate(classes)}
 
     def prepare(row):
+        expected_images = dataset.get("purpose_views", 2) if dataset["task"] == "purpose" else 3
+        if len(row["images"]) != expected_images:
+            raise ValueError("Actual image count differs from the frozen task/view contract")
         pictures = []
         for ref in row["images"]:
             path = Path(ref["path"])
@@ -233,6 +237,10 @@ def main(recipe_path):
         model = PeftModel.from_pretrained(
             model, str(adapter), is_trainable=False, local_files_only=True
         )
+        parameter_audit = audit_saved_adapter(model, adapter, "default")
+        write_json(out / "adapter-parameter-audit.json", parameter_audit)
+        if not parameter_audit["passed"]:
+            raise RuntimeError("Cold adapter tensors differ from their saved FP32 values")
         evaluate("external_adapted", validation)
         write_json(
             out / "inference_receipt.json",
@@ -345,6 +353,19 @@ def main(recipe_path):
             else:
                 label = rng.choices(sampling_labels, weights=weights, k=1)[0]
             row = rng.choice(pools[label])
+            with (out / "training-samples.jsonl").open("a", encoding="utf-8") as trace:
+                trace.write(
+                    json.dumps(
+                        {
+                            "step": step + 1,
+                            "microstep": microstep,
+                            "record_id": row["record_id"],
+                            "label": label,
+                            "input_image_sha256": [ref["sha256"] for ref in row["images"]],
+                        }
+                    )
+                    + "\n"
+                )
             sampled[label] += 1
             inputs = prepare(row)
             logits = model(**inputs, logits_to_keep=1, use_cache=False).logits[:, -1].float()
@@ -442,13 +463,37 @@ def main(recipe_path):
     adapted = evaluate("adapted_validation", validation)
     checkpoint = out / ("checkpoint-" + str(recipe["steps"]))
     # Reload the saved adapter into the resident base; avoid a second 2B model allocation.
-    model.load_adapter(str(checkpoint), adapter_name="saved_reload", is_trainable=False)
-    model.set_adapter("saved_reload")
+    from peft import PeftConfig
+
+    before_audit = audit_saved_adapter(model, checkpoint, "default")
+    reload_config = PeftConfig.from_pretrained(str(checkpoint), local_files_only=True)
+    precast_then_load(model, checkpoint, "saved_reload", reload_config)
+    after_audit = audit_saved_adapter(model, checkpoint, "saved_reload")
+    write_json(out / "reload-parameter-audit.json", {"before": before_audit, "after": after_audit})
+    if not before_audit["passed"] or not after_audit["passed"]:
+        raise RuntimeError("Saved/reloaded adapter parameters are not bit-exact FP32")
     reloaded = evaluate("reload_probe", validation[:1])
     original_probe = adapted[0]
     reload_error = max(
         abs(reloaded[0]["closed_scores"][label] - original_probe["closed_scores"][label])
         for label in classes
+    )
+    write_json(
+        out / "reload_receipt.json",
+        {
+            "strategy": "precast_FP32_before_resident_load",
+            "before_parameters_exact": before_audit["passed"],
+            "after_parameters_exact": after_audit["passed"],
+            "parameter_audit_sha256": sha(out / "reload-parameter-audit.json"),
+            "difference_by_class": {
+                label: reloaded[0]["closed_scores"][label] - original_probe["closed_scores"][label]
+                for label in classes
+            },
+            "max_abs_logit_error": reload_error,
+            "logit_tolerance": 0.02,
+            "passed": reload_error <= 0.02,
+            "quality_approved": False,
+        },
     )
     if reload_error > 0.02:
         raise RuntimeError("Saved adapter reload changed the probe scores")

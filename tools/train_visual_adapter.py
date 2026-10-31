@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--evaluation-limit", type=int, default=48)
     parser.add_argument("--learning-rate", type=float, default=2e-5)
     parser.add_argument("--max-pixels", type=int)
+    parser.add_argument("--purpose-views", type=int, choices=(2, 3), default=2)
     parser.add_argument(
         "--sampling",
         choices=("balanced_class_cycle", "sqrt_class_frequency"),
@@ -60,6 +61,7 @@ def main():
         task=args.task,
         allow_train_only=args.allow_train_only,
         evaluation_request=args.validation_request,
+        purpose_views=args.purpose_views,
     )
     validation = dataset["evaluation_records"] or [
         row for row in dataset["records"] if row["split"] == "validation"
@@ -104,6 +106,7 @@ def main():
         "max_input_tokens": 2048,
         "evaluation_record_ids": chosen,
         "label_free_evaluation": bool(dataset["evaluation_records"]),
+        "purpose_views": args.purpose_views if args.task == "purpose" else None,
         "quality_approved": False,
         "supervision": {
             "minimum_available_mb": 256,

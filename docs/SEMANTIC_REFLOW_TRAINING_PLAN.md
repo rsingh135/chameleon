@@ -1,8 +1,10 @@
 # Semantic reflow: descriptors, training and acceptance
 
 The source-first inspection harness, rule-derived descriptors and source-anchor
-execution are implemented. A fresh bounded local Qwen VLM experiment is owned
-by the primary training chat; its qualified outcome remains pending.
+execution are implemented. The primary training chat has completed bounded Qwen
+VLM experiments, but their failed quality gates do not justify deployment. See
+[measured model results and limitations](MODEL_VALIDATION_2026-10-31.md) for the
+current evaluation record; additional experiments remain separately controlled.
 Preserve every original element, copy,
 asset, font and authored relationship. Learn what an element does and what it
 belongs with; let trusted layout code choose valid transformations.
@@ -284,8 +286,8 @@ prevents group overlap; see [the official GroupKFold contract](https://scikit-le
 **Primary experiment and ownership.** The bounded local Qwen VLM pilot uses the
 primary training chat's exact cached Qwen3-VL-2B base and frozen adapter recipe.
 Subsequent compute uses that chat's freshly verified configuration and budget
-guard, including the newly authorized Brev direction. Final qualification and a
-deployed adapter remain pending. Data readiness or optimizer steps alone
+guard, including the newly authorized Brev direction. Completed purpose and
+critic experiments remain unqualified and disabled in production. Data readiness or optimizer steps alone
 establish no task benefit. Keep source-only analysis, organization and
 verification on the existing shared contracts described in
 [the pipeline guide](IMAGE_REASONING_PIPELINE.md) and
@@ -351,9 +353,11 @@ especially at 256 pixels; this representation limit is recorded separately.
 An isolated layer is not its design intent: retain the complete source and
 neighbor context. Never treat these thumbnails as replacement output assets.
 
-The primary worker owns the explicit three-view loader and prompt. Its planned
-matched runs keep the same sample IDs, labels and optimization recipe: R1 uses
-the 256-pixel preprocessing budget; R2 changes only that budget to 512. Compare
+The primary worker owns the explicit three-view loader and prompt. The initial
+matched-run plan kept the same sample IDs, labels and optimization recipe: R1
+used the 256-pixel preprocessing budget; R2 changed that budget to 512. Both runs
+are completed; their measured results and later experiments are recorded in
+[the model validation report](MODEL_VALIDATION_2026-10-31.md). Compare
 an unchanged base and adapter under each exact input/prompt contract. Keep new
 product/art family expansion as a separate experiment. An unavailable third
 view must be reported and excluded consistently or fail the matched run; no

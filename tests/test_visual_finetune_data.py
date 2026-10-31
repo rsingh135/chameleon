@@ -581,3 +581,104 @@ def test_coverage_selection_rejects_nontraining_records():
             coverage=BadCoverage(),
             record_by_id={"heldout": {"label": "a", "split": "validation"}},
         )
+
+
+def test_contrast_matte_is_explicit_and_prompt_names_the_actual_view(tmp_path):
+    from experiments.visual_finetune.data import (
+        CONTRAST_MATTE_V1,
+        build_purpose_prompt,
+        purpose_rows,
+    )
+
+    context = {
+        "bbox_normalized": [0, 0, 1, 1],
+        "type": "text",
+        "text_data": "copy",
+        "paint_order_index": 0,
+        "element_count": 1,
+    }
+    checker = build_purpose_prompt(context, purpose_views=3)
+    matte = build_purpose_prompt(context, purpose_views=3, isolated_view_policy=CONTRAST_MATTE_V1)
+    assert "neutral checker" in checker and "plain contrast matte" not in checker
+    assert "plain contrast matte" in matte and "neutral checker" not in matte
+    manifest = tmp_path / "manifest.json"
+    write_json(
+        manifest,
+        {
+            "protocol": "semantic-analysis-training-data-v1",
+            "human_reviewed": False,
+            "isolated_view_policy": CONTRAST_MATTE_V1,
+        },
+    )
+    with pytest.raises(ValueError, match="explicit three-view admission"):
+        purpose_rows(manifest, purpose_views=3)
+
+
+@pytest.mark.parametrize(
+    "native_protocol,alpha_field",
+    [
+        ("semantic-purpose-isolated-layer-evidence-v1", "isolated_alpha_image"),
+        ("native-element-isolation-v2-24mp-source", "alpha_image"),
+    ],
+)
+def test_contrast_evidence_binds_retained_alpha_native_provenance_and_output_pixels(
+    tmp_path, native_protocol, alpha_field
+):
+    import hashlib
+
+    from experiments.visual_finetune.data import (
+        CONTRAST_COMPOSER_SHA256,
+        CONTRAST_MATTE_V1,
+        digest,
+        verify_contrast_evidence,
+    )
+
+    alpha, rgb = tmp_path / "alpha.png", tmp_path / "rgb.png"
+    Image.new("RGBA", (8, 8), (200, 30, 10, 255)).save(alpha)
+    Image.new("RGB", (8, 8), (200, 30, 10)).save(rgb)
+
+    def ref(path):
+        return {"path": path.name, "sha256": sha(path)}
+
+    original = {
+        alpha_field: ref(alpha),
+        "status": "available",
+        "clipped": False,
+        "native_single_original_layer": True,
+        "label_used_for_paint_choices": False,
+        "no_replacement_asset_or_content": True,
+        "protocol": native_protocol,
+    }
+    write_json(tmp_path / "original.json", original)
+    composed = {
+        "protocol": CONTRAST_MATTE_V1,
+        "implementation_sha256": CONTRAST_COMPOSER_SHA256,
+        "input_alpha_png_sha256": sha(alpha),
+        "output_png_sha256": sha(rgb),
+        "input_rgba_unchanged": True,
+        "native_redraw": False,
+        "model_executed": False,
+        "policy": {"selection_uses_labels_or_context": False},
+        "size": [8, 8],
+    }
+    for path, key in ((alpha, "input_rgba_pixel_sha256"), (rgb, "output_rgb_pixel_sha256")):
+        with Image.open(path) as image:
+            composed[key] = hashlib.sha256(image.tobytes()).hexdigest()
+    composed["receipt_digest"] = digest(composed)
+    write_json(tmp_path / "composed.json", composed)
+    active = {
+        **original,
+        "retained_alpha": ref(alpha),
+        "original_isolation_receipt": ref(tmp_path / "original.json"),
+        "contrast_matte_receipt": ref(tmp_path / "composed.json"),
+    }
+    rgb_ref = ref(rgb)
+    hashes = {path.name: sha(path) for path in tmp_path.iterdir() if path.is_file()}
+    verify_contrast_evidence(tmp_path, hashes, rgb_ref, active)
+    active["clipped"] = True
+    with pytest.raises(ValueError, match="native isolation provenance"):
+        verify_contrast_evidence(tmp_path, hashes, rgb_ref, active)
+    active["clipped"] = False
+    Image.new("RGB", (8, 8), "black").save(rgb)
+    with pytest.raises(ValueError, match="file changed"):
+        verify_contrast_evidence(tmp_path, hashes, rgb_ref, active)

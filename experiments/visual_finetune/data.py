@@ -14,6 +14,8 @@ from .source_observations import FIELDS, observed_typography
 BASE_REPO = "Qwen/Qwen3-VL-2B-Instruct"
 BASE_REVISION = "89644892e4d85e24eaac8bacfd4f463576704203"
 BASE_MODEL_SHA256 = "7de1838c87a5349b016c26a1c3f7d2bc400a3d485f95ef39a7059ffd734977a0"
+CONTRAST_MATTE_V1 = "isolated-alpha-contrast-matte-v1"
+CONTRAST_COMPOSER_SHA256 = "7b5f8fc3d604928ef5b3d9779230aa59e91e32f36bd7142164e563883a64c601"
 
 ALIASES = {
     "background": "background",
@@ -59,7 +61,14 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
-def build_purpose_prompt(context, *, purpose_views=2, task_definition=None, observed_style=None):
+def build_purpose_prompt(
+    context,
+    *,
+    purpose_views=2,
+    task_definition=None,
+    observed_style=None,
+    isolated_view_policy=None,
+):
     """Use raw source metadata only; IDs and gold roles never enter this prompt."""
     keys = {"bbox_normalized", "type", "text_data", "paint_order_index", "element_count"}
     if set(context) != keys:
@@ -89,6 +98,15 @@ def build_purpose_prompt(context, *, purpose_views=2, task_definition=None, obse
     if task_definition is not None:
         prompt = prompt.replace("support (secondary lead-in)", "support (defined below)")
         prompt = "Pinned task definitions: " + canonical(task_definition) + "\n" + prompt
+    if isolated_view_policy is not None:
+        if isolated_view_policy != CONTRAST_MATTE_V1 or purpose_views != 3:
+            raise ValueError("Contrast matte requires the explicit three-view policy")
+        prompt = prompt.replace(
+            "on a neutral checker. The checker explains transparency "
+            "and is not part of the authored design.",
+            "on a plain contrast matte. The matte improves visibility "
+            "and is not part of the authored design.",
+        )
     return prompt + canonical(fields)
 
 
@@ -117,6 +135,74 @@ def _local(root, relative):
     if not path.is_relative_to(root.resolve()) or not path.is_file():
         raise ValueError("Dataset reference leaves its declared local root")
     return path
+
+
+def verify_contrast_evidence(root, hashes, isolated, receipt):
+    """Verify the label-independent derivative against retained native RGBA evidence."""
+    from PIL import Image
+
+    def checked(ref):
+        path = _local(root, ref["path"])
+        if ref["sha256"] != hashes[ref["path"]] or sha(path) != ref["sha256"]:
+            raise ValueError("Contrast evidence file changed")
+        return path
+
+    alpha_ref = receipt["retained_alpha"]
+    alpha_path = checked(alpha_ref)
+    original = read_json(checked(receipt["original_isolation_receipt"]))
+    composed = read_json(checked(receipt["contrast_matte_receipt"]))
+    original_alpha = original[
+        "alpha_image"
+        if original.get("protocol") == "native-element-isolation-v2-24mp-source"
+        else "isolated_alpha_image"
+    ]
+    if original_alpha["sha256"] != alpha_ref["sha256"]:
+        raise ValueError("Contrast view does not retain the native alpha image")
+    preserved = (
+        "protocol",
+        "status",
+        "clipped",
+        "label_used_for_paint_choices",
+        "native_single_original_layer",
+        "no_replacement_asset_or_content",
+        "source_element_sha256",
+        "source_render_sha256",
+        "context_render_sha256",
+    )
+    if any(receipt.get(key) != original.get(key) for key in preserved):
+        raise ValueError("Contrast derivative changed native isolation provenance")
+    expected_digest = composed.get("receipt_digest")
+    body = {key: value for key, value in composed.items() if key != "receipt_digest"}
+    actual_digest = hashlib.sha256(
+        json.dumps(
+            body, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+        ).encode()
+    ).hexdigest()
+    if (
+        expected_digest != actual_digest
+        or composed.get("protocol") != CONTRAST_MATTE_V1
+        or composed.get("implementation_sha256") != CONTRAST_COMPOSER_SHA256
+        or composed.get("input_alpha_png_sha256") != alpha_ref["sha256"]
+        or composed.get("output_png_sha256") != isolated["sha256"]
+        or composed.get("input_rgba_unchanged") is not True
+        or composed.get("native_redraw") is not False
+        or composed.get("model_executed") is not False
+        or composed.get("policy", {}).get("selection_uses_labels_or_context") is not False
+    ):
+        raise ValueError("Contrast compositor receipt is not verified label-independent evidence")
+    for path, mode, key in (
+        (alpha_path, "RGBA", "input_rgba_pixel_sha256"),
+        (checked(isolated), "RGB", "output_rgb_pixel_sha256"),
+    ):
+        with Image.open(path) as image:
+            if (
+                image.format != "PNG"
+                or image.mode != mode
+                or max(image.size) > 512
+                or list(image.size) != composed["size"]
+                or hashlib.sha256(image.tobytes()).hexdigest() != composed[key]
+            ):
+                raise ValueError("Contrast image pixels differ from the compositor receipt")
 
 
 def _copy_image(path, expected, destination):
@@ -185,6 +271,7 @@ def purpose_rows(
     allow_source_24mp=False,
     task_definition=None,
     observed_style=False,
+    allow_contrast_matte=False,
 ):
     manifest_path = Path(manifest_path).resolve()
     root, manifest = manifest_path.parent, load_purpose_manifest(manifest_path)
@@ -195,6 +282,11 @@ def purpose_rows(
         raise ValueError("Unexpected reviewed purpose-export protocol")
     if manifest.get("human_reviewed") is not False:
         raise ValueError("This loader preserves the declared agent weak-label scope")
+    view_policy = manifest.get("isolated_view_policy")
+    if view_policy is not None and (
+        view_policy != CONTRAST_MATTE_V1 or not allow_contrast_matte or purpose_views != 3
+    ):
+        raise ValueError("Contrast matte isolation requires explicit three-view admission")
     hashes = manifest["files_sha256"]
     if sha(root / "elements.jsonl") != hashes["elements.jsonl"]:
         raise ValueError("Purpose JSONL differs from its frozen export")
@@ -279,6 +371,10 @@ def purpose_rows(
             ):
                 raise ValueError("Isolated target receipt changed")
             isolated_receipt = read_json(receipt_path)
+            if isolated_receipt.get("view_policy") != view_policy:
+                raise ValueError("Isolated receipt policy differs from its manifest")
+            if view_policy == CONTRAST_MATTE_V1:
+                verify_contrast_evidence(root, hashes, isolated, isolated_receipt)
             if (
                 isolated_receipt.get("protocol") == "native-element-isolation-v2-24mp-source"
                 and not allow_source_24mp
@@ -311,6 +407,7 @@ def purpose_rows(
                     context,
                     purpose_views=purpose_views,
                     task_definition=task_definition,
+                    isolated_view_policy=view_policy,
                     observed_style=(
                         observed_typography(
                             geometry[row["receipt"]]["source"],
@@ -330,6 +427,7 @@ def purpose_rows(
         "label_scope": "agent_visual_review_not_human",
         "input_context_version": "purpose-context-v2-authored-paint-order",
         "purpose_views": purpose_views,
+        "isolated_view_policy": view_policy,
         "source_json_sha256": {
             sources[key]["source_id"]: value["source_json_sha256"]
             for key, value in geometry.items()

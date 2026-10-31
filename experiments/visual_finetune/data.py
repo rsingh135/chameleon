@@ -146,6 +146,29 @@ def load_purpose_manifest(manifest_path):
     return manifest
 
 
+def purpose_family(source, *, receipt=None, row=None, frozen=None):
+    """Bind scene variants to their declared authored/asset family, never their count."""
+    family = source.get("family_id", source["source_id"])
+    if not isinstance(family, str) or not family:
+        raise ValueError("Purpose source family must be a nonempty identifier")
+    explicit = "family_id" in source
+    for name, entry in (("receipt", receipt), ("row", row), ("frozen split", frozen)):
+        if entry is None:
+            continue
+        declared = entry.get("family_id")
+        if declared is None and name == "frozen split":
+            declared = entry.get("family")
+        if explicit and declared is None and name in {"receipt", "row"}:
+            raise ValueError("Explicit source family is missing from its " + name)
+        if declared is not None and declared != family:
+            raise ValueError("Purpose family disagrees with its " + name)
+        if entry.get("source_id", source["source_id"]) != source["source_id"]:
+            raise ValueError("Purpose scene ID disagrees with its " + name)
+        if entry.get("split", source["split"]) != source["split"]:
+            raise ValueError("Purpose split disagrees with its " + name)
+    return family
+
+
 def purpose_rows(manifest_path, *, purpose_views=2):
     manifest_path = Path(manifest_path).resolve()
     root, manifest = manifest_path.parent, load_purpose_manifest(manifest_path)
@@ -160,12 +183,22 @@ def purpose_rows(manifest_path, *, purpose_views=2):
     if sha(root / "elements.jsonl") != hashes["elements.jsonl"]:
         raise ValueError("Purpose JSONL differs from its frozen export")
     sources = {entry["receipt"]: entry for entry in manifest["sources"]}
+    frozen_sources = {
+        entry["source_id"]: entry for entry in manifest.get("frozen_split", {}).get("sources", [])
+    }
     geometry = {}
+    family_splits = {}
     for relative, entry in sources.items():
         receipt_path = _local(root, relative)
         if sha(receipt_path) != hashes[relative]:
             raise ValueError("Purpose source receipt differs from its export identity")
         receipt = read_json(receipt_path)
+        family = purpose_family(
+            entry, receipt=receipt, frozen=frozen_sources.get(entry["source_id"])
+        )
+        if family in family_splits and family_splits[family] != entry["split"]:
+            raise ValueError("A canonical purpose family spans training and validation")
+        family_splits[family] = entry["split"]
         reference = entry.get("source_json")
         if not isinstance(reference, str):
             raise ValueError("Purpose export requires a SHA-verified local source_json copy")
@@ -187,6 +220,8 @@ def purpose_rows(manifest_path, *, purpose_views=2):
         split = row["split"]
         if split not in {"train", "validation"}:
             continue
+        source = sources[row["receipt"]]
+        family = purpose_family(source, row=row)
         provenance = row["provenance"]
         if (
             not row.get("review_mask")
@@ -194,11 +229,11 @@ def purpose_rows(manifest_path, *, purpose_views=2):
             or provenance.get("uncertain")
         ):
             continue
+        if row.get("task_mask", row.get("task_review_mask", True)) is False:
+            continue
         if split == "train" and not row.get("training_eligible"):
             continue
-        source = sources[row["receipt"]]
-        family = source["source_id"]
-        if family in {"opensuse_banner_we_believe", "doory_modern-resume"}:
+        if {family, source["source_id"]} & {"opensuse_banner_we_believe", "doory_modern-resume"}:
             raise ValueError("Manual/reserve source cannot enter adapter training")
         inputs = row["input"]
         context = {key: inputs[key] for key in ("bbox_normalized", "type", "text_data")}
@@ -226,6 +261,7 @@ def purpose_rows(manifest_path, *, purpose_views=2):
             ):
                 raise ValueError("Isolated target receipt changed")
             isolated_receipt = read_json(receipt_path)
+            purpose_family(source, receipt=isolated_receipt, row=row)
             if (
                 isolated_receipt["status"] != "available"
                 or isolated_receipt["clipped"] is not False
@@ -305,7 +341,15 @@ def critic_rows(manifest_path):
                 "pair_id": row.get("pair_id"),
             }
         )
-    return rows, {"manifest_sha256": sha(manifest_path), "label_scope": "explicit_per_record"}
+    return rows, {
+        "manifest_sha256": sha(manifest_path),
+        "label_scope": "explicit_per_record",
+        "declared_manifest_metadata": (
+            {key: value for key, value in payload.items() if key not in {"records", "files_sha256"}}
+            if payload
+            else {}
+        ),
+    }
 
 
 def label_free_rows(request_path, *, task):

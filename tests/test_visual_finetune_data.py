@@ -345,3 +345,67 @@ def test_three_view_blank_controls_cannot_leak_the_isolated_target(tmp_path, mon
         and row["related_input_family"] != row["family_id"]
         for row in replacements
     )
+
+
+def test_critic_packaging_preserves_declared_rights_and_separates_training_probe(tmp_path):
+    from tools.package_visual_training import portable_critic_export
+
+    manifest, request = train_only_inputs(tmp_path)
+    notice = tmp_path / "licenses" / "notice.txt"
+    notice.parent.mkdir()
+    notice.write_text("Unit test provenance fixture; no public-license claim.")
+    payload = json.loads(manifest.read_text())
+    payload["declared_rights"] = {"status": "project-owned-not-declared-public"}
+    payload["files_sha256"] = {"licenses/notice.txt": sha(notice)}
+    write_json(manifest, payload)
+    destination = tmp_path / "bundle-export"
+    portable_critic_export(manifest, request, destination)
+    original = json.loads((destination / "provenance/original-training-manifest.json").read_text())
+    assert original == payload
+    assert sha(destination / "provenance/licenses/notice.txt") == sha(notice)
+    exported = json.loads((destination / "manifest.json").read_text())
+    assert (
+        exported["provenance"]["declared_manifest_metadata"]["declared_rights"]
+        == payload["declared_rights"]
+    )
+    assert exported["provenance"]["original_manifest"]["public_status_inferred"] is False
+    probe = json.loads((destination / "fixed-train-probe.json").read_text())
+    assert len(probe["records"]) == 3
+    assert all("label" not in row for row in probe["records"])
+    assert probe["execute_only_after_causal_R1_R2"] is True
+
+
+def test_purpose_scene_variants_keep_their_three_canonical_families():
+    from experiments.visual_finetune.data import purpose_family
+
+    families = []
+    for index in range(8):
+        source = {
+            "source_id": f"scene-{index}",
+            "family_id": f"asset-{index % 3}",
+            "split": "train",
+        }
+        binding = {
+            "source_id": source["source_id"],
+            "family_id": source["family_id"],
+            "split": "train",
+        }
+        families.append(purpose_family(source, receipt=binding, row=binding, frozen=binding))
+    assert len(set(families)) == 3
+    assert purpose_family({"source_id": "legacy-work", "split": "train"}) == "legacy-work"
+
+
+def test_purpose_family_binding_rejects_parent_row_receipt_or_split_disagreement():
+    from experiments.visual_finetune.data import purpose_family
+
+    source = {"source_id": "scene", "family_id": "asset", "split": "train"}
+    with pytest.raises(ValueError, match="family disagrees"):
+        purpose_family(source, row={"family_id": "wrong"})
+    with pytest.raises(ValueError, match="family disagrees"):
+        purpose_family(source, receipt={"family_id": "wrong"})
+    with pytest.raises(ValueError, match="family disagrees"):
+        purpose_family(source, frozen={"family": "wrong"})
+    with pytest.raises(ValueError, match="split disagrees"):
+        purpose_family(source, row={"family_id": "asset", "split": "validation"})
+    with pytest.raises(ValueError, match="missing"):
+        purpose_family(source, receipt={"source_id": "scene"})

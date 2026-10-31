@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import shutil
 import tarfile
+from collections import Counter
 from pathlib import Path
 
 from experiments.visual_finetune.data import (
@@ -79,6 +80,8 @@ def portable_export(manifest_path, destination):
 
 
 def portable_critic_export(manifest_path, evaluation_request, destination):
+    manifest_path = Path(manifest_path).resolve()
+    declared = read_json(manifest_path)
     destination = Path(destination)
     image_dir = destination / "images"
     image_dir.mkdir(parents=True, exist_ok=False)
@@ -88,6 +91,22 @@ def portable_critic_export(manifest_path, evaluation_request, destination):
         raise ValueError("This critic bundle is explicitly train-only")
     if {row["family_id"] for row in training} & {row["family_id"] for row in evaluation}:
         raise ValueError("Critic training and independent evaluation families overlap")
+    provenance_dir = destination / "provenance"
+    provenance_dir.mkdir()
+    shutil.copyfile(manifest_path, provenance_dir / "original-training-manifest.json")
+    for relative, expected in declared.get("files_sha256", {}).items():
+        source = _local(manifest_path.parent, relative)
+        if sha(source) != expected:
+            raise ValueError("Declared critic provenance changed: " + relative)
+        target = provenance_dir / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+    provenance["original_manifest"] = {
+        "path": "provenance/original-training-manifest.json",
+        "sha256": sha(manifest_path),
+        "declared_rights_preserved_verbatim": True,
+        "public_status_inferred": False,
+    }
     for row in training + evaluation:
         row["images"] = [
             {"path": "images/" + Path(ref["path"]).name, "sha256": ref["sha256"]}
@@ -111,9 +130,33 @@ def portable_critic_export(manifest_path, evaluation_request, destination):
             "records": evaluation,
         },
     )
+    write_json(
+        destination / "fixed-train-probe.json",
+        {
+            "protocol": "visual-adapter-label-free-evaluation-v1",
+            "task": "critic",
+            "scope": "training_examples_only_not_validation_or_independent_quality",
+            "execute_only_after_causal_R1_R2": True,
+            "records": [
+                {key: row[key] for key in ("record_id", "family_id", "prompt", "images", "control")}
+                for row in training
+            ],
+        },
+    )
+    write_json(
+        destination / "fixed-train-probe-labels.json",
+        {
+            "scope": "existing_weak_training_labels_not_heldout_gold",
+            "labels": {row["record_id"]: row["label"] for row in training},
+        },
+    )
     return {
         "portable_export": {"original_manifest_sha256": sha(manifest_path)},
         "evaluation_request_sha256": sha(evaluation_request),
+        "training_rows": len(training),
+        "evaluation_rows": len(evaluation),
+        "training_families": len({row["family_id"] for row in training}),
+        "training_labels": dict(Counter(row["label"] for row in training)),
     }
 
 
@@ -287,9 +330,12 @@ def package(
             "this bundle starts no VM and installs nothing. MODEL_BASE and RUN_OUT must "
             "be set to project-local paths, then run `bash run-critic.sh`. The base overlay "
             "helper and references/base-identity.json work as in the purpose pilot.\n\n"
-            "Thirty train-only rows are algorithmic weak labels over five source families; "
-            "A/B/N each have ten examples. They demonstrate fitting corruption examples, "
-            "not human aesthetic preference. Twenty separate label-free independent inputs "
+            f"{export['training_rows']} train-only rows are algorithmic weak labels over "
+            f"{export['training_families']} source families; label counts are "
+            f"{export['training_labels']}. They are not human aesthetic preferences. "
+            "Read the preserved original manifest and receipts for the exact teacher objective "
+            "(including readability/fit versus corruption), rights, and limitations. "
+            f"{export['evaluation_rows']} separate label-free independent inputs "
             "are scored before/after training and never supply gradients or gold labels. "
             "Only the independent evaluator holds gold. "
             "No accuracy is computed by this trainer.\n\n"

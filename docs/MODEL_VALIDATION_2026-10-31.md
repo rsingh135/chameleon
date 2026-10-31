@@ -42,6 +42,7 @@ ablation.
 | R3, cleaned data and coverage, 128 steps | 105 | 139 | 0.545 | 0/6 |
 | R4, R3 plus observed typography | 87 | 139 | 0.549 | 0/6 |
 | R5, R3 with isolated contrast matte | 99 | 138 | 0.466 | 0/6 |
+| R6, R3 plus 44 technical training elements | 105 | 140 | 0.424 | 0/6 |
 
 R3 and R4 each classify 137/166 original elements correctly, exceeding the
 106/166 always-body baseline. Both detect all 18 development backgrounds.
@@ -54,6 +55,31 @@ The matte makes pale isolated elements easier to see, but R5's aggregate model
 score regresses and supporting copy remains unresolved. Better input contrast
 does not by itself establish better classification or layout quality.
 
+R6 ties R3/R4 on original elements (137/166); its additional correct prediction
+comes from a control. It improves body accuracy but loses the single primary
+visual and all four footer cases, so the higher overall count is not a balanced
+quality improvement.
+
+## Independent synthetic tuning
+
+Three new, independently authored native-layout families supply 42 original
+targets and nine blank/replaced-image controls. Their source intentions and gold
+were frozen before predictions. Matching pretrained and adapted outputs are
+bound to the requests, pixels, weights, code and both prediction-file hashes.
+There are no missing, invalid or fallback predictions in these results.
+
+| Run | Pretrained originals | Adapted originals | TRAIN-only metadata baseline | Support recall | Controls |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| R3 | 16/42 | 23/42 | 23/42 | 0/9 | 1/9 |
+| R4 | 18/42 | 23/42 | 23/42 | 0/9 | 0/9 |
+| R5 | 20/42 | 25/42 | 23/42 | 0/9 | 0/9 |
+| R6 | 16/42 | 25/42 | 26/42 | 1/9 | 1/9 |
+
+All four candidates fail the frozen promotion thresholds. R5's accuracy gain over
+its metadata baseline does not repair supporting copy or control handling. R6
+trails the metadata model trained on the same expanded training set. The separate
+final purpose and critic sets remain sealed and unused.
+
 The critic's V3 run scores 7/12 on its small public development gold set and gets
 both candidate orders right on 1/4 physical comparisons. Increasing only training
 length from 32 to 128 steps (C4) collapses to B on all 20 probes. Adding only
@@ -62,6 +88,13 @@ interleaved image labels at 128 steps (C5) breaks that collapse but still scores
 unlabeled missing-source probes is a behavioral observation, not accuracy.
 These results do not justify enabling the critic.
 
+The critic training set contains only six distinct unordered candidate pairs
+across three synthetic families. Its neither-candidate examples cover source
+mismatches rather than same-source ties or two poor designs. C5 reaches very low
+late training losses while failing development preferences; training loss is not
+evidence of generalization. A later dataset needs broader native preference
+conditions and reviewed design judgments before another promotion attempt.
+
 ## Preservation and deployment
 
 Runs save every four optimizer steps, including adapter/configuration,
@@ -69,6 +102,12 @@ optimizer/scheduler/RNG state, sampling coverage, frozen code, data and hash
 manifests. Completed runs are copied off the VM and every saved generation is
 verified. Exact optimizer-state replay has not been validated; file preservation
 does not establish exact resumability.
+
+The independent backup audit protects 232 checkpoint generations across eleven
+audited cloud runs, including every generation from the six 128-step runs.
+All training and tuning outputs were copied locally. The external guard
+confirmed the Brev instance **STOPPED at 04:58:20 UTC**, before the fixed
+05:01 UTC deadline. No additional training run is queued.
 
 The independently authored synthetic evaluation separates tuning and final
 families. Gold stays outside GPU input packages. The personal-test reserve

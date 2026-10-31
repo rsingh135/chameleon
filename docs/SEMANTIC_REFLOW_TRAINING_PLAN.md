@@ -1,7 +1,8 @@
 # Semantic reflow: descriptors, training and acceptance
 
-The source-first inspection harness and rule-derived descriptors are now
-implemented. Semantic model training and qualification remain the next work.
+The source-first inspection harness, rule-derived descriptors and source-anchor
+execution are implemented. A fresh bounded local Qwen VLM experiment is owned
+by the primary training chat; its qualified outcome remains pending.
 Preserve every original element, copy,
 asset, font and authored relationship. Learn what an element does and what it
 belongs with; let trusted layout code choose valid transformations.
@@ -50,9 +51,20 @@ while explicit-group retention was approximately `1.0` and reading-order
 retention `1.0`. Coverage was one corner, one footer, one explicit group and two
 reading edges. These diagnostics expose anchor failures despite preserved group
 geometry/order; they are not calibrated probabilities or independent visual
-approval. The receipt reports no immutable identity differences. **After-fix
-native-render verification is pending.** This exposed case remains development
-regression evidence, excluded from held-out generalization aggregates.
+approval. The receipt reports no immutable identity differences.
+
+The later [v3 native manual proof](../output/semantic-anchor-manual-proof-v3/report.json)
+restores the logo to the top-right and centers the footer. Cube width increases
+from approximately 226 to 248 pixels, with the headline/cube group preserved;
+corner retention is approximately `1.0`, footer retention `0.9761`, and group
+and reading-order retention remain approximately `1.0`. The target is still
+1600 × 400, with no recorded hard-contract violations. Native visual readability
+remains **partial**: lettering baked into the atomic cube image is still small,
+and the footer has about an 11-pixel bottom gap. Live-text font checks cannot
+verify embedded raster lettering. The trained fit ranker chooses between two
+admitted geometries; this is not learned purpose inference or automatic visual
+approval. Neither this exposed development proof nor its weight ablation is a
+production acceptance or held-out generalization result.
 
 ## Implemented all-element inspection contract
 
@@ -107,6 +119,16 @@ default separators. They are different existing protocols. Bind and verify
 each with its own helper or add a separately named canonical sidecar digest;
 do not compare the two strings as though they had the same encoding.
 
+The ready training export makes both bindings explicit: rich semantic labels
+use `source_digest_protocol: canonical-compact-v1` and `source_digest`;
+`engine.visual_analysis` source-only observations use
+`analysis_source_digest_protocol: sorted-spaced-json-v1` and
+`analysis_source_digest`, plus the exact native `source_render_sha256`.
+Request/sidecar digests remain separate compact content hashes. Consumers must
+use the appropriate stored binding rather than copy one digest into both
+protocols. Sparse `analysis_raw` observations refer only to IDs surviving the
+bounded source summary; full purpose records still cover every original ID.
+
 Explicit `group_id` and immutable design identity retain their existing hard
 authority. A model cannot break such a group, declare an inferred connection
 hard, replace text, drop a footer, introduce padding artwork, authorize a crop,
@@ -122,9 +144,16 @@ analyzer feeds advisory facts to the organizer without target/menu influence.
 See [implementation and setup](IMAGE_REASONING_PIPELINE.md). This does not
 itself establish per-element semantic quality or the fit-feature changes below.
 
-The source-first harness is implemented; menu/ranker integration and the
-descriptor trainer below remain proposed. Coordinate engine ownership before
-making those changes.
+The source-first harness and deterministic source-anchor execution are
+implemented. `engine/layout/semantic_anchors.py` generates source-bound atomic
+layouts and `engine/semantic_execution.py` admits/ranks them under native text,
+group, bounds, overlap and affinity checks. Purpose authority is source evidence
+and deterministic constraints; the fit policy ranks geometry and makes no
+learned-purpose claim. The full marketing-pixel profile is not evaluated by that
+specialized execution profile. Supplied purpose/relationship proposals remain
+soft; the inspection harness exports them without applying them to a design.
+Richer learned descriptor/menu features below remain proposed, not a second
+parallel pipeline. Coordinate extensions through the shared visual pipeline.
 
 1. `design_semantics.py` implements source-bound descriptors and the closed
    proposal validator. Source anchors are measurements and preferences; explicit
@@ -197,9 +226,44 @@ validated universal design rule. Report raw drift and eligible counts too.
 
 ## Small, bounded training experiment
 
-**Collect labels at the right level.** The existing 34 image-role labels cannot
-supervise text purpose, footers or pairwise connections. Start with licensed or
-user-owned independent development families covering corner brand marks,
+**Current data is ready for an experimental run.**
+[READY.json](../output/semantic-analysis-data-v1/READY.json) points to
+[the frozen manifest](../output/semantic-analysis-data-v1/dataset-smoke-v1/manifest.json)
+with SHA-256 `17d014c14e4271897978513acc72a0994f6235d8dd7037ec680e1c78fc0c6863`.
+There are eight authored sources: five train and three validation, with 344
+element records comprising 169 eligible reviewed training elements, nine masked
+uncertain training elements and 166 validation elements excluded from training.
+The 16 source-analysis rows contain original/opaque-ID variants of the same eight
+sources; they are not 16 independent scenes. The frozen split hash is
+`f231be09489b7d6fa438d772410792b92bced668f3250afb12280eb38cfd549c`.
+
+`analysis.jsonl`, `elements.jsonl` and `relationships.jsonl` are under
+`output/semantic-analysis-data-v1/dataset-smoke-v1`. Admission is explicitly
+`WEAKSUPERVISED_EXPERIMENT_ONLY`, with agent visual review rather than human
+ground truth. The original inspection artifacts remain training-ineligible;
+the separate exporter admits only reviewed train records with `review_mask:true`. Validation
+labels must not train or calibrate the model. Authored-work separation is not
+unseen-brand or unseen-typography evidence: the manifest discloses shared fonts.
+Relations and rule-derived anchors are currently exported as
+`artifact_only_not_training_features`, not learned relational/anchor targets.
+The [optional blank controls](../output/semantic-analysis-data-v1/blank-controls-v1/manifest.json)
+are separate synthetic-abstention diagnostics, not original-render parity or
+agent-reviewed labels. A trainer must opt in explicitly; they are not consumed
+automatically and cannot enlarge the independent-source count.
+
+**Freeze the trainer/evaluator contract before interpreting results.**
+The exported [purpose question](../output/semantic-analysis-data-v1/element-purpose-question-v1.json)
+uses twelve purpose classes and one-letter answers. The primary
+`experiments/visual_finetune/data.py` currently maps purposes to ten word aliases.
+These contracts differ. This plan chooses neither mapping: the primary owner
+must record and freeze the exact label mapping, prompt, tokenizer, masks and
+evaluation decoding together. Scores from different mappings are not directly
+comparable. Eligible training has no `corner_marker`, `footer_legal` or `unknown`
+examples; those behaviors cannot be claimed as learned from this corpus.
+
+**Expand labels at the right level after the bounded pilot.** The earlier 34
+image-role labels cannot supervise text purpose, footers or pairwise connections.
+Add licensed or user-owned independent development families covering corner marks,
 footers, grouped image/text, editorial columns and ambiguous decorative marks.
 For each source, review all element purposes and only the relevant relationships;
 include hard negatives such as an unrelated nearby icon and footer-sized body
@@ -215,14 +279,47 @@ relationship in held-out data blocks a claim about that behavior. The existing
 reserves and the manual acceptance case remain excluded. Group-aware splitting
 prevents group overlap; see [the official GroupKFold contract](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html).
 
-**Train a small descriptor policy first.** Freeze one recipe and one seed.
+**Primary experiment and ownership.** The fresh user-authorized local bounded
+Qwen VLM run is the primary experiment, using the primary training chat's exact
+cached Qwen3-VL-2B base and frozen adapter recipe. Final qualification and a
+deployed adapter remain pending. Data readiness or optimizer steps alone
+establish no task benefit. Keep source-only analysis, organization and
+verification on the existing shared contracts described in
+[the pipeline guide](IMAGE_REASONING_PIPELINE.md) and
+[the training plan](SCENE_MODEL_TRAINING_PLAN.md). The primary training chat owns
+the local RTX 4070, memory/offload scheduling, checkpoints and adapter-backed
+role configuration. Supporting chats provide artifacts, review and verification;
+they start no competing model/GPU work. This document creates no new GPU job,
+cloud session, download, time allowance or budget authorization. Historical
+Brev limits do not authorize a new cloud run.
+
+**Verified early finding.** The saved
+[checkpoint-8 training receipt](../output/visual-finetune/runs/purpose-r4-32-v2/checkpoint-8/training_receipt.json)
+records eight real optimizer steps and nonzero LoRA updates. The
+[same-adapter evaluation receipt](../output/visual-finetune/runs/purpose-checkpoint8-eval-v3/result.json)
+binds adapter SHA-256
+`8eddb0524f8874dc83e03c843938c5c9b46ed07933dd035cac6edb4b66193ec1`.
+On the 48 closed-class cases, the
+[public-development analysis](../output/visual-finetune/runs/purpose-checkpoint8-eval-v3/public-validation-analysis.json)
+reports base `21/48` versus adapter `23/48`: original-source cases `17/39` to
+`18/39`, blank controls `3/6` to `4/6`, and source-swapped cases `1/3` unchanged.
+This is a compatibility and weak public-development result under that run's
+contract, not qualified design fidelity, generalization or a completed full
+validation of all 166 held-out elements. It does not resolve the twelve-letter
+versus ten-alias contract difference or establish learned relationship/anchor
+execution. The separate optional blank-control export is still opt-in.
+
+**Optional conservative CPU baseline.** Retain the small descriptor-head
+experiment as a control, not a prohibition on the authorized VLM work. Freeze
+one recipe and one seed if this control is scheduled by the primary owner.
 Use normalized source geometry, type, measured alpha/ink evidence, font ranks
 and neighbor geometry. Where available, add the already pinned frozen visual
 features with an explicit missing-feature mask. Existing image-only cached
 features do not cover text/shape crops: new contextual crop/full-scene features
 need their own exact pixel and extractor receipts. Geometry alone cannot
 establish brand identity or copy meaning; report that limitation and ablation.
-Do not download or fine-tune a larger VLM as part of this first experiment.
+Any new visual features need the primary owner's memory and runtime preflight;
+do not silently substitute them for the frozen baseline features.
 
 Fit regularized linear purpose and anchor classifiers, plus a small sparse
 pairwise relation classifier. Normalize using training data only. Use masked,
@@ -239,7 +336,7 @@ Use at most 200 fixed optimization steps, one CPU worker and a 600-second
 external stop deadline after feature preparation. Save the recipe, split and
 label hashes, feature version/bytes, normalizer, weights and code identities to
 a fresh ignored `output/semantic-reflow/<run-id>` directory. Verify checkpoint
-reload predictions exactly. No paid GPU is needed for this head experiment.
+reload predictions exactly. No paid GPU is needed for this optional head control.
 This is task-head training on frozen features, not VLM fine-tuning.
 
 Calibrate probabilities on disjoint calibration families when coverage permits;
@@ -282,18 +379,23 @@ review; do not claim that the model understands the design.
 
 ## First implementation sequence
 
-1. Freeze engine/model ownership; land sidecar validation and identity tests.
-2. Export source descriptors and per-target invariants from the harness without
-   changing resize authority. Test stale/duplicate IDs, cycles, partial labels,
-   source immutability, source/asset changes and absent ink measurements.
-3. Review a small development set and run the reviewed-descriptor ablation. Test
-   a corner symbol, footer alignment, explicit image/text group and an unrelated
-   nearby element; require generic rules independent of names/sample IDs.
-4. Freeze split/features/recipe, execute the one bounded CPU head experiment,
-   reload, calibrate where supported, and run the paired native matrix.
-5. Publish classifier results, invariant changes, actual action/veto counts,
-   PNG/checkpoint hashes, reviewed wins/losses and remaining gaps. Default use
-   follows evidence, not the successful completion of training.
+1. Keep the implemented descriptor/harness and source-anchor regression evidence
+   frozen. Verify READY, native-image/annotation hashes and the eight-source split
+   before the primary trainer consumes the separately admitted weak labels.
+2. Resolve and freeze the trainer/evaluator's twelve-letter versus ten-alias
+   contract explicitly, including prompt, masks, tokenizer and decoding. Preserve
+   validation and manual/reserve exclusions; opt into blank controls separately.
+3. Let the primary owner finish the bounded local VLM experiment under its
+   existing memory/offload and checkpoint controls. Record actual steps, saved
+   versus restorable state and all failed runs; supporting chats start no jobs.
+4. Compare checkpoint-backed purpose predictions with unchanged base, majority
+   and optional CPU controls using the same frozen contract. Include per-class
+   support, source/metadata ablations and abstention. Relationship/anchor learning
+   remains future work until those labels are admitted as actual targets.
+5. Run source-bound paired native transformations on independent development
+   cases through the shared analyzer/organizer/verifier path. Publish invariant
+   changes, action/veto counts, PNG/checkpoint hashes, reviewed wins/losses and
+   remaining readability gaps. No automatic promotion follows training completion.
 
 Run the new source-first harness directly from the project root. For the
 explicitly opened manual case, use a fresh output name:
@@ -318,4 +420,6 @@ Plain development cases also need separate reviewed dataset admission.
 The existing `tools.scene_harness --help` and `tools.train_fit_policy --help`
 remain runnable entry points. The latter accepts only the current fit
 feature/label schema; it cannot train the proposed descriptors unchanged.
-New semantic trainers still require implementation and focused tests before use.
+The primary VLM trainer has its own purpose-data adapter; it must use the frozen
+training/evaluation contract above. Additional relation/anchor trainers remain
+future work and require implementation and focused tests before use.

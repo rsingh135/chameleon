@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "mode": "off",
+  "candidate_limit": 4,
+  "include_baseline": true,
+  "output_contract": "candidate_id_or_abstain",
+  "deterministic_validation_required": true,
+  "models": {
+    "infrastructure_smoke": "Qwen/Qwen3-VL-2B-Instruct",
+    "small_quality_candidate": "Qwen/Qwen3.5-0.8B",
+    "quality_comparison": "Qwen/Qwen3.5-2B",
+    "cheap_baseline": "frozen_siglip2_pairwise_head"
+  },
+  "budget": {
+    "session_minutes": 120,
+    "padded_hourly_usd": 2.0,
+    "pilot_compute_allowance_usd": 16.0,
+    "planning_reserve_usd": 20.0,
+    "native_credit_cap_verified": false
+  },
+  "dataset_manifest": "datasets/vision_critic/sources.json",
+  "task_trainer_implemented": true,
+  "notes": "Collection, labeling, CPU ranker and offline SFT framework implemented. GPU compatibility and task quality are unmeasured. Never starts compute."
+}

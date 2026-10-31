@@ -4,3 +4,7 @@ fixtures/open_posters/adapted/** -text
 fixtures/open_posters/fonts/** -text
 fixtures/open_posters/licenses/** -text
 fixtures/open_posters/prepared/** -text
+
+# Slurm rejects CRLF job scripts copied from Windows.
+tools/slurm/*.sbatch text eol=lf
+tools/brev_*.sh text eol=lf

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
+from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from urllib.parse import urlsplit
 
@@ -13,6 +15,20 @@ CORPUS_ROOT = ROOT / "fixtures" / "open_posters"
 GALLERY_ROOT = ROOT / "output" / "poster-audit"
 MAX_BUNDLE_BYTES = 24 * 1024 * 1024
 _ID = re.compile(r"[a-z0-9][a-z0-9_-]{0,99}\Z")
+
+
+@dataclass(frozen=True)
+class _CataloguePage:
+    """Read-only HTTP asset with the same read interface as persisted gallery files."""
+
+    content: bytes
+    name: str = "index.html"
+
+    def is_file(self):
+        return True
+
+    def read_bytes(self):
+        return self.content
 
 
 def contained(root: Path, relative: object) -> Path:
@@ -138,10 +154,92 @@ def preview_file(poster_id: str) -> Path:
     return prepared_path(entry_for(poster_id), "native.png")
 
 
-def gallery_file(relative: str) -> Path:
+def _catalogue_gallery() -> _CataloguePage:
+    """List original inputs without depending on generated evaluation artifacts."""
+    entries = {entry["id"]: entry for entry in catalogue()}
+    examples = library_metadata()["examples"]
+    groups = []
+    for split, heading in (
+        ("reviewed", "Reviewed examples"),
+        ("reserve", "Personal test originals"),
+    ):
+        cards = []
+        for item in examples:
+            if item["split"] != split:
+                continue
+            identity = item["id"]
+            title = html.escape(str(item["title"]))
+            credit = html.escape(str(item["attribution_text"]))
+            license_name = html.escape(str(item["license_id"]))
+            preview = prepared_path(entries[identity], "native.png")
+            image = (
+                f'<img src="/api/posters/{identity}/preview" alt="Source preview: {title}" '
+                'loading="lazy" width="320" height="300">'
+                if preview.is_file()
+                else '<p class="unavailable">Source preview is unavailable.</p>'
+            )
+            action = (
+                f'<a class="open" href="/?poster={identity}">Open in Studio</a>'
+                if item["ready"]
+                else '<p class="status">Import support is still needed.</p>'
+            )
+            links = [f'<a href="/api/posters/{identity}/original">Editable original</a>']
+            for key, label in (("source_url", "Source"), ("license_url", "License")):
+                if item[key]:
+                    links.append(
+                        f'<a href="{html.escape(item[key], quote=True)}" '
+                        f'target="_blank" rel="noopener noreferrer">{label}</a>'
+                    )
+            note = (
+                f'<p class="note">{html.escape(str(item["source_note"]))}</p>'
+                if item["source_note"]
+                else ""
+            )
+            cards.append(
+                f'<article>{image}<div class="details"><h3>{title}</h3>'
+                f'<p class="credit">{credit} · {license_name}</p>{note}{action}'
+                f'<p class="links">{" · ".join(links)}</p></div></article>'
+            )
+        if cards:
+            groups.append(
+                f'<section><h2>{heading}</h2><div class="grid">{"".join(cards)}</div></section>'
+            )
+    content = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poster library · Chameleon</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f6f6f6;color:#242424;
+font:14px/1.5 system-ui,sans-serif}a{color:#305d8f;text-underline-offset:3px}
+a:focus-visible{outline:3px solid #1473e6;outline-offset:4px}
+header{padding:18px 28px;background:#fff;border-bottom:1px solid #dedede}
+header a{color:#242424;font-size:18px;font-weight:650;text-decoration:none}
+main{max-width:1480px;margin:auto;padding:28px}h1{font-size:30px;letter-spacing:-.7px;
+margin:0 0 8px}h2{font-size:20px;margin:32px 0 16px}h3{font-size:16px;margin:0 0 6px}
+.intro{max-width:72ch;color:#575757}.grid{display:grid;
+grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px}
+article{min-width:0;background:#fff;border:1px solid #dedede;border-radius:8px;overflow:hidden}
+article img{display:block;width:100%;height:300px;object-fit:contain;padding:16px;
+background:#ededed}.details{padding:18px}.credit,.note,.status,.links{font-size:13px;
+overflow-wrap:anywhere}.credit{color:#626262}.open{display:inline-block;margin:8px 0;
+padding:8px 12px;color:#fff;background:#303030;border-radius:5px;text-decoration:none}
+.unavailable{display:grid;place-items:center;min-height:180px;color:#686868}
+@media(max-width:600px){header{padding:16px}main{padding:20px 16px}h1{font-size:26px}}
+</style></head><body><header><a href="/">Chameleon Studio</a></header><main>
+<h1>Poster library</h1><p class="intro">Browse original designs and their source previews.
+Open a design in Studio to choose a canvas and compare a resized result.
+Source and license information accompanies each design.</p>"""
+    content += (
+        "".join(groups) if groups else "<p>No poster sources are available in this checkout.</p>"
+    )
+    content += "</main></body></html>"
+    return _CataloguePage(content.encode("utf-8"))
+
+
+def gallery_file(relative: str) -> Path | _CataloguePage:
     path = contained(GALLERY_ROOT, relative or "index.html")
     if path.suffix.lower() not in {".html", ".png", ".jpg", ".jpeg", ".json", ".zip", ".css"}:
         raise FileNotFoundError("Gallery file not found.")
     if not path.is_file():
+        if path == (GALLERY_ROOT / "index.html").resolve():
+            return _catalogue_gallery()
         raise FileNotFoundError("Gallery has not been generated. Run tools.poster_audit.")
     return path

@@ -44,6 +44,12 @@ from engine.resources import (
 )
 from renderer.converter.convert import convert_chameleon_to_crello
 from viewer import poster_library
+from viewer.addon_bridge import (
+    addon_origins,
+    perform_addon_resize,
+    validate_design_fonts,
+    validate_request_id,
+)
 from viewer.document_bridge import (
     DOCUMENT_ORIGIN,
     MAX_DOCUMENT_REQUEST_BYTES,
@@ -456,13 +462,20 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self.send_header("Connection", "close")
         for name, value in (extra_headers or {}).items():
             self.send_header(name, value)
-        if (
-            urlsplit(self.path).path == "/api/document/resize"
-            and self.headers.get("Origin") == DOCUMENT_ORIGIN
-            and self.headers.get("Host")
-            in {f"127.0.0.1:{self.server.server_port}", f"localhost:{self.server.server_port}"}
-        ):
-            self.send_header("Access-Control-Allow-Origin", DOCUMENT_ORIGIN)
+        route = urlsplit(self.path).path
+        origin = self.headers.get("Origin")
+        cross_origins = (
+            {DOCUMENT_ORIGIN}
+            if route == "/api/document/resize"
+            else self.server.addon_origins
+            if route == "/api/addon/resize"
+            else set()
+        )
+        if origin in cross_origins and self.headers.get("Host") in {
+            f"127.0.0.1:{self.server.server_port}",
+            f"localhost:{self.server.server_port}",
+        }:
+            self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
             if self.command == "OPTIONS":
                 self.send_header("Access-Control-Allow-Methods", "POST")
@@ -489,7 +502,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
             head=head,
         )
 
-    def _local_request(self, *, document: bool = False) -> bool:
+    def _local_request(self, *, document: bool = False, addon: bool = False) -> bool:
         port = self.server.server_port
         allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
         if self.headers.get("Host") not in allowed_hosts:
@@ -499,6 +512,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
         allowed_origins = {f"http://{host}" for host in allowed_hosts}
         if document:
             allowed_origins.add(DOCUMENT_ORIGIN)
+        if addon:
+            allowed_origins.update(self.server.addon_origins)
         if origin and origin not in allowed_origins:
             self._json(
                 HTTPStatus.FORBIDDEN, {"error": "Only same-origin local requests are allowed."}
@@ -647,10 +662,11 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self._get(head=True)
 
     def do_OPTIONS(self) -> None:
-        document = urlsplit(self.path).path == "/api/document/resize"
-        if not self._local_request(document=document):
+        route = urlsplit(self.path).path
+        document, addon = route == "/api/document/resize", route == "/api/addon/resize"
+        if not self._local_request(document=document, addon=addon):
             return
-        if not document:
+        if not (document or addon):
             self._json(HTTPStatus.NOT_FOUND, {"error": "API endpoint not found."})
             return
         headers = {
@@ -659,7 +675,8 @@ class ViewerHandler(BaseHTTPRequestHandler):
             if name.strip()
         }
         if (
-            self.headers.get("Origin") != DOCUMENT_ORIGIN
+            self.headers.get("Origin")
+            not in (self.server.addon_origins if addon else {DOCUMENT_ORIGIN})
             or self.headers.get("Access-Control-Request-Method") != "POST"
             or not headers <= {"content-type"}
         ):
@@ -671,10 +688,16 @@ class ViewerHandler(BaseHTTPRequestHandler):
         self._body_read_attempted = False
         route = urlsplit(self.path).path
         document = route == "/api/document/resize"
-        if not self._local_request(document=document):
+        addon = route == "/api/addon/resize"
+        if not self._local_request(document=document, addon=addon):
             return
         benchmark = route == "/api/benchmark/run"
-        if route not in {"/api/resize", "/api/document/resize", "/api/benchmark/run"}:
+        if route not in {
+            "/api/resize",
+            "/api/addon/resize",
+            "/api/document/resize",
+            "/api/benchmark/run",
+        }:
             self._json(HTTPStatus.NOT_FOUND, {"error": "API endpoint not found."})
             return
         if self.headers.get_content_type() != "application/json":
@@ -714,7 +737,7 @@ class ViewerHandler(BaseHTTPRequestHandler):
             )
             return
         try:
-            self._process_resize_request(raw, document=document, benchmark=benchmark)
+            self._process_resize_request(raw, document=document, benchmark=benchmark, addon=addon)
         finally:
             self.server.resize_slots.release()
 
@@ -780,7 +803,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self.connection.settimeout(previous_timeout)
         return b"".join(chunks)
 
-    def _process_resize_request(self, raw: bytes, *, document: bool, benchmark: bool) -> None:
+    def _process_resize_request(
+        self, raw: bytes, *, document: bool, benchmark: bool, addon: bool = False
+    ) -> None:
         try:
             payload = json.loads(raw.decode("utf-8"))
             if benchmark:
@@ -801,6 +826,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, result)
                 return
             validate_request(payload)
+            if addon:
+                validate_request_id(payload)
+                validate_design_fonts(payload["source"], FONTS_DIR)
             if not self._require_current_method(action="Resize"):
                 return
             prepared = prepare_document(payload) if document else None
@@ -816,7 +844,9 @@ class ViewerHandler(BaseHTTPRequestHandler):
         try:
             if not self._require_current_method(action="Resize"):
                 return
-            if prepared is None:
+            if addon:
+                result = perform_addon_resize(payload)
+            elif prepared is None:
                 result = perform_resize(payload)
             else:
                 result = perform_resize(payload, resources=prepared.resources)
@@ -829,10 +859,12 @@ class ViewerHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"Resize failed: {exc}"})
 
 
-def create_server(port: int = 8765) -> ThreadingHTTPServer:
+def create_server(port: int = 8765, *, allowed_addon_origins=None) -> ThreadingHTTPServer:
     from viewer.benchmark import method_receipt
 
+    origins = addon_origins(allowed_addon_origins)
     instance = ThreadingHTTPServer(("127.0.0.1", port), ViewerHandler)
+    instance.addon_origins = origins
     instance.resize_slots = threading.BoundedSemaphore(MAX_IN_FLIGHT_RESIZES)
     try:
         instance.benchmark_method = method_receipt()
@@ -845,12 +877,15 @@ def create_server(port: int = 8765) -> ThreadingHTTPServer:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument(
+        "--addon-origin", action="append", help="Explicit HTTPS origin of a hosted Express add-on"
+    )
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
     try:
-        server = create_server(args.port)
-    except OSError as exc:
+        server = create_server(args.port, allowed_addon_origins=args.addon_origin)
+    except (OSError, ValueError) as exc:
         parser.exit(1, f"Could not start local viewer: {exc}\n")
     print(f"Chameleon is running at http://127.0.0.1:{server.server_port}", flush=True)
     try:

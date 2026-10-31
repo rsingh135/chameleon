@@ -1,8 +1,10 @@
 # Local studio and file inspector
 
-A dependency-free local inspector for development. The final challenge PDF
-requires the engine for stage one and a full Adobe Express add-on for the
-finale. This inspector is not an installed Express add-on.
+A dependency-free local inspector for development. The supplied FAQ requires
+a stage-one viewer add-on; the final challenge PDF places the full Express
+add-on in the finale. Keep the FAQ requirement outstanding until organizers
+clarify the conflict; see [FAQ submission requirements](../FAQ.md#using-the-starter-kit--submitting).
+This inspector is not an installed Express add-on.
 
 Run `python -m viewer.server --port 8765` from the repository root and open
 [http://127.0.0.1:8765](http://127.0.0.1:8765) for the live studio. Choose a sample

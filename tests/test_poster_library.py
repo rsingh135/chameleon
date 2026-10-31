@@ -4,6 +4,7 @@ import hashlib
 import http.client
 import json
 import threading
+from html.parser import HTMLParser
 
 import pytest
 
@@ -152,3 +153,93 @@ def test_catalogue_rejects_invalid_paths_duplicates_and_active_links(corpus):
     (root / "catalogue.json").write_text(json.dumps({"schema_version": 1, "examples": entries * 2}))
     with pytest.raises(ValueError, match="Duplicate"):
         library.catalogue()
+
+
+class GalleryMarkup(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links = []
+        self.images = []
+        self.scripts = []
+        self.active_attributes = []
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        self.active_attributes.extend(name for name in values if name.startswith("on"))
+        if tag == "a":
+            self.links.append(values.get("href"))
+        elif tag == "img":
+            self.images.append(values.get("src"))
+        elif tag == "script":
+            self.scripts.append(values)
+
+
+@pytest.mark.parametrize("route", ["/posters", "/posters/", "/posters/index.html"])
+def test_clean_checkout_gallery_uses_existing_original_source_routes(http_server, corpus, route):
+    (corpus[0] / "gallery/index.html").unlink()
+    status, headers, raw = request(http_server, route)
+    page = GalleryMarkup()
+    page.feed(raw.decode("utf-8"))
+    assert status == 200
+    assert headers["Content-Type"].startswith("text/html")
+    assert "default-src 'none'" in headers["Content-Security-Policy"]
+    assert "/?poster=example" in page.links
+    assert "/api/posters/example/original" in page.links
+    assert page.images == ["/api/posters/example/preview"]
+    assert page.scripts == []
+    assert request(http_server, page.images[0])[2] == b"example-png"
+    assert (
+        request(http_server, "/api/posters/example/original")[2]
+        == (corpus[0] / "original.svg").read_bytes()
+    )
+    assert b"Personal test originals" in raw
+    assert b"compare a resized result" in raw
+    assert not (corpus[0] / "gallery/index.html").exists()
+
+
+def test_fallback_gallery_escapes_metadata_and_suppresses_active_urls(http_server, corpus):
+    root, entries, _ = corpus
+    (root / "gallery/index.html").unlink()
+    entries[0].update(
+        title='<script>alert("title")</script>',
+        attribution_text='<img src="evil">',
+        source_note='<b onclick="bad()">Note</b>',
+        license_id='" onmouseover="bad()',
+        source_url="javascript:alert(1)",
+        license_url='https://example.test/license?text=" onmouseover="bad()',
+    )
+    (root / "catalogue.json").write_text(json.dumps({"schema_version": 1, "examples": entries}))
+    status, _, raw = request(http_server, "/posters/")
+    page = GalleryMarkup()
+    page.feed(raw.decode("utf-8"))
+    assert status == 200 and page.scripts == []
+    assert page.active_attributes == []
+    assert b"&lt;script&gt;" in raw and b"&lt;img" in raw and b"&lt;b" in raw
+    assert "javascript:alert(1)" not in page.links
+    assert all(link.startswith(("/", "https://")) for link in page.links)
+    assert page.images == ["/api/posters/example/preview"]
+
+
+def test_fallback_gallery_preserves_unsupported_readiness_and_missing_preview(http_server, corpus):
+    root, _, _ = corpus
+    (root / "gallery/index.html").unlink()
+    (root / "prepared/example/import-report.json").write_text('{"status":"unsupported"}')
+    (root / "prepared/example/native.png").unlink()
+    status, _, raw = request(http_server, "/posters/")
+    page = GalleryMarkup()
+    page.feed(raw.decode("utf-8"))
+    assert status == 200 and not page.images
+    assert "/?poster=example" not in page.links
+    assert b"Import support is still needed" in raw
+    assert b"Source preview is unavailable" in raw
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/posters/missing.html", "/posters/%2e%2e/catalogue.json", "/posters/%2e%2e%5ccatalogue.json"],
+)
+def test_fallback_gallery_does_not_turn_missing_or_escaped_paths_into_success(
+    http_server, corpus, path
+):
+    (corpus[0] / "gallery/index.html").unlink()
+    assert request(http_server, path)[0] in {400, 404}

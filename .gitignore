@@ -71,3 +71,12 @@ eval/cases/
 # Ship the compact default model; keep experimental checkpoints local.
 /models/*
 !/models/fit_policy/
+/models/fit_policy/*
+!/models/fit_policy/default.json
+
+# Machine-local environment and the supplied challenge handout.
+/vision-env.sh
+/.env
+/.env.*
+!/.env.example
+/Final Chameleon Challenge - Adobe cloud storage.pdf

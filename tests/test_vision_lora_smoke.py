@@ -196,13 +196,19 @@ if [[ $# -eq 1 && "$1" == "-" ]]; then
 fi
 printf '%s\\n' "$*" >> "$CHAMELEON_ROOT/calls.log"
 if [[ "$*" == "-m pip install torch=="* ]]; then
+  test -f "$CHAMELEON_ROOT/build-ready"
   touch "$CHAMELEON_ROOT/cuda-ready"
 fi
 if [[ "$*" == "-m pip freeze --all" ]]; then
   printf '%s\\n' 'stub-only==1'
 fi
 if [[ "$1" == "tools/vision_gpu_probe.py" ]]; then
-  test -f "$CHAMELEON_ROOT/cuda-ready"
+  if [[ "${2:-}" == "--build-only" ]]; then
+    touch "$CHAMELEON_ROOT/build-ready"
+  else
+    test -f "$CHAMELEON_ROOT/build-ready"
+    test -f "$CHAMELEON_ROOT/cuda-ready"
+  fi
 fi
 """,
         encoding="utf-8",
@@ -232,7 +238,23 @@ fi
     calls = (project / "calls.log").read_text().splitlines()
     assert sum(line.startswith("-m pip install torch==") for line in calls) == 1
     assert calls.count("-m pip install -r requirements-vision.txt") == 2
-    assert sum(line.startswith("tools/vision_gpu_probe.py") for line in calls) == 2
+    build_probes = [
+        index
+        for index, line in enumerate(calls)
+        if line == "tools/vision_gpu_probe.py --build-only --out "
+        "output/vision_critic/build-prerequisites.json"
+    ]
+    gpu_probes = [
+        index
+        for index, line in enumerate(calls)
+        if line == "tools/vision_gpu_probe.py --min-vram-gib 16 --out "
+        "output/vision_critic/gpu-probe.json"
+    ]
+    torch_install = next(
+        index for index, line in enumerate(calls) if line.startswith("-m pip install torch==")
+    )
+    assert len(build_probes) == len(gpu_probes) == 2
+    assert build_probes[0] < torch_install < gpu_probes[0] < build_probes[1] < gpu_probes[1]
     assert (project / "vision-env.sh").is_file()
 
 

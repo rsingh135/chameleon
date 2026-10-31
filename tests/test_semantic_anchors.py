@@ -9,6 +9,7 @@ import pytest
 from engine.design_semantics import audit_semantic_preservation, describe_design
 from engine.eval import check_contract
 from engine.layout import semantic_anchors as module
+from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.layout.semantic_anchors import generate_semantic_anchor_states
 from engine.stage_one import strictly_in_bounds
 
@@ -85,7 +86,7 @@ def test_corner_footer_and_explicit_group_have_actual_valid_transformed_geometry
     states = generate_semantic_anchor_states(source, target, semantics)
     assert states
     state = states[0]
-    assert state.cluster_axes and state.topology == "source-semantic-anchors"
+    assert state.topology == "source-semantic-anchors"
     assert strictly_in_bounds(state.design)
     assert check_contract(source, state.design, target) == []
     result = {e["id"]: e for e in state.design["elements"]}
@@ -113,6 +114,17 @@ def test_default_path_uses_describer_without_a_model(source):
     states = generate_semantic_anchor_states(source, {"width": 450, "height": 150})
     assert states
     assert all("semantic-source:" in " ".join(state.exceptions) for state in states)
+
+
+def test_anchor_states_can_be_consumed_by_viewer_relationship_diagnostics(source):
+    graph = build_relationship_graph(source)
+    states = generate_semantic_anchor_states(source, {"width": 600, "height": 150})
+    assert states
+    for state in states:
+        # Moving/scaling atomic groups preserves their source flow. Semantic unit
+        # names cannot be used as relationship-graph cluster identifiers.
+        analyze_relationships(graph, state.design, dict(state.cluster_axes))
+        assert state.cluster_axes == ()
 
 
 def test_primary_uses_footer_free_band_and_can_start_above_a_nonoverlapping_corner(source):

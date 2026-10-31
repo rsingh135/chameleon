@@ -426,20 +426,13 @@ def generate_semantic_anchor_states(source, target, semantics=None):
                         design, sort_keys=True, separators=(",", ":"), allow_nan=False
                     )
                     if encoded not in seen:
-                        axes = tuple(
-                            (
-                                u["name"],
-                                "vertical"
-                                if u["frame"].height >= u["frame"].width
-                                else "horizontal",
-                            )
-                            for u in units
-                        )
                         result.append(
                             GroupedState(
                                 f"semantic-anchors/usable-band-{fraction:.2f}",
                                 "source-semantic-anchors",
-                                axes,
+                                # Atomic groups retain source flow. Semantic unit
+                                # names are not relationship-graph cluster IDs.
+                                (),
                                 encoded,
                                 (
                                     f"shared-foreground-scale:{actual_scale:.9g}",

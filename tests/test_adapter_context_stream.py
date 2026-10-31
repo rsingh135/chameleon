@@ -572,3 +572,26 @@ def test_three_view_mode_and_native_resource_paths_are_operator_flags_not_packet
             purpose_views=3,
             view_builder=lambda *_a: pytest.fail("Injected packet must not trigger native paint"),
         )
+
+
+def test_transport_reads_and_binds_actual_optional_base_prediction_file(source_png, tmp_path):
+    root, _job, evaluation, bundle = prepare_job(source_png, tmp_path)
+    frozen = handle(
+        {"operation": "freeze", "job_id": "opaque-job", "evaluation_dir": str(evaluation)},
+        artifact_root=root,
+    )
+    fake_completed_output(evaluation, bundle, frozen["prepared_identity"])
+    base = evaluation / "external_base.json"
+    base.write_bytes(b'{"synthetic_protocol_base_scores":true}\n')
+    receipt = json.loads((evaluation / "inference_receipt.json").read_text())
+    receipt["base_prediction_file_sha256"] = sha_file(base)
+    write(evaluation / "inference_receipt.json", receipt)
+    packet = {"operation": "complete", "job_id": "opaque-job"}
+    complete = handle(packet, artifact_root=root, diagnostic=True)
+    assert complete["ok"] and complete["result"]["trace"]["base_prediction_file_verified"]
+    base.write_bytes(b"changed base file")
+    invalid = handle(packet, artifact_root=root, diagnostic=True)
+    assert not invalid["ok"] and invalid["result"]["abstained"]
+    base.unlink()
+    with pytest.raises(ValueError, match="base prediction file is missing"):
+        handle(packet, artifact_root=root, diagnostic=True)

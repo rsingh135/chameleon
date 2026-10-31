@@ -50,6 +50,13 @@ recipe SHA, dataset SHA, and copied worker code SHAs. The receipt must bind the
 exact request and prediction-file bytes. It remains experimental and cannot claim
 quality approval. The score file must attest all three ordered image embeddings.
 
+The optional `base_prediction_file_sha256` receipt field accepts null or an exact
+lowercase SHA-256. If non-null, completion requires the actual base score file
+bytes through `base_prediction_bytes` and checks their hash and byte limit.
+Operator scoring callbacks can return those optional bytes alongside the existing
+three fields. Old receipts remain valid without it. Base scores are provenance
+only; they never replace the adapted A/B/N preference or alter native gates.
+
 ## Graph integration
 
 ```python

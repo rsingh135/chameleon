@@ -529,3 +529,52 @@ def test_malformed_three_view_record_cannot_crash_or_fall_back_during_completion
         scene[0], scene[1], bundle, data, receipt, expected_identity=expected(), mode="diagnostic"
     )
     assert not result["executed"] and not result["valid"] and result["abstained"]
+
+
+@pytest.mark.parametrize("case", ["absent", "none", "bound", "missing", "changed", "invalid"])
+def test_optional_base_score_hash_requires_actual_bytes_and_preserves_old_receipts(scene, case):
+    bundle = bridge.build_adapter_request(*scene)
+    encoded, receipt = attest(bundle, scores(bundle))
+    base = None
+    if case != "absent":
+        receipt["base_prediction_file_sha256"] = None
+    if case in {"bound", "missing", "changed"}:
+        base = b'{"synthetic_protocol_base_scores":true}\n'
+        receipt["base_prediction_file_sha256"] = hashlib.sha256(base).hexdigest()
+        if case == "missing":
+            base = None
+        elif case == "changed":
+            base += b"changed"
+    elif case == "invalid":
+        receipt["base_prediction_file_sha256"] = "not-a-sha"
+    result = bridge.complete_adapter_analysis(
+        scene[0],
+        scene[1],
+        bundle,
+        encoded,
+        receipt,
+        expected_identity=expected(),
+        mode="diagnostic",
+        base_prediction_bytes=base,
+    )
+    assert result["valid"] is (case in {"absent", "none", "bound"})
+    if result["valid"]:
+        assert result["trace"]["base_prediction_file_verified"] is (case == "bound")
+        assert not result["trace"]["qualified"] and not result["trace"]["layout_authority"]
+
+
+def test_graph_driver_forwards_actual_optional_base_bytes_without_changing_observations(scene):
+    def runner(bundle, **_kwargs):
+        encoded, receipt = attest(bundle, scores(bundle, alias="headline"))
+        base = b'{"synthetic_protocol_base_scores":true}\n'
+        receipt["base_prediction_file_sha256"] = hashlib.sha256(base).hexdigest()
+        return {
+            "prediction_bytes": encoded,
+            "receipt": receipt,
+            "prepared_identity": expected(),
+            "base_prediction_bytes": base,
+        }
+
+    result = factory(scene, mode="diagnostic", score_runner=runner).analyze(scene[0], scene[1])
+    assert result["valid"] and result["trace"]["base_prediction_file_verified"]
+    assert result["analysis"]["observations"][0]["kind"] == "subject"

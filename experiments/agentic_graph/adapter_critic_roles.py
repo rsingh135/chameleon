@@ -154,11 +154,12 @@ def create_adapter_critic_roles(
                     raise ValueError(
                         "Critic scoring mutated its source/menu/render/request context"
                     )
-                if not isinstance(scored, dict) or set(scored) != {
-                    "prediction_bytes",
-                    "receipt",
-                    "prepared_identity",
-                }:
+                required = {"prediction_bytes", "receipt", "prepared_identity"}
+                if (
+                    not isinstance(scored, dict)
+                    or not required <= scored.keys()
+                    or scored.keys() - required - {"base_prediction_bytes"}
+                ):
                     raise ValueError(
                         "Critic driver must return scores, receipt and prepared identity"
                     )
@@ -177,6 +178,7 @@ def create_adapter_critic_roles(
                     scored["receipt"],
                     expected_identity=prepared,
                     mode=self._mode,
+                    base_prediction_bytes=scored.get("base_prediction_bytes"),
                 )
                 verify_render_files(bundle)
                 result["trace"].update(

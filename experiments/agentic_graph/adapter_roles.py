@@ -190,11 +190,12 @@ def create_adapter_roles(
                 scored = score_runner(transmitted, timeout_seconds=remaining)
                 if transmitted != bundle or source_digest(source) != source_pin:
                     raise ValueError("Adapter scoring mutated its source/request binding")
-                if not isinstance(scored, dict) or set(scored) != {
-                    "prediction_bytes",
-                    "receipt",
-                    "prepared_identity",
-                }:
+                required = {"prediction_bytes", "receipt", "prepared_identity"}
+                if (
+                    not isinstance(scored, dict)
+                    or not required <= scored.keys()
+                    or scored.keys() - required - {"base_prediction_bytes"}
+                ):
                     raise ValueError(
                         "Adapter driver must return scores, receipt and "
                         "pre-inference prepared identity"
@@ -212,6 +213,7 @@ def create_adapter_roles(
                     scored["receipt"],
                     expected_identity=prepared,
                     mode=self._mode,
+                    base_prediction_bytes=scored.get("base_prediction_bytes"),
                 )
                 fallback = result
                 if views == 3:

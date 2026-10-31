@@ -51,6 +51,14 @@ three-view mode, and attest exactly the selected image count. Old evaluation
 outputs without this receipt remain unverified and abstain; no successful model
 execution is manufactured for them.
 
+New receipts may additionally contain `base_prediction_file_sha256`, either null
+or an exact lowercase SHA-256. A non-null value requires the actual base score
+file bytes via `base_prediction_bytes`; missing, oversized or mismatched bytes
+fail closed. JSONL completion reads the fixed `external_base.json` sidecar when
+that hash is claimed. Operator score callbacks may return the same optional bytes.
+Old receipts without the field remain accepted. This verifies provenance only:
+base scores do not alter the adapted classifier's observations or quality gates.
+
 The bridge checks the full-vocabulary greedy token as well as closed-class
 scores. Nonclass raw tokens, unknown predictions, inconsistent score/probability
 distributions and weak normalized candidate scores abstain. The current diagnostic

@@ -278,14 +278,23 @@ def handle(packet, *, artifact_root, diagnostic=False, purpose_views=2, view_bui
             raise ValueError("Adapter prediction file is missing or oversized")
         with prediction_path.open("rb") as stream:
             predictions = stream.read(8 * 1024 * 1024 + 1)
+        receipt = _read(directory / "inference_receipt.json")
+        base_predictions = None
+        if isinstance(receipt, dict) and receipt.get("base_prediction_file_sha256") is not None:
+            base_path = directory / "external_base.json"
+            if not base_path.is_file() or not 0 < base_path.stat().st_size <= 8 * 1024 * 1024:
+                raise ValueError("Actual base prediction file is missing or oversized")
+            with base_path.open("rb") as stream:
+                base_predictions = stream.read(8 * 1024 * 1024 + 1)
         result = complete_adapter_analysis(
             _read(job / "source.json"),
             _read(job / "source-render.json"),
             bundle,
             predictions,
-            _read(directory / "inference_receipt.json"),
+            receipt,
             expected_identity=frozen["prepared_identity"],
             mode="diagnostic" if diagnostic else "off",
+            base_prediction_bytes=base_predictions,
         )
         return {
             "ok": result["valid"],

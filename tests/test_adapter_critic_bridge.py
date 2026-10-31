@@ -473,3 +473,57 @@ def test_graph_factory_rejects_changed_pins_requests_pixels_and_expired_deadline
     )
     assert not result["valid"] and result["abstained"] and result["decision"] is None
     assert result["trace"]["fallback_reason"]
+
+
+@pytest.mark.parametrize("case", ["absent", "none", "bound", "missing", "changed", "invalid"])
+def test_optional_base_scores_never_change_the_adapted_critic_choice_or_relax_binding(scene, case):
+    source, render, _snapshot, menu, renders, bundle = scene
+    encoded, receipt = attest(bundle, scores(bundle))
+    base = None
+    if case != "absent":
+        receipt["base_prediction_file_sha256"] = None
+    if case in {"bound", "missing", "changed"}:
+        base = b'{"synthetic_protocol_base_scores":true}\n'
+        receipt["base_prediction_file_sha256"] = hashlib.sha256(base).hexdigest()
+        if case == "missing":
+            base = None
+        elif case == "changed":
+            base += b"changed"
+    elif case == "invalid":
+        receipt["base_prediction_file_sha256"] = True
+    result = bridge.complete_adapter_critic(
+        source,
+        render,
+        menu,
+        renders,
+        bundle,
+        encoded,
+        receipt,
+        expected_identity=identity(),
+        mode="diagnostic",
+        base_prediction_bytes=base,
+    )
+    assert result["valid"] is (case in {"absent", "none", "bound"})
+    if result["valid"]:
+        assert result["decision"] == complete(scene)["decision"]
+        assert result["trace"]["base_prediction_file_verified"] is (case == "bound")
+        assert not result["trace"]["admission_override"]
+
+
+def test_critic_driver_forwards_optional_base_bytes_while_selecting_only_adapted_choice(scene):
+    def runner(bundle, **_kwargs):
+        encoded, receipt = attest(bundle, scores(bundle, choice="B"))
+        base = b'{"synthetic_protocol_base_scores":true}\n'
+        receipt["base_prediction_file_sha256"] = hashlib.sha256(base).hexdigest()
+        return {
+            "prediction_bytes": encoded,
+            "receipt": receipt,
+            "prepared_identity": identity(),
+            "base_prediction_bytes": base,
+        }
+
+    result = factory(mode="diagnostic", runner=runner).verify(
+        scene[0], scene[1], scene[3], scene[4]
+    )
+    assert result["valid"] and result["trace"]["base_prediction_file_verified"]
+    assert result["decision"]["plan_id"] == scene[3]["plans"][1]["plan_id"]

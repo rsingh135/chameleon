@@ -18,6 +18,7 @@ from .adapter_analysis import (
     _IDENTITY_KEYS,
     MAX_PREDICTION_BYTES,
     WORKER_PROTOCOL,
+    _base_prediction_binding,
     _identity,
     _parse_predictions,
     _ref,
@@ -289,6 +290,7 @@ def complete_adapter_critic(
     *,
     expected_identity,
     mode="off",
+    base_prediction_bytes=None,
 ):
     """Map a verified A/B score to a known ID; N/weak/invalid emits no decision.
 
@@ -335,7 +337,8 @@ def complete_adapter_critic(
         }
         if (
             not isinstance(inference_receipt, dict)
-            or set(inference_receipt) != receipt_keys
+            or not receipt_keys <= inference_receipt.keys()
+            or inference_receipt.keys() - receipt_keys - {"base_prediction_file_sha256"}
             or inference_receipt.get("execution_success") is not True
             or inference_receipt.get("task") != "critic"
             or inference_receipt.get("quality_approved") is not False
@@ -351,6 +354,7 @@ def complete_adapter_critic(
             != hashlib.sha256(prediction_bytes).hexdigest()
         ):
             raise ValueError("Critic inference request/prediction bytes changed")
+        base_verified = _base_prediction_binding(inference_receipt, base_prediction_bytes)
         result["executed"] = True
         result["trace"].update(receipt_valid=True, receipt=deepcopy(inference_receipt))
         payload = _parse_predictions(prediction_bytes)
@@ -369,6 +373,7 @@ def complete_adapter_critic(
             model_visual_input_count=3,
             diagnostic_candidate_score_screen=MIN_PROBABILITY,
             diagnostic_margin_screen=MIN_MARGIN,
+            base_prediction_file_verified=base_verified,
         )
         reason = prediction["abstention_reason"] or (
             "adapter_critic_disabled" if mode == "off" else None
@@ -407,6 +412,7 @@ def complete_and_apply_adapter_critic(
     *,
     expected_identity,
     mode="off",
+    base_prediction_bytes=None,
     assets_dir=None,
     fonts_dir=None,
 ):
@@ -428,6 +434,7 @@ def complete_and_apply_adapter_critic(
         inference_receipt,
         expected_identity=expected_identity,
         mode=mode,
+        base_prediction_bytes=base_prediction_bytes,
     )
     output = {"verifier": result, "applied": None}
     if not result["valid"]:

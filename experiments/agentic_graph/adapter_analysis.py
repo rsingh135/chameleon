@@ -402,6 +402,23 @@ def _parse_predictions(encoded):
     return value
 
 
+def _base_prediction_binding(receipt, encoded):
+    """Verify an optional actual base score sidecar, without using its scores."""
+    expected = receipt.get("base_prediction_file_sha256")
+    if expected is None:
+        if encoded is not None:
+            raise ValueError("Base prediction bytes were supplied without a receipt hash")
+        return False
+    _sha(expected)
+    if (
+        not isinstance(encoded, bytes)
+        or not 0 < len(encoded) <= MAX_PREDICTION_BYTES
+        or hashlib.sha256(encoded).hexdigest() != expected
+    ):
+        raise ValueError("Actual base prediction file bytes differ from their receipt hash")
+    return True
+
+
 def _prediction(row, binding, *, purpose_views=2):
     required = {
         "record_id",
@@ -516,6 +533,7 @@ def complete_adapter_analysis(
     *,
     expected_identity,
     mode="off",
+    base_prediction_bytes=None,
 ):
     """Return the graph analyzer result; bad/cold scores abstain, never organize.
 
@@ -565,7 +583,8 @@ def complete_adapter_analysis(
         }
         if (
             not isinstance(inference_receipt, dict)
-            or set(inference_receipt) != receipt_keys
+            or not receipt_keys <= inference_receipt.keys()
+            or inference_receipt.keys() - receipt_keys - {"base_prediction_file_sha256"}
             or inference_receipt.get("execution_success") is not True
             or inference_receipt.get("task") != "purpose"
             or inference_receipt.get("quality_approved") is not False
@@ -584,6 +603,7 @@ def complete_adapter_analysis(
             != hashlib.sha256(prediction_bytes).hexdigest()
         ):
             raise ValueError("Adapter execution request/prediction file bytes changed")
+        base_verified = _base_prediction_binding(inference_receipt, base_prediction_bytes)
         result["executed"] = True
         result["trace"]["receipt_valid"] = True
         payload = _parse_predictions(prediction_bytes)
@@ -616,6 +636,7 @@ def complete_adapter_analysis(
             initial_abstentions=deepcopy(bundle["initial_abstentions"]),
             model_visual_input_count=len(rows) * views,
             purpose_views=views,
+            base_prediction_file_verified=base_verified,
         )
         if views == 3:
             result["trace"]["native_isolation"] = {

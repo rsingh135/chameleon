@@ -545,7 +545,7 @@ def test_implicit_alpha_resources_and_resize_cache_are_isolated_by_both_paths(
     monkeypatch.setattr(resize_module, "generate_composition_states", lambda *_: ())
     monkeypatch.setattr(resize_module, "generate_grouped_states", lambda *_: ())
     monkeypatch.setattr(
-        resize_module, "_select_candidate", lambda _s, _t, candidates, *_: candidates[0]
+        resize_module, "_select_candidate", lambda _s, _t, candidates, *_, **_kwargs: candidates[0]
     )
     resize_module._resize_cached.cache_clear()
     try:

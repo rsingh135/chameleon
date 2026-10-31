@@ -334,7 +334,7 @@ def test_compact_state_json_retains_selected_name_and_axes(monkeypatch, design):
     monkeypatch.setattr(module, "generate_candidates", lambda *_: [])
     monkeypatch.setattr(module, "generate_source_guides", lambda *_: (state,))
 
-    def select_supplied_state(_source, _target, candidates, axes):
+    def select_supplied_state(_source, _target, candidates, axes, **_kwargs):
         # Isolate serialization lookup; relationship-axis semantics are covered
         # by the source-evidenced declared-flow test below.
         assert axes[json.dumps(candidate, sort_keys=True)] == {"opaque-cluster": "horizontal"}

@@ -34,6 +34,15 @@ existing brand-kit fonts and no image assets. Their geometry and copy are not
 copied from Modern Resume or any reserve. Generated original source JSON is
 saved alongside the dataset for inspection.
 
+The current synthetic epoch used HEX shape fills. The official shape converter
+accepts `rgb(...)`/`rgba(...)` strings and rendered those HEX fills with its gray
+fallback, so the source and adaptations have the same gray paper and their rules
+blend into it. This is a historical synthetic-source encoding limitation, not
+a resize color change. The policy has no color features or color targets;
+geometry training remains applicable. Equivalent RGBA writer values are queued
+for a later dataset version. The current source/data/checkpoint must retain their
+actual history rather than be relabeled as if that correction had already run.
+
 Authored targets are 800×500 and 900×1600. Synthetic-column targets are 1080×1080
 and 1600×900, with at most two per source. Exact-ratio resolution requests bypass
 policy training. The fitted-column generator also requires at least 35% widening;
@@ -148,6 +157,15 @@ and file SHA-256
 The generation receipt confirms implementation bytes remained unchanged during
 the successful expanded build. Detailed records, actual candidate JSON and
 training results are under `output/fit-policy-training-expanded`.
+
+An actual trained-policy call on the held-out original Operations Digest selected
+`fitted-columns/2-header-0.24` at 1080×1080 and
+`fitted-columns/4-header-0.3` at 1600×900. Native source, uniform-baseline and
+trained-selection PNGs plus model receipts are in its `native-qa` directory.
+Agent inspection found larger readable body type, use of the available width,
+and retained section-label/paragraph ownership and column reading order in these
+two examples. This is agent review of those renders, not independent human
+aesthetic validation or a claim for every source.
 
 The first authored-only optimization completed 200 epochs over 239 comparisons
 in 0.422 seconds. It used 104 candidates in 17 source/target groups: 75 training

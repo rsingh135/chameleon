@@ -81,10 +81,12 @@ def method_receipt() -> dict:
         ROOT / "tools" / "scene_harness.py",
         ROOT / "viewer" / "server.py",
         ROOT / "viewer" / "document_bridge.py",
-        ROOT / "viewer" / "addon_bridge.py",
         ROOT / "viewer" / "resize_cache.py",
         Path(__file__),
     ]
+    addon_bridge = ROOT / "viewer" / "addon_bridge.py"
+    if addon_bridge.is_file():
+        paths.append(addon_bridge)
     files = {
         path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in sorted(set(paths))

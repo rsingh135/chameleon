@@ -12,6 +12,7 @@ from typing import Any
 from engine.layout import build_context, generate_candidates, get_measurer
 from engine.layout.backgrounds import generate_background_states
 from engine.layout.composition import generate_composition_states
+from engine.layout.fitted_columns import generate_fitted_column_states
 from engine.layout.focal import analyze_focal, infer_focal_profile
 from engine.layout.focal_states import generate_focal_states
 from engine.layout.geometry import bounds, intersection
@@ -19,6 +20,7 @@ from engine.layout.grouped import GroupedState, generate_grouped_states
 from engine.layout.reading_order import analyze_reading_order, infer_reading_order
 from engine.layout.relationships import analyze_relationships, build_relationship_graph
 from engine.layout.rules import analyze_rules
+from engine.layout.semantic_anchors import generate_semantic_anchor_states
 from engine.layout.source_guides import _transform, generate_source_guides
 from engine.resources import get_resources, using_resources
 from engine.scene import analyze_scene, background_coverage
@@ -220,6 +222,10 @@ def _select_candidate(
     state_axes: dict | None = None,
     *,
     snapshot: dict | None = None,
+    fit_candidate_ids: set | None = None,
+    policy_trace: dict | None = None,
+    semantic_candidate_ids: set | None = None,
+    semantic_trace: dict | None = None,
 ) -> dict:
     """Exclude disqualified layouts, then rank source-aware quality metrics.
 
@@ -229,6 +235,54 @@ def _select_candidate(
     """
     if snapshot is not None:
         snapshot["candidates"] = []
+    if fit_candidate_ids:
+        from engine.fit_execution import select_fitted_document
+
+        fit_graph = build_relationship_graph(source)
+        fitted = select_fitted_document(
+            source,
+            target,
+            candidates,
+            fit_candidate_ids,
+            [{"element_ids": list(unit.element_ids)} for unit in fit_graph.units],
+            snapshot=snapshot,
+        )
+        if fitted is not None:
+            proposal = fitted["trace"]["fit_policy"]
+            receipt = deepcopy(proposal["receipt"])
+            receipt["decision"] = deepcopy(proposal["decision"])
+            receipt["choice_available"] = len(receipt.get("scores", [])) > 1
+            receipt["execution_profile"] = "measured_document_columns"
+            if policy_trace is not None:
+                policy_trace.update(receipt)
+            if snapshot is not None:
+                snapshot["fit_policy"] = receipt
+            return fitted["design"]
+    if semantic_candidate_ids:
+        from engine.semantic_execution import select_semantic_layout
+
+        semantic_graph = build_relationship_graph(source)
+        anchored = select_semantic_layout(
+            source,
+            target,
+            candidates,
+            semantic_candidate_ids,
+            [{"element_ids": list(unit.element_ids)} for unit in semantic_graph.units],
+            snapshot=snapshot,
+        )
+        if anchored is not None:
+            receipt = deepcopy(anchored["trace"]["fit_policy"])
+            if "receipt" in receipt:
+                receipt = {**receipt["receipt"], "decision": receipt.get("decision")}
+            receipt["execution_profile"] = "source_semantic_anchors"
+            if policy_trace is not None:
+                policy_trace.update(receipt)
+            if semantic_trace is not None:
+                semantic_trace.update(anchored["trace"]["semantic_execution"])
+            if snapshot is not None:
+                snapshot["fit_policy"] = receipt
+                snapshot["semantic_execution"] = deepcopy(anchored["trace"]["semantic_execution"])
+            return anchored["design"]
     layout_context = build_context(source)
     try:
         from engine.eval import build_context as build_eval_context
@@ -424,6 +478,38 @@ def _select_candidate(
         return -round(drift / max(1, len(texts)), 6), item.evaluation["total"], fidelity(item)
 
     selected = max(finalists, key=typography_preference)
+    if fit_candidate_ids:
+        from engine.fit_policy import build_fit_menu, choose_fit_plan
+
+        admitted_fit = [
+            item for item in finalists if _candidate_id(item.design) in fit_candidate_ids
+        ]
+        if admitted_fit:
+            rows = [
+                {"plan_id": _candidate_id(item.design), "design": item.design, "hard_valid": True}
+                for item in finalists
+            ]
+            units = [{"element_ids": list(unit.element_ids)} for unit in graph.units]
+            menu = build_fit_menu(source, target, rows, units=units)
+            proposal = choose_fit_plan(source, target, menu, rows)
+            receipt = proposal["receipt"]
+            if proposal["decision"] is not None:
+                previous = _candidate_id(selected.design)
+                choice = proposal["decision"]["plan_id"]
+                selected = next(item for item in finalists if _candidate_id(item.design) == choice)
+                receipt.update(
+                    selected_candidate_id=choice,
+                    comparison_candidate_id=previous,
+                    selection_changed=choice != previous,
+                    choice_available=len(finalists) > 1,
+                    execution_scope="resize_computation",
+                )
+            if policy_trace is not None:
+                policy_trace.update(receipt)
+            if snapshot is not None:
+                snapshot["fit_policy"] = deepcopy(receipt)
+        elif policy_trace is not None:
+            policy_trace.update(executed=False, status="fitted_candidates_not_admitted")
     if snapshot is not None:
         finalist_objects = {id(item) for item in finalists}
         for item in valid:
@@ -463,6 +549,7 @@ def _resize_cached(
     scene_digest: str = "",
     visual_plan_json: str = "",
     strict_bounds: bool = False,
+    fit_model_digest: str = "",
 ) -> dict:
     with using_resources(assets_dir, fonts_dir):
         return _resize_in_context(
@@ -472,6 +559,7 @@ def _resize_cached(
             scene_proposal=json.loads(scene_proposal_json) if scene_proposal_json else None,
             visual_plan=json.loads(visual_plan_json) if visual_plan_json else None,
             strict_bounds=strict_bounds,
+            fit_model_digest=fit_model_digest,
         )
 
 
@@ -493,16 +581,27 @@ def _candidate_pool(
     if resolution is not None:
         candidates, legacy_count, states = [], 0, (resolution,)
     else:
-        candidates = generate_candidates(source, target_canvas)
-        legacy_count = len(candidates)
         graph = build_relationship_graph(source)
-        states = (
-            *generate_background_states(source, target_canvas),
-            *generate_composition_states(source, target_canvas, graph),
-            *generate_grouped_states(source, target_canvas, graph),
-            *generate_focal_states(source, target_canvas, graph),
-            *generate_source_guides(source, target_canvas, graph),
-        )
+        fitted = generate_fitted_column_states(source, target_canvas, graph)
+        if fitted:
+            # Authored document columns need measured text reflow. Arbitrary
+            # marketing grids separate their section labels and live paragraphs.
+            candidates, legacy_count = [], 0
+            states = tuple(fitted)
+        else:
+            anchored = generate_semantic_anchor_states(source, target_canvas)
+            if anchored:
+                candidates, legacy_count, states = [], 0, tuple(anchored)
+            else:
+                candidates = generate_candidates(source, target_canvas)
+                legacy_count = len(candidates)
+                states = (
+                    *generate_background_states(source, target_canvas),
+                    *generate_composition_states(source, target_canvas, graph),
+                    *generate_grouped_states(source, target_canvas, graph),
+                    *generate_focal_states(source, target_canvas, graph),
+                    *generate_source_guides(source, target_canvas, graph),
+                )
     candidates.extend(state.design for state in states)
     if visual_plan is not None:
         from engine.layout.visual_plan import realize_plan
@@ -579,6 +678,7 @@ def _resize_in_context(
     scene_proposal=None,
     visual_plan=None,
     strict_bounds=False,
+    fit_model_digest="",
 ) -> dict:
     source = json.loads(source_json)
     target_canvas = {"width": width, "height": height}
@@ -591,8 +691,35 @@ def _resize_in_context(
         visual_plan=visual_plan,
         strict_bounds=strict_bounds,
     )
-    selected = _select_candidate(source, target_canvas, candidates, axes)
+    fit_ids = {
+        _candidate_id(state.design)
+        for state in by_design.values()
+        if state.topology == "fitted-source-columns"
+    }
+    fit_trace = {}
+    semantic_trace = {}
+    semantic_ids = {
+        _candidate_id(state.design)
+        for state in by_design.values()
+        if state.topology == "source-semantic-anchors"
+    }
+    selected = _select_candidate(
+        source,
+        target_canvas,
+        candidates,
+        axes,
+        fit_candidate_ids=fit_ids,
+        policy_trace=fit_trace,
+        semantic_candidate_ids=semantic_ids,
+        semantic_trace=semantic_trace,
+    )
+    if fit_trace.get("executed") and fit_trace["model_sha256"] != fit_model_digest:
+        raise ValueError("Fit policy changed during resize; retry with its current identity")
     state = _state_metadata(selected, source, source_json, by_design)
+    if fit_trace:
+        state["fit_policy"] = fit_trace
+    if semantic_trace:
+        state["semantic_execution"] = semantic_trace
     if scene_proposal is not None:
         state["scene_model"] = {k: v for k, v in model_trace.items() if k != "visual_plan"}
     if visual_plan is not None:
@@ -648,7 +775,25 @@ def collect_candidate_snapshot(
             model_trace=model_trace,
         )
         trace = {}
-        selected = _select_candidate(original, target, candidates, axes, snapshot=trace)
+        fit_ids = {
+            _candidate_id(state.design)
+            for state in by_design.values()
+            if state.topology == "fitted-source-columns"
+        }
+        semantic_ids = {
+            _candidate_id(state.design)
+            for state in by_design.values()
+            if state.topology == "source-semantic-anchors"
+        }
+        selected = _select_candidate(
+            original,
+            target,
+            candidates,
+            axes,
+            snapshot=trace,
+            fit_candidate_ids=fit_ids,
+            semantic_candidate_ids=semantic_ids,
+        )
         records = {_candidate_id(row["design"]): row for row in trace["candidates"]}
         ordered = {}
         for design in [*candidates, selected]:
@@ -674,6 +819,10 @@ def collect_candidate_snapshot(
         }
         if strict_bounds:
             result["strict_bounds"] = True
+        if "fit_policy" in trace:
+            result["fit_policy"] = trace["fit_policy"]
+        if "semantic_execution" in trace:
+            result["semantic_execution"] = trace["semantic_execution"]
         if visual_plan is not None:
             result["visual_plan"] = model_trace["visual_plan"]
             result["visual_plan"]["model_candidate_selected"] = (
@@ -695,6 +844,9 @@ def resize_with_state(
 ) -> dict:
     """Return a fresh design and the exact declared state used during selection."""
     with using_resources(assets_dir, fonts_dir) as resources:
+        from engine.fit_policy import fit_policy_identity
+
+        fit_identity = fit_policy_identity()
         if type(strict_bounds) is not bool:
             raise ValueError("strict_bounds must be a boolean")
         profile = analyze_scene(source)
@@ -722,6 +874,7 @@ def resize_with_state(
                 if visual_plan is not None
                 else "",
                 strict_bounds,
+                fit_identity.get("model_sha256") or "",
             )
         )
 

@@ -212,6 +212,9 @@ def score(request_path, predictions_path, receipt_path, gold_path, freeze_path):
     freeze, freeze_sha = _json(freeze_path)
     if request.get("protocol") != REQUEST_PROTOCOL or request.get("task") != "purpose":
         raise ValueError("Expected a label-free purpose request")
+    purpose_views = request.get("purpose_views", 2)
+    if type(purpose_views) is not int or purpose_views not in (2, 3):
+        raise ValueError("Purpose request must explicitly declare two or three views")
     if freeze.get("protocol") != FREEZE_PROTOCOL or freeze.get("request_sha256") != request_sha:
         raise ValueError("Purpose evaluation freeze differs from the request")
     if (
@@ -237,7 +240,7 @@ def score(request_path, predictions_path, receipt_path, gold_path, freeze_path):
         images = row.get("images")
         if (
             not isinstance(images, list)
-            or len(images) != 2
+            or len(images) != purpose_views
             or any(
                 not isinstance(image, dict)
                 or not _hash(image.get("sha256"))
@@ -248,7 +251,9 @@ def score(request_path, predictions_path, receipt_path, gold_path, freeze_path):
             or not _text(row.get("family_id", "independent"))
             or not _text(row.get("control", "independent"))
         ):
-            raise ValueError("Purpose request needs ordered source/context images and raw metadata")
+            raise ValueError(
+                "Purpose request needs its exact declared ordered images and raw metadata"
+            )
     gold, gold_sha = _json(gold_path, expected_sha=freeze["gold_sha256"])
     if (
         gold.get("protocol") != GOLD_PROTOCOL
@@ -337,6 +342,7 @@ def score(request_path, predictions_path, receipt_path, gold_path, freeze_path):
         "schema_version": 1,
         "protocol": "visual-purpose-offline-score-v1",
         "classes": list(PURPOSE_CLASSES),
+        "purpose_views": purpose_views,
         "label_scope": gold["label_scope"],
         "bindings": {
             "request_sha256": request_sha,

@@ -365,6 +365,53 @@ def test_changed_gold_is_hash_rejected_before_parsing_its_answers(frozen, monkey
         score(frozen)
 
 
+def bind_changed_request(frozen, request):
+    write(frozen.paths["request"], request)
+    request_sha = sha(frozen.paths["request"])
+    gold = json.loads(frozen.paths["gold"].read_text())
+    gold["request_sha256"] = request_sha
+    write(frozen.paths["gold"], gold)
+    freeze = json.loads(frozen.paths["freeze"].read_text())
+    freeze.update(request_sha256=request_sha, gold_sha256=sha(frozen.paths["gold"]))
+    write(frozen.paths["freeze"], freeze)
+    frozen.receipt["request_sha256"] = request_sha
+    publish(frozen)
+
+
+@pytest.mark.parametrize("declared", [None, 2, 3])
+def test_exact_declared_view_count_and_order_are_bound(frozen, declared):
+    request = json.loads(frozen.paths["request"].read_text())
+    if declared is not None:
+        request["purpose_views"] = declared
+    if declared == 3:
+        for row, prediction in zip(request["records"], frozen.rows, strict=True):
+            image = {"path": "isolated.png", "sha256": "c" * 64}
+            row["images"].append(image)
+            prediction["input_image_sha256"].append(image["sha256"])
+    bind_changed_request(frozen, request)
+    report = score(frozen)
+    assert report["purpose_views"] == (declared or 2)
+    assert report["metrics"]["accuracy_all_gold"] == 1
+    if declared == 3:
+        frozen.rows[0]["input_image_sha256"][-2:] = reversed(
+            frozen.rows[0]["input_image_sha256"][-2:]
+        )
+        publish(frozen)
+        assert score(frozen)["metrics"]["invalid_count"] == 1
+
+
+@pytest.mark.parametrize("declared,actual", [(None, 3), (2, 3), (3, 2), (True, 2), (4, 2)])
+def test_undeclared_or_mismatched_three_view_requests_fail(frozen, declared, actual):
+    request = json.loads(frozen.paths["request"].read_text())
+    if declared is not None:
+        request["purpose_views"] = declared
+    if actual == 3:
+        request["records"][0]["images"].append({"path": "isolated.png", "sha256": "c" * 64})
+    bind_changed_request(frozen, request)
+    with pytest.raises(ValueError, match="views|ordered images"):
+        score(frozen)
+
+
 def test_invalid_receipt_does_not_open_local_gold(frozen, monkeypatch):
     frozen.receipt["execution_success"] = False
     write(frozen.paths["receipt"], frozen.receipt)

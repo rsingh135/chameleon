@@ -1,0 +1,232 @@
+"""Data-boundary checks that do not import Torch or consume GPU memory."""
+
+import json
+import os
+from pathlib import Path
+
+import pytest
+from PIL import Image
+
+from experiments.visual_finetune.data import freeze_dataset, sha, write_json
+from experiments.visual_finetune.worker import classification_metrics
+
+
+def critic_manifest(tmp_path, *, overlap=False):
+    images = []
+    for i, color in enumerate(("red", "blue", "white")):
+        path = tmp_path / f"image-{i}.png"
+        Image.new("RGB", (64, 64), color).save(path)
+        images.append({"path": path.name, "sha256": sha(path)})
+    records = []
+    for split, family in (("train", "work-a"), ("validation", "work-a" if overlap else "work-b")):
+        records.append(
+            {
+                "record_id": split,
+                "family_id": family,
+                "split": split,
+                "label": "NEITHER",
+                "label_origin": "synthetic_geometry",
+                "images": images,
+            }
+        )
+    path = tmp_path / "manifest.json"
+    write_json(path, {"records": records})
+    return path
+
+
+def test_family_overlap_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="disjoint"):
+        freeze_dataset(critic_manifest(tmp_path, overlap=True), tmp_path / "out", task="critic")
+
+
+def test_changed_pixels_are_rejected(tmp_path):
+    manifest = critic_manifest(tmp_path)
+    Image.new("RGB", (64, 64), "black").save(tmp_path / "image-0.png")
+    with pytest.raises(ValueError, match="identity"):
+        freeze_dataset(manifest, tmp_path / "out", task="critic")
+
+
+def test_sealed_test_rows_do_not_enter_training_export(tmp_path):
+    manifest = critic_manifest(tmp_path)
+    payload = json.loads(manifest.read_text())
+    payload["records"].append({"split": "test", "secret_label": "never_read"})
+    write_json(manifest, payload)
+    dataset = freeze_dataset(manifest, tmp_path / "out", task="critic")
+    assert len(dataset["records"]) == 2
+    assert dataset["counts"]["train"] == {"N": 1}
+    assert dataset["families"] == {"train": ["work-a"], "validation": ["work-b"]}
+    for row in dataset["records"]:
+        assert all(sha(ref["path"]) == ref["sha256"] for ref in row["images"])
+
+
+def test_constant_choice_does_not_look_like_balanced_success():
+    rows = [
+        {
+            "label": label,
+            "prediction": "B",
+            "control": "original",
+            "raw_next_token_is_allowed": True,
+        }
+        for label in ("A", "B", "N")
+    ]
+    metrics = classification_metrics(rows, ["A", "B", "N"])
+    assert metrics["accuracy"] == pytest.approx(1 / 3)
+    assert metrics["macro_f1"] == pytest.approx(1 / 6)
+    assert metrics["per_class"]["N"]["recall"] == 0
+
+
+def test_external_scoring_refuses_sealed_answers(tmp_path):
+    from tools.evaluate_visual_adapter import prepare
+
+    training = tmp_path / "training"
+    training.mkdir()
+    write_json(training / "data.json", {"task": "critic", "classes": ["A", "B", "N"]})
+    write_json(
+        training / "recipe.json",
+        {"dataset": str(training / "data.json"), "dataset_sha256": sha(training / "data.json")},
+    )
+    request = tmp_path / "request.json"
+    write_json(
+        request,
+        {
+            "protocol": "visual-adapter-label-free-evaluation-v1",
+            "task": "critic",
+            "records": [{"record_id": "opaque", "label": "B"}],
+        },
+    )
+    with pytest.raises(ValueError, match="sealed answers"):
+        prepare(request, training, tmp_path / "unused-adapter", tmp_path / "out")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows owned-job lifecycle")
+def test_worker_waits_for_owned_job_assignment(tmp_path):
+    from experiments.visual_finetune.supervise import run
+
+    executable = Path("C:/Users/edmun/anaconda3/python.exe")
+    if not executable.is_file():
+        pytest.skip("Measured local lightweight Python is unavailable")
+    command = [
+        str(executable),
+        "-c",
+        "import sys; assert sys.stdin.readline().strip() == 'owned-job-assigned'; "
+        "print('assigned')",
+    ]
+    receipt = run(command, tmp_path, cwd=str(tmp_path), max_seconds=10)
+    assert receipt["exit_code"] == 0
+    assert receipt["owned_kill_on_close_job"] is True
+    assert receipt["owned_worker_stopped"] is True
+    assert "assigned" in (tmp_path / "stdout.log").read_text()
+
+
+def test_stale_experiment_code_is_rejected_before_model_import(tmp_path):
+    from experiments.visual_finetune.worker import main
+
+    recipe = tmp_path / "recipe.json"
+    write_json(recipe, {"code_sha256": {"worker.py": "0" * 64}})
+    with pytest.raises(ValueError, match="experiment code"):
+        main(recipe)
+
+
+def test_atomic_checkpoint_includes_complete_state_and_verifies(tmp_path):
+    from experiments.visual_finetune.checkpoint import REQUIRED, publish, staging_directory
+    from tools.vision_lora_smoke import verify_checkpoint
+
+    destination = tmp_path / "checkpoint-4"
+    stage = staging_directory(destination)
+    for name in REQUIRED:
+        (stage / name).write_bytes(b"io-test-fixture-not-a-model")
+    publish(stage, destination)
+    assert not stage.exists()
+    assert REQUIRED.issubset(verify_checkpoint(destination)["files"])
+    (destination / "training-state.pt").write_bytes(b"changed")
+    with pytest.raises(RuntimeError, match="SHA256"):
+        verify_checkpoint(destination)
+
+
+def test_incomplete_checkpoint_does_not_replace_earlier_save(tmp_path):
+    from experiments.visual_finetune.checkpoint import publish, staging_directory
+
+    previous = tmp_path / "checkpoint-4"
+    previous.mkdir()
+    (previous / "sentinel").write_text("keep")
+    destination = tmp_path / "checkpoint-8"
+    stage = staging_directory(destination)
+    (stage / "adapter_model.safetensors").write_bytes(b"partial")
+    with pytest.raises(ValueError, match="incomplete"):
+        publish(stage, destination)
+    assert stage.exists()
+    assert not destination.exists()
+    assert (previous / "sentinel").read_text() == "keep"
+
+
+def train_only_inputs(tmp_path):
+    manifest = critic_manifest(tmp_path)
+    payload = json.loads(manifest.read_text())
+    row = payload["records"][0]
+    payload["records"] = [{**row, "record_id": label, "label": label} for label in ("A", "B", "N")]
+    write_json(manifest, payload)
+    request = tmp_path / "independent.json"
+    write_json(
+        request,
+        {
+            "protocol": "visual-adapter-label-free-evaluation-v1",
+            "task": "critic",
+            "records": [
+                {
+                    "record_id": "opaque-probe",
+                    "family_id": "work-b",
+                    "split": "validation",
+                    "images": row["images"],
+                }
+            ],
+        },
+    )
+    return manifest, request
+
+
+def test_train_only_keeps_independent_inputs_out_of_gradient_records(tmp_path):
+    manifest, request = train_only_inputs(tmp_path)
+    dataset = freeze_dataset(
+        manifest, tmp_path / "out", task="critic", allow_train_only=True, evaluation_request=request
+    )
+    assert len(dataset["records"]) == 3
+    assert all(row["split"] == "train" for row in dataset["records"])
+    assert len(dataset["evaluation_records"]) == 1
+    assert "label" not in dataset["evaluation_records"][0]
+    assert dataset["provenance"]["evaluation_labels_available_to_trainer"] is False
+    assert classification_metrics([{"prediction": "A", "label": None}], ["A", "B", "N"]) is None
+
+
+def test_train_only_refuses_evaluation_gold_and_family_overlap(tmp_path):
+    manifest, request = train_only_inputs(tmp_path)
+    payload = json.loads(request.read_text())
+    payload["records"][0]["label"] = "A"
+    write_json(request, payload)
+    with pytest.raises(ValueError, match="held-out answers"):
+        freeze_dataset(
+            manifest,
+            tmp_path / "gold",
+            task="critic",
+            allow_train_only=True,
+            evaluation_request=request,
+        )
+    del payload["records"][0]["label"]
+    payload["records"][0]["family_id"] = "work-a"
+    write_json(request, payload)
+    with pytest.raises(ValueError, match="disjoint"):
+        freeze_dataset(
+            manifest,
+            tmp_path / "overlap",
+            task="critic",
+            allow_train_only=True,
+            evaluation_request=request,
+        )
+
+
+def test_portable_shells_have_lf_bytes_on_windows(tmp_path):
+    from tools.package_visual_training import normalize_shell_scripts
+
+    script = tmp_path / "run.sh"
+    script.write_bytes(b"#!/usr/bin/env bash\r\r\nset -euo pipefail\r\n")
+    normalize_shell_scripts(tmp_path)
+    assert script.read_bytes() == b"#!/usr/bin/env bash\nset -euo pipefail\n"
